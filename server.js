@@ -1,5 +1,5 @@
-import createApp from "./src/app";
-import { connectDB } from "./src/db/db";
+import createApp from "./src/app.js";
+import { connectDB } from "./src/db/db.js";
 
 const app = createApp();
 

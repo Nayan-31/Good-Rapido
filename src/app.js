@@ -1,4 +1,6 @@
 import express from 'express'
+import morgan from 'morgan'
+import env from './config/env.js'
 import securityMiddlewares from './middlewares/security.middleware.js';
 
 export default function createApp() {
@@ -8,4 +10,6 @@ export default function createApp() {
         app.use(morgan('dev'));
 
     securityMiddlewares(app);
+
+    return app;
 }
