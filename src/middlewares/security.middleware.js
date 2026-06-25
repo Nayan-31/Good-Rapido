@@ -4,6 +4,8 @@ import helmet from "helmet"
 import cors from "cors"
 import express from "express"
 import cookieParser from "cookie-parser"
+import { rateLimiter } from "./rate-limiter.middleware.js"
+import env from "../config/env.js"
 
 export default function securityMiddlewares(app) {
 
@@ -12,7 +14,7 @@ export default function securityMiddlewares(app) {
         credentials: true
     }))
 
-
+    app.use(rateLimiter)
     app.use(cookieParser());
     app.use(helmet())
     app.use(hpp())

@@ -1,6 +1,8 @@
+import env from "../config/env.js"
+
 const request = new Map()
-const MAX_REQUEST = 10;
-const WINDOW_MS = 60 * 1000;
+const MAX_REQUEST = env.RATELIMIT
+const WINDOW_MS = env.RATELIMIT_WINDOWS;
 
 setInterval(() => {
     const now = Date.now()

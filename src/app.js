@@ -1,4 +1,5 @@
 import express from 'express'
+import securityMiddlewares from './middlewares/security.middleware.js';
 
 export default function createApp() {
     const app = express()
