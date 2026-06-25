@@ -114,3 +114,42 @@ src/
 ---
 
 **Final Goal:** To create the most transparent, trustworthy, and fair ride-booking ecosystem, replacing the "black-box" experience with clear, data-driven insights.
+
+---
+
+## Docker & Local Development
+
+This project uses **Docker Compose** to manage the local development environment seamlessly.
+
+### Quick Start Commands
+
+- **Start the environment:**
+  ```bash
+  docker compose up --build -d
+  ```
+  *This builds the Node.js API image, downloads the MongoDB database, links them together in a secure network, and runs them in the background.*
+
+- **View only the API Logs (Live):**
+  ```bash
+  docker compose logs -f api
+  ```
+  *This shows you the live console output of just your Node server (ignoring database spam). Press `Ctrl + C` to stop watching.*
+
+- **Stop the environment:**
+  ```bash
+  docker compose down
+  ```
+  *This safely stops and removes the running containers to save RAM. Your code and database records are permanently saved and will be right there when you start it up again.*
+
+### Why Docker Compose instead of Manual Commands?
+
+If you were to run this architecture manually, you would have to run:
+1. `docker build -t good-rapido-api .` (To build the Node app)
+2. `docker run mongo:latest` (To start the database)
+3. `docker run -p 3000:3000 good-rapido-api` (To start the app)
+
+We handle all of this automatically inside `docker-compose.yml` for several critical reasons:
+1. **Automated Networking:** Manual `docker run` commands place containers in isolated networks, meaning Node cannot talk to MongoDB easily. Docker Compose automatically creates a private Bridge Network so Node can connect securely using `mongodb://mongodb:27017/rapido`.
+2. **Volume Mounting (Live Reloading):** Compose mounts your local codebase into the container (`.:/app`). When you hit "Save" on a file in VS Code, `nodemon` instantly restarts the server inside Docker without having to rebuild the image.
+3. **Persistent Database:** We map a volume (`mongo-data:/data/db`) so that running `docker compose down` doesn't wipe your hard-earned database records.
+4. **Log Suppression:** We pass `--quiet` to the MongoDB container natively in the YAML file to prevent massive blocks of WiredTiger boot-logs from polluting the terminal.
