@@ -1,4 +1,4 @@
-import env from "../config/env.js"
+import env from "../../config/env.js"
 
 const request = new Map()
 const MAX_REQUEST = env.RATELIMIT
