@@ -1,7 +1,7 @@
 import dotenv from 'dotenv'
 dotenv.config()
 import z from 'zod'
-import appConstant from '../constant/app.constant.js'
+import appConstant from '../shared/constant/app.constant.js'
 
 const envSchema = z.object({
     PORT: z.coerce.number().default(appConstant.PORT),

@@ -5,7 +5,7 @@ import cors from "cors"
 import express from "express"
 import cookieParser from "cookie-parser"
 import { rateLimiter } from "./rate-limiter.middleware.js"
-import env from "../config/env.js"
+import env from "../../config/env.js"
 
 export default function securityMiddlewares(app) {
 
