@@ -4,7 +4,7 @@ const request = new Map()
 const MAX_REQUEST = env.RATELIMIT
 const WINDOW_MS = env.RATELIMIT_WINDOWS;
 
-setInterval(() => {
+const cleanupInterval = setInterval(() => {
     const now = Date.now()
     for (const [ip, userData] of request.entries()) { //Iterates over every entry in the Map. Each iteration destructures the entry into ip (the key). and userData (the value object).
         if (now > userData.startTime + WINDOW_MS) { //Checks if the IP's time window has expired — i.e., more than 60 seconds have passed since they started.
@@ -12,6 +12,8 @@ setInterval(() => {
         }
     }
 }, 5 * 60 * 1000)
+
+cleanupInterval.unref?.()
 
 export const rateLimiter = (req, res, next) => {
     const ip = req.ip;

@@ -8,9 +8,10 @@ import { rateLimiter } from "./rate-limiter.middleware.js"
 import env from "../../config/env.js"
 
 export default function securityMiddlewares(app) {
+    const allowedOrigins = env.CORS_ORIGIN.split(',').map((origin) => origin.trim())
 
     app.use(cors({
-        origin: env.CORS_ORIGIN.split(',').map((origin) => origin.trim()),
+        origin: allowedOrigins.includes('*') ? true : allowedOrigins,
         credentials: true
     }))
 

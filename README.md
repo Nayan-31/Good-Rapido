@@ -121,6 +121,53 @@ src/
 
 This project uses **Docker Compose** to manage the local development environment seamlessly.
 
+## Current API Surface
+
+The first implemented module is public authentication. It follows the layered flow described above:
+
+`routes -> validators/middlewares -> controller -> service -> dao -> Mongo model`
+
+Controllers only hand off request data and send service responses. The reusable auth service is mounted for both rider and passenger roles, and database access is isolated in the DAO.
+
+### Auth Routes
+
+Base path: `/api/v1/public/auth`
+
+| Method | Path | Description |
+| --- | --- | --- |
+| POST | `/riders/register` | Register a rider account |
+| POST | `/riders/login` | Login a rider account |
+| POST | `/riders/refresh` | Rotate rider access and refresh tokens |
+| POST | `/riders/logout` | Logout a rider session |
+| GET | `/riders/me` | Fetch the authenticated rider profile |
+| POST | `/passengers/register` | Register a passenger account |
+| POST | `/passengers/login` | Login a passenger account |
+| POST | `/passengers/refresh` | Rotate passenger access and refresh tokens |
+| POST | `/passengers/logout` | Logout a passenger session |
+| GET | `/passengers/me` | Fetch the authenticated passenger profile |
+
+Register body:
+
+```json
+{
+  "fullName": "Nayan Mahato",
+  "email": "nayan@example.com",
+  "phone": "+919999999999",
+  "password": "password123"
+}
+```
+
+Login body:
+
+```json
+{
+  "identifier": "+919999999999",
+  "password": "password123"
+}
+```
+
+Use the returned access token as `Authorization: Bearer <accessToken>` for `/me`. Use the returned refresh token in the `refreshToken` body field for `/refresh` and `/logout`.
+
 ### Quick Start Commands
 
 - **Start the environment:**
