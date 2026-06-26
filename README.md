@@ -117,6 +117,170 @@ src/
 
 ---
 
+## Project Module Roadmap
+
+This is the planned module direction, not the current implementation state.
+
+Current implementation status:
+
+- **Implemented now:** `src/modules/public/auth`
+- **Reserved for upcoming work:** `src/modules/private`
+- **Planned later:** `src/modules/core`
+
+After public authentication, the platform should grow as a modular monolith with three clear module layers:
+
+- **Public modules:** Rider and passenger-facing APIs.
+- **Private modules:** Driver, admin, ops, and internal APIs.
+- **Core modules:** Shared business engines used by both public and private APIs.
+
+The goal is to keep the project DRY. Public and private modules can expose different route surfaces, but shared business logic should live in reusable services, DAOs, and core engines.
+
+### Planned Directory Direction
+
+```text
+src/
+├── modules/
+│   ├── public/
+│   │   ├── auth/
+│   │   ├── profile/
+│   │   ├── fare/
+│   │   ├── ride-booking/
+│   │   ├── rides/
+│   │   ├── drivers/
+│   │   ├── payments/
+│   │   ├── promos/
+│   │   ├── ratings/
+│   │   ├── disputes/
+│   │   ├── notifications/
+│   │   └── support/
+│   │
+│   ├── private/
+│   │   ├── auth/
+│   │   ├── admin/
+│   │   ├── driver/
+│   │   ├── driver-availability/
+│   │   ├── driver-documents/
+│   │   ├── vehicle/
+│   │   ├── ride-ops/
+│   │   ├── pricing/
+│   │   ├── surge/
+│   │   ├── trust/
+│   │   ├── fraud/
+│   │   ├── earnings/
+│   │   ├── disputes/
+│   │   ├── analytics/
+│   │   └── notifications/
+│   │
+│   └── core/
+│       ├── identity/
+│       ├── ride-lifecycle/
+│       ├── pricing-engine/
+│       ├── matching-engine/
+│       ├── route-engine/
+│       ├── trust-engine/
+│       ├── fraud-engine/
+│       ├── payment-engine/
+│       └── notification-engine/
+```
+
+### Planned Public Modules
+
+Public modules are for rider and passenger workflows.
+
+- **auth:** Rider and passenger register, login, refresh, logout, and profile session.
+- **profile:** Rider/passenger profile, saved addresses, emergency contacts, and preferences.
+- **fare:** Fare estimate, fare breakdown, fare confidence meter, and alternate pickup suggestions.
+- **ride-booking:** Ride search, booking creation, driver selection, and cancellation.
+- **rides:** Current ride, ride history, ride details, and trip receipt.
+- **drivers:** Public driver profile, trust score, route fairness score, and cancellation risk.
+- **payments:** Payment methods, wallet, ride payment, invoices, and refunds.
+- **promos:** Promo eligibility, referral code, and promo application.
+- **ratings:** Driver rating, route feedback, fare feedback, and ride experience feedback.
+- **disputes:** Waiting charge dispute, wrong route dispute, fake trip dispute, and refund request.
+- **notifications:** User notifications, ride alerts, fare lock expiry, and payment updates.
+- **support:** Help center, support tickets, FAQs, and contact support.
+
+### Planned Private Modules
+
+Private modules are for drivers, admins, ops users, and internal systems.
+
+- **auth:** Driver, admin, and ops authentication with role-aware permissions.
+- **admin:** Admin users, roles, permissions, and internal dashboard APIs.
+- **driver:** Driver profile, onboarding status, approval status, and account controls.
+- **driver-availability:** Online/offline status, current location, and active service zones.
+- **driver-documents:** License, identity verification, KYC documents, and approval workflow.
+- **vehicle:** Vehicle details, registration certificate, insurance, and pollution certificate.
+- **ride-ops:** Internal ride monitoring, manual ride review, force cancel, and driver reassignment.
+- **pricing:** Base fare configuration, city pricing, distance pricing, time pricing, and commission rules.
+- **surge:** Surge zones, demand heatmap, supply rules, and fare lock management.
+- **trust:** Rider trust score, driver trust score, cancellation score, and route fairness score.
+- **fraud:** Promo abuse detection, ghost ride detection, suspicious cancellations, and device fingerprint review.
+- **earnings:** Driver earnings, commission, payout, penalties, incentives, and settlement status.
+- **disputes:** Ops/admin dispute review, evidence tracking, resolution, and refunds.
+- **analytics:** Historical fares, cancellation trends, demand heatmaps, and driver behavior analytics.
+- **notifications:** Driver/admin alerts, operational events, and dispute updates.
+
+### Planned Core Modules
+
+Core modules hold reusable business logic. Public and private APIs should call these engines instead of duplicating business rules.
+
+- **identity:** Shared profile, role, account status, and identity verification rules.
+- **ride-lifecycle:** Ride states such as requested, accepted, arrived, started, completed, and cancelled.
+- **pricing-engine:** Base fare, distance fare, time fare, surge fare, fare lock, and transparent fare breakdown.
+- **matching-engine:** Driver matching based on location, availability, trust score, cancellation risk, and vehicle type.
+- **route-engine:** Expected route, actual route, route comparison, detour percentage, and waiting validation.
+- **trust-engine:** Rider reliability, driver reliability, route fairness, cancellation behavior, and dispute impact.
+- **fraud-engine:** Promo abuse, fake trips, ghost rides, device anomalies, and suspicious behavior.
+- **payment-engine:** Payment capture, refunds, wallet, invoices, commission, and driver settlement.
+- **notification-engine:** Reusable notification orchestration for push, SMS, email, and in-app alerts.
+
+### Standard Module Shape
+
+Each feature module should follow the same layered structure:
+
+```text
+module/
+├── dto/
+├── interfaces/
+├── session/              # only when the module needs auth/session helpers
+├── validators/
+├── module.constants.js
+├── module.controller.js
+├── module.dao.js
+├── module.model.js
+├── module.route.js
+├── module.service.js
+└── module.route.test.js
+```
+
+Standard request flow:
+
+```text
+route -> validator/middleware -> controller -> service -> dao -> model
+```
+
+Controllers should stay thin. Business logic belongs in services. Database logic belongs in DAOs. Response shaping belongs in DTOs. Validation belongs in validators.
+
+### Recommended Build Order
+
+1. Private auth for driver, admin, and ops users.
+2. Public and private profile modules.
+3. Driver onboarding with documents, vehicle, and KYC verification.
+4. Driver availability and live location.
+5. Fare estimate and pricing engine.
+6. Ride booking and ride lifecycle.
+7. Matching engine.
+8. Live ride sockets.
+9. Payments, wallet, invoices, and refunds.
+10. Ratings and disputes.
+11. Trust engine.
+12. Fraud engine.
+13. Analytics and admin dashboard APIs.
+
+The next practical module after public auth should be **private auth**, followed by **driver onboarding**, because ride booking depends on verified drivers, vehicles, availability, and location.
+
+---
+
 ## Docker & Local Development
 
 This project uses **Docker Compose** to manage the local development environment seamlessly.
