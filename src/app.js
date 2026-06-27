@@ -3,6 +3,7 @@ import morgan from 'morgan'
 import env from './config/env.js'
 import securityMiddlewares from './shared/middlewares/security.middleware.js';
 import authRoutes from './modules/public/auth/auth.route.js';
+import profileRoutes from './modules/public/profile/profile.route.js';
 import { errorMiddleware, notFoundMiddleware } from './shared/middlewares/error.middleware.js';
 
 export default function createApp() {
@@ -21,6 +22,7 @@ export default function createApp() {
     });
 
     app.use('/api/v1/public/auth', authRoutes);
+    app.use('/api/v1/public/profile', profileRoutes);
 
     app.use(notFoundMiddleware);
     app.use(errorMiddleware);

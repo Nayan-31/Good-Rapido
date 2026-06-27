@@ -123,7 +123,7 @@ This is the planned module direction, not the current implementation state.
 
 Current implementation status:
 
-- **Implemented now:** `src/modules/public/auth`
+- **Implemented now:** `src/modules/public/auth`, `src/modules/public/profile`
 - **Reserved for upcoming work:** `src/modules/private`
 - **Planned later:** `src/modules/core`
 
@@ -264,7 +264,7 @@ Controllers should stay thin. Business logic belongs in services. Database logic
 ### Recommended Build Order
 
 1. Private auth for driver, admin, and ops users.
-2. Public and private profile modules.
+2. Private profile modules for driver, admin, and ops users.
 3. Driver onboarding with documents, vehicle, and KYC verification.
 4. Driver availability and live location.
 5. Fare estimate and pricing engine.
@@ -277,7 +277,7 @@ Controllers should stay thin. Business logic belongs in services. Database logic
 12. Fraud engine.
 13. Analytics and admin dashboard APIs.
 
-The next practical module after public auth should be **private auth**, followed by **driver onboarding**, because ride booking depends on verified drivers, vehicles, availability, and location.
+The next practical module after public auth and public profile should be **private auth**, followed by **driver onboarding**, because ride booking depends on verified drivers, vehicles, availability, and location.
 
 ---
 
@@ -287,11 +287,11 @@ This project uses **Docker Compose** to manage the local development environment
 
 ## Current API Surface
 
-The first implemented module is public authentication. It follows the layered flow described above:
+The currently implemented public modules are authentication and profile management. They follow the layered flow described above:
 
 `routes -> validators/middlewares -> controller -> service -> dao -> Mongo model`
 
-Controllers only hand off request data and send service responses. The reusable auth service is mounted for both rider and passenger roles, and database access is isolated in the DAO.
+Controllers only hand off request data and send service responses. Services own business rules, database access is isolated in DAOs, and response shaping is handled through DTOs.
 
 ### Auth Routes
 
@@ -331,6 +331,76 @@ Login body:
 ```
 
 Use the returned access token as `Authorization: Bearer <accessToken>` for `/me`. Use the returned refresh token in the `refreshToken` body field for `/refresh` and `/logout`.
+
+### Profile Routes
+
+Base path: `/api/v1/public/profile`
+
+All profile routes require `Authorization: Bearer <accessToken>`.
+
+| Method | Path | Description |
+| --- | --- | --- |
+| GET | `/me` | Fetch or create the authenticated user's public profile |
+| PATCH | `/me` | Update editable profile fields |
+| PATCH | `/preferences` | Update profile preferences |
+| POST | `/saved-addresses` | Add a saved address |
+| PATCH | `/saved-addresses/:addressId` | Update a saved address |
+| DELETE | `/saved-addresses/:addressId` | Remove a saved address |
+| POST | `/emergency-contacts` | Add an emergency contact |
+| PATCH | `/emergency-contacts/:contactId` | Update an emergency contact |
+| DELETE | `/emergency-contacts/:contactId` | Remove an emergency contact |
+
+Update profile body:
+
+```json
+{
+  "displayName": "Nayan Mahato",
+  "avatarUrl": "https://example.com/avatar.png",
+  "dateOfBirth": "2000-01-01",
+  "gender": "male"
+}
+```
+
+Update preferences body:
+
+```json
+{
+  "language": "en",
+  "notifications": {
+    "sms": true,
+    "email": true,
+    "push": true
+  }
+}
+```
+
+Saved address body:
+
+```json
+{
+  "label": "Home",
+  "addressLine": "221B Baker Street",
+  "city": "Kolkata",
+  "state": "West Bengal",
+  "country": "India",
+  "pincode": "700001",
+  "location": {
+    "latitude": 22.5726,
+    "longitude": 88.3639
+  },
+  "isDefault": true
+}
+```
+
+Emergency contact body:
+
+```json
+{
+  "name": "Emergency Person",
+  "phone": "+919876543210",
+  "relationship": "Friend"
+}
+```
 
 ### Quick Start Commands
 
