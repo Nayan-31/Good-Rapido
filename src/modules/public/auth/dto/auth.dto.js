@@ -17,3 +17,7 @@ export const toAuthSessionDto = (user, tokens) => ({
     user: toPublicAuthUser(user),
     tokens
 });
+
+/**
+ * auth.dto.js  = response shape
+ */

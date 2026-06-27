@@ -184,3 +184,8 @@ export default class AuthService {
         }
     }
 }
+
+
+/**
+ * auth.service.js  = business rules
+ */

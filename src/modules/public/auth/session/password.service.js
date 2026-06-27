@@ -33,3 +33,10 @@ export default class PasswordService {
         return timingSafeEqual(storedKey, suppliedKey);
     }
 }
+
+/**
+ * This handles password security:
+ * Used during:
+ * register -> hash password before saving
+ * login    -> compare entered password with stored hash
+ */

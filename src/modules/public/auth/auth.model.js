@@ -66,3 +66,7 @@ authUserSchema.index(
 const AuthUser = mongoose.models.AuthUser || mongoose.model('AuthUser', authUserSchema);
 
 export default AuthUser;
+
+/**
+ * auth.model.js = database shape
+ */

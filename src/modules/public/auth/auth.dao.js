@@ -61,3 +61,7 @@ export default class AuthDao {
         );
     }
 }
+
+/**
+ * auth.dao.js  = repository/database operations
+ */

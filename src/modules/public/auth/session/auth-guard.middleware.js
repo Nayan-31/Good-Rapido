@@ -29,3 +29,13 @@ const extractBearerToken = (authorizationHeader) => {
 
     return authorizationHeader.replace('Bearer ', '').trim();
 };
+
+
+/**
+ * This protects private routes like /me.
+ * It checks:
+ * Is there an Authorization header?
+ * Is it Bearer token?
+ * Is the access token valid?
+ * Is the role allowed?
+ */
