@@ -123,7 +123,7 @@ This is the planned module direction, not the current implementation state.
 
 Current implementation status:
 
-- **Implemented now:** `src/modules/public/auth`, `src/modules/public/profile`
+- **Implemented now:** `src/modules/public/auth`, `src/modules/public/profile`, `src/modules/public/fare`
 - **Reserved for upcoming work:** `src/modules/private`
 - **Planned later:** `src/modules/core`
 
@@ -287,7 +287,7 @@ This project uses **Docker Compose** to manage the local development environment
 
 ## Current API Surface
 
-The currently implemented public modules are authentication and profile management. They follow the layered flow described above:
+The currently implemented public modules are authentication, profile management, and fare estimates. They follow the layered flow described above:
 
 `routes -> validators/middlewares -> controller -> service -> dao -> Mongo model`
 
@@ -400,6 +400,64 @@ Emergency contact body:
   "phone": "+919876543210",
   "relationship": "Friend"
 }
+```
+
+### Fare Routes
+
+Base path: `/api/v1/public/fare`
+
+All fare routes require `Authorization: Bearer <accessToken>`.
+
+What people will find helpful here:
+
+- Users can see the complete fare before booking instead of guessing from a single total.
+- The fare explains base fare, distance, time, surge, platform fee, tax, and final amount separately.
+- Surge is shown with a reason, so price increases feel understandable instead of random.
+- The confidence meter tells users whether the estimate is stable or likely to change.
+- Alternate pickup suggestions can help users move a short distance and save money.
+- Fare lock gives users a short window where the quoted price is protected.
+- Fare history helps users compare recent estimates and notice unusual pricing.
+
+| Method | Path | Description |
+| --- | --- | --- |
+| POST | `/estimate` | Create a fare estimate with breakdown, confidence, surge, and alternate pickups |
+| GET | `/estimates/:estimateId` | Fetch a saved fare estimate |
+| POST | `/estimates/:estimateId/lock` | Lock a valid estimate for a short pricing window |
+| GET | `/history` | Fetch recent fare totals for the authenticated user |
+
+Fare estimate body:
+
+```json
+{
+  "pickup": {
+    "address": "Park Street, Kolkata",
+    "latitude": 22.5535,
+    "longitude": 88.3526
+  },
+  "dropoff": {
+    "address": "Howrah Station",
+    "latitude": 22.585,
+    "longitude": 88.3426
+  },
+  "vehicleType": "bike",
+  "requestedAt": "2026-01-01T12:00:00.000Z"
+}
+```
+
+Supported `vehicleType` values:
+
+```text
+bike
+auto
+cab_economy
+cab_premium
+```
+
+Fare history query examples:
+
+```text
+/api/v1/public/fare/history
+/api/v1/public/fare/history?vehicleType=auto&limit=5
 ```
 
 ### Quick Start Commands
