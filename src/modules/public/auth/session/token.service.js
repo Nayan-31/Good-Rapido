@@ -67,3 +67,7 @@ export default class TokenService {
         return user.id || user._id?.toString();
     }
 }
+
+/**
+ * This handles JWT tokens: So the service does not manually create JWTs. It asks TokenService.
+ */

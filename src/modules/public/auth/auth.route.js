@@ -53,3 +53,7 @@ export const createAuthRouter = (dependencies = createAuthDependencies()) => {
 };
 
 export default createAuthRouter();
+
+/**
+ * auth.route.js  = URL setup + dependency wiring
+ */

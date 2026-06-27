@@ -26,3 +26,7 @@ export default class AuthController {
         sendHttpResponse(res, await this.authService.me(req.auth));
     });
 }
+
+/**
+ * auth.controller.js  = HTTP request/response bridge
+ */
