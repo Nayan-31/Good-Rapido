@@ -1,5 +1,12 @@
 import express from 'express'
-import securityMiddlewares from './middlewares/security.middleware.js';
+import morgan from 'morgan'
+import env from './config/env.js'
+import securityMiddlewares from './shared/middlewares/security.middleware.js';
+import authRoutes from './modules/public/auth/auth.route.js';
+import fareRoutes from './modules/public/fare/fare.route.js';
+import profileRoutes from './modules/public/profile/profile.route.js';
+import rideBookingRoutes from './modules/public/ride-booking/ride-booking.route.js';
+import { errorMiddleware, notFoundMiddleware } from './shared/middlewares/error.middleware.js';
 
 export default function createApp() {
     const app = express()
@@ -8,4 +15,21 @@ export default function createApp() {
         app.use(morgan('dev'));
 
     securityMiddlewares(app);
+
+    app.get('/health', (_req, res) => {
+        res.status(200).json({
+            success: true,
+            message: 'Good Rapido API is healthy'
+        });
+    });
+
+    app.use('/api/v1/public/auth', authRoutes);
+    app.use('/api/v1/public/profile', profileRoutes);
+    app.use('/api/v1/public/fare', fareRoutes);
+    app.use('/api/v1/public/ride-booking', rideBookingRoutes);
+
+    app.use(notFoundMiddleware);
+    app.use(errorMiddleware);
+
+    return app;
 }

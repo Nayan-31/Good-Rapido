@@ -1,0 +1,152 @@
+export const RIDE_BOOKING_STATUSES = Object.freeze({
+    DRIVER_SEARCH: 'driver_search',
+    DRIVER_SELECTED: 'driver_selected',
+    CONFIRMED: 'confirmed',
+    CANCELLED: 'cancelled'
+});
+
+export const RIDE_BOOKING_CANCELLATION_REASONS = Object.freeze({
+    DRIVER_LATE: 'driver_late',
+    PRICE_CHANGED: 'price_changed',
+    CHANGED_PLANS: 'changed_plans',
+    SAFETY_CONCERN: 'safety_concern',
+    WRONG_PICKUP: 'wrong_pickup',
+    OTHER: 'other'
+});
+
+export const RIDE_BOOKING_RISK_LEVELS = Object.freeze({
+    LOW: 'low',
+    MEDIUM: 'medium',
+    HIGH: 'high'
+});
+
+export const RIDE_BOOKING_QUOTE_HOLD_MINUTES = 5;
+
+export const RIDE_BOOKING_DRIVER_POOL = Object.freeze([
+    Object.freeze({
+        id: 'drv_bike_arjun',
+        fullName: 'Arjun Singh',
+        vehicleType: 'bike',
+        vehicleName: 'Honda Activa',
+        vehicleNumber: 'WB 02 AB 7492',
+        vehicleColor: 'Black',
+        rating: 4.9,
+        etaMinutes: 3,
+        distanceKm: 0.4,
+        averageFarePerKm: 8,
+        routeFairnessScore: 96,
+        detourPercentage: 1.8,
+        onTimeArrivalScore: 95,
+        cancellationRatio: 1.1,
+        trustScore: 94,
+        reliabilityScore: 96,
+        cancellationRiskScore: 8,
+        cancellationRiskLevel: RIDE_BOOKING_RISK_LEVELS.LOW,
+        completedRides: 1280
+    }),
+    Object.freeze({
+        id: 'drv_bike_sahil',
+        fullName: 'Sahil Khan',
+        vehicleType: 'bike',
+        vehicleName: 'TVS Ntorq',
+        vehicleNumber: 'WB 06 TK 1188',
+        vehicleColor: 'Red',
+        rating: 4.7,
+        etaMinutes: 5,
+        distanceKm: 0.9,
+        averageFarePerKm: 8.5,
+        routeFairnessScore: 93,
+        detourPercentage: 2.6,
+        onTimeArrivalScore: 91,
+        cancellationRatio: 2.4,
+        trustScore: 89,
+        reliabilityScore: 90,
+        cancellationRiskScore: 18,
+        cancellationRiskLevel: RIDE_BOOKING_RISK_LEVELS.LOW,
+        completedRides: 840
+    }),
+    Object.freeze({
+        id: 'drv_auto_imran',
+        fullName: 'Imran Ali',
+        vehicleType: 'auto',
+        vehicleName: 'Bajaj RE',
+        vehicleNumber: 'WB 04 AU 9021',
+        vehicleColor: 'Yellow Green',
+        rating: 4.8,
+        etaMinutes: 4,
+        distanceKm: 0.7,
+        averageFarePerKm: 14,
+        routeFairnessScore: 95,
+        detourPercentage: 2.1,
+        onTimeArrivalScore: 93,
+        cancellationRatio: 1.8,
+        trustScore: 92,
+        reliabilityScore: 94,
+        cancellationRiskScore: 13,
+        cancellationRiskLevel: RIDE_BOOKING_RISK_LEVELS.LOW,
+        completedRides: 1760
+    }),
+    Object.freeze({
+        id: 'drv_cab_rajesh',
+        fullName: 'Rajesh Kumar',
+        vehicleType: 'cab_economy',
+        vehicleName: 'Suzuki Dzire',
+        vehicleNumber: 'WB 01 AC 4522',
+        vehicleColor: 'White',
+        rating: 4.9,
+        etaMinutes: 4,
+        distanceKm: 0.8,
+        averageFarePerKm: 15,
+        routeFairnessScore: 97,
+        detourPercentage: 2,
+        onTimeArrivalScore: 94,
+        cancellationRatio: 1.2,
+        trustScore: 95,
+        reliabilityScore: 97,
+        cancellationRiskScore: 7,
+        cancellationRiskLevel: RIDE_BOOKING_RISK_LEVELS.LOW,
+        completedRides: 2480
+    }),
+    Object.freeze({
+        id: 'drv_cab_neha',
+        fullName: 'Neha Das',
+        vehicleType: 'cab_economy',
+        vehicleName: 'Hyundai Aura',
+        vehicleNumber: 'WB 08 ND 5291',
+        vehicleColor: 'Silver',
+        rating: 4.7,
+        etaMinutes: 7,
+        distanceKm: 1.3,
+        averageFarePerKm: 16,
+        routeFairnessScore: 92,
+        detourPercentage: 3.4,
+        onTimeArrivalScore: 90,
+        cancellationRatio: 3.8,
+        trustScore: 88,
+        reliabilityScore: 89,
+        cancellationRiskScore: 31,
+        cancellationRiskLevel: RIDE_BOOKING_RISK_LEVELS.MEDIUM,
+        completedRides: 980
+    }),
+    Object.freeze({
+        id: 'drv_premium_amit',
+        fullName: 'Amit Das',
+        vehicleType: 'cab_premium',
+        vehicleName: 'Toyota Innova',
+        vehicleNumber: 'WB 12 PR 4488',
+        vehicleColor: 'Navy Blue',
+        rating: 4.9,
+        etaMinutes: 6,
+        distanceKm: 1.1,
+        averageFarePerKm: 27,
+        routeFairnessScore: 98,
+        detourPercentage: 1.4,
+        onTimeArrivalScore: 96,
+        cancellationRatio: 0.9,
+        trustScore: 97,
+        reliabilityScore: 98,
+        cancellationRiskScore: 5,
+        cancellationRiskLevel: RIDE_BOOKING_RISK_LEVELS.LOW,
+        completedRides: 1540
+    })
+]);
