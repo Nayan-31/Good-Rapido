@@ -123,7 +123,7 @@ This is the planned module direction, not the current implementation state.
 
 Current implementation status:
 
-- **Implemented now:** `src/modules/public/auth`, `src/modules/public/profile`, `src/modules/public/fare`
+- **Implemented now:** `src/modules/public/auth`, `src/modules/public/profile`, `src/modules/public/fare`, `src/modules/public/ride-booking`
 - **Reserved for upcoming work:** `src/modules/private`
 - **Planned later:** `src/modules/core`
 
@@ -287,7 +287,7 @@ This project uses **Docker Compose** to manage the local development environment
 
 ## Current API Surface
 
-The currently implemented public modules are authentication, profile management, and fare estimates. They follow the layered flow described above:
+The currently implemented public modules are authentication, profile management, fare estimates, and ride booking. They follow the layered flow described above:
 
 `routes -> validators/middlewares -> controller -> service -> dao -> Mongo model`
 
@@ -402,13 +402,17 @@ Emergency contact body:
 }
 ```
 
-### Fare Routes
+### Fare Module
 
 Base path: `/api/v1/public/fare`
 
 All fare routes require `Authorization: Bearer <accessToken>`.
 
-What people will find helpful here:
+#### GitHub Description
+
+The public fare module adds transparent ride pricing for riders and passengers. It creates a fare estimate before booking, stores the estimate snapshot, explains the full price breakdown, shows surge reasons, gives a confidence signal, suggests cheaper nearby pickup points, and allows users to lock a quoted fare for a short time.
+
+#### How This Helps Users
 
 - Users can see the complete fare before booking instead of guessing from a single total.
 - The fare explains base fare, distance, time, surge, platform fee, tax, and final amount separately.
@@ -418,6 +422,18 @@ What people will find helpful here:
 - Fare lock gives users a short window where the quoted price is protected.
 - Fare history helps users compare recent estimates and notice unusual pricing.
 
+#### What This Module Provides
+
+- Fare estimate creation for supported vehicle types.
+- Transparent pricing breakdown with currency, base fare, distance fare, time fare, surge fare, fees, taxes, and total fare.
+- Demand-aware surge level and explanation.
+- Fare confidence score with human-readable factors.
+- Alternate pickup suggestions with walking distance and estimated savings.
+- Short-duration fare lock for valid estimates.
+- Recent fare history for the authenticated user.
+
+#### API Routes
+
 | Method | Path | Description |
 | --- | --- | --- |
 | POST | `/estimate` | Create a fare estimate with breakdown, confidence, surge, and alternate pickups |
@@ -425,7 +441,7 @@ What people will find helpful here:
 | POST | `/estimates/:estimateId/lock` | Lock a valid estimate for a short pricing window |
 | GET | `/history` | Fetch recent fare totals for the authenticated user |
 
-Fare estimate body:
+#### Fare Estimate Body
 
 ```json
 {
@@ -444,7 +460,7 @@ Fare estimate body:
 }
 ```
 
-Supported `vehicleType` values:
+#### Supported Vehicle Types
 
 ```text
 bike
@@ -453,11 +469,99 @@ cab_economy
 cab_premium
 ```
 
-Fare history query examples:
+#### Fare History Query Examples
 
 ```text
 /api/v1/public/fare/history
 /api/v1/public/fare/history?vehicleType=auto&limit=5
+```
+
+### Ride Booking Module
+
+Base path: `/api/v1/public/ride-booking`
+
+All ride booking routes require `Authorization: Bearer <accessToken>`.
+
+#### GitHub Description
+
+The public ride-booking module turns a transparent fare estimate into a booking flow. It helps users search trusted driver matches, create a ride booking, select or change a driver, confirm the ride, and cancel with a clear reason. The module keeps the fare snapshot, driver trust signals, route fairness score, cancellation risk, and locked quote timing visible throughout the booking process.
+
+#### How This Helps Users
+
+- Users can book from a known fare estimate instead of starting from a hidden price.
+- Driver options are ranked with trust, route fairness, arrival reliability, and cancellation behavior.
+- Users can see driver reliability before confirming the ride.
+- The selected booking stores the fare snapshot, so the quoted price remains explainable.
+- Cancellation uses explicit reasons, improving accountability and future trust scoring.
+- Confirmation checks the booking quote window, helping avoid stale or misleading prices.
+
+#### What This Module Provides
+
+- Trusted driver search from a fare estimate.
+- Ride booking creation with selected driver and fare snapshot.
+- Driver selection or driver change before confirmation.
+- Booking detail fetch for the authenticated user.
+- Ride confirmation while the quote is still valid.
+- Ride cancellation with reason and optional note.
+- Trust signals including fair price score, route fairness, route accuracy, driver reliability, cancellation ratio, and cancellation risk.
+
+#### API Routes
+
+| Method | Path | Description |
+| --- | --- | --- |
+| POST | `/search` | Search trusted driver options for a fare estimate |
+| POST | `/bookings` | Create a ride booking from a valid fare estimate |
+| GET | `/bookings/:bookingId` | Fetch a ride booking |
+| PATCH | `/bookings/:bookingId/driver` | Select or change the driver before confirmation |
+| POST | `/bookings/:bookingId/confirm` | Confirm a ride booking while the quote is valid |
+| POST | `/bookings/:bookingId/cancel` | Cancel a ride booking with a transparent reason |
+
+#### Search Body
+
+```json
+{
+  "fareEstimateId": "fare-estimate-id",
+  "limit": 3
+}
+```
+
+#### Create Booking Body
+
+```json
+{
+  "fareEstimateId": "fare-estimate-id",
+  "selectedDriverId": "drv_cab_rajesh",
+  "paymentMethod": "personal_wallet",
+  "riderNote": "Please call after reaching the pickup gate"
+}
+```
+
+#### Select Driver Body
+
+```json
+{
+  "driverId": "drv_cab_neha"
+}
+```
+
+#### Cancel Booking Body
+
+```json
+{
+  "reason": "changed_plans",
+  "note": "No longer needed"
+}
+```
+
+Supported cancellation reasons:
+
+```text
+driver_late
+price_changed
+changed_plans
+safety_concern
+wrong_pickup
+other
 ```
 
 ### Quick Start Commands
