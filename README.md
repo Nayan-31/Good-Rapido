@@ -123,7 +123,7 @@ This is the planned module direction, not the current implementation state.
 
 Current implementation status:
 
-- **Implemented now:** `src/modules/public/auth`, `src/modules/public/profile`, `src/modules/public/fare`, `src/modules/public/ride-booking`
+- **Implemented now:** `src/modules/public/auth`, `src/modules/public/profile`, `src/modules/public/fare`, `src/modules/public/ride-booking`, `src/modules/public/rides`
 - **Reserved for upcoming work:** `src/modules/private`
 - **Planned later:** `src/modules/core`
 
