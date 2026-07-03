@@ -7,6 +7,7 @@ import fareRoutes from './modules/public/fare/fare.route.js';
 import profileRoutes from './modules/public/profile/profile.route.js';
 import rideBookingRoutes from './modules/public/ride-booking/ride-booking.route.js';
 import ridesRoutes from './modules/public/rides/rides.route.js';
+import driversRoutes from './modules/public/drivers/drivers.route.js';
 import { errorMiddleware, notFoundMiddleware } from './shared/middlewares/error.middleware.js';
 
 export default function createApp() {
@@ -29,6 +30,7 @@ export default function createApp() {
     app.use('/api/v1/public/fare', fareRoutes);
     app.use('/api/v1/public/ride-booking', rideBookingRoutes);
     app.use('/api/v1/public/rides', ridesRoutes);
+    app.use('/api/v1/public/drivers', driversRoutes);
 
     app.use(notFoundMiddleware);
     app.use(errorMiddleware);

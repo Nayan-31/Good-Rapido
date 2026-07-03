@@ -123,7 +123,7 @@ This is the planned module direction, not the current implementation state.
 
 Current implementation status:
 
-- **Implemented now:** `src/modules/public/auth`, `src/modules/public/profile`, `src/modules/public/fare`, `src/modules/public/ride-booking`, `src/modules/public/rides`
+- **Implemented now:** `src/modules/public/auth`, `src/modules/public/profile`, `src/modules/public/fare`, `src/modules/public/ride-booking`, `src/modules/public/rides`, `src/modules/public/drivers`
 - **Reserved for upcoming work:** `src/modules/private`
 - **Planned later:** `src/modules/core`
 
@@ -287,7 +287,7 @@ This project uses **Docker Compose** to manage the local development environment
 
 ## Current API Surface
 
-The currently implemented public modules are authentication, profile management, fare estimates, and ride booking. They follow the layered flow described above:
+The currently implemented public modules are authentication, profile management, fare estimates, ride booking, rides, and driver transparency. They follow the layered flow described above:
 
 `routes -> validators/middlewares -> controller -> service -> dao -> Mongo model`
 
@@ -562,6 +562,52 @@ changed_plans
 safety_concern
 wrong_pickup
 other
+```
+
+### Drivers Module
+
+Base path: `/api/v1/public/drivers`
+
+All driver transparency routes require `Authorization: Bearer <accessToken>`.
+
+#### GitHub Description
+
+The public drivers module gives riders and passengers a transparent driver profile before or during booking. It exposes driver trust score, route fairness, cancellation risk, average fare per km, arrival reliability, detour history, completed rides, and vehicle identity.
+
+#### How This Helps Users
+
+- Users can compare drivers by trust instead of only distance.
+- Driver fare behavior is visible through average fare per km.
+- Route fairness and detour percentage make route behavior easier to understand.
+- Cancellation risk is explicit before the user commits to a driver.
+- Trust reports explain the dimensions behind the driver score.
+
+#### API Routes
+
+| Method | Path | Description |
+| --- | --- | --- |
+| GET | `/` | List public driver transparency summaries |
+| GET | `/:driverId` | Fetch a public driver profile |
+| GET | `/:driverId/trust` | Fetch driver trust score details |
+| GET | `/:driverId/route-fairness` | Fetch route fairness and detour signals |
+| GET | `/:driverId/cancellation-risk` | Fetch cancellation risk and rider guidance |
+
+#### Driver List Query Examples
+
+```text
+/api/v1/public/drivers
+/api/v1/public/drivers?vehicleType=cab_economy&sortBy=route_fairness&limit=3
+/api/v1/public/drivers?riskLevel=low&sortBy=cancellation_risk
+```
+
+Supported sort options:
+
+```text
+trust_score
+eta
+rating
+route_fairness
+cancellation_risk
 ```
 
 ### Quick Start Commands
