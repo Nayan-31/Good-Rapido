@@ -281,6 +281,69 @@ The next practical module after public auth and public profile should be **priva
 
 ---
 
+## Implemented Module: Public Drivers
+
+The public drivers module exposes rider-facing driver transparency APIs. It helps users compare drivers before or during booking using trust score, route fairness, cancellation risk, ETA, rating, vehicle details, and completed ride history.
+
+### Problem It Solves
+
+Traditional ride-booking apps often show only the nearest or cheapest driver. Users cannot easily understand whether a driver is reliable, likely to cancel, or known for fair routing. This module turns driver selection into a transparent decision by exposing safety and trust signals in a structured API response.
+
+### Module Hierarchy
+
+```text
+src/modules/public/drivers/
+├── dto/
+│   └── drivers.dto.js              # Shapes public driver API responses
+├── validators/
+│   └── drivers.validator.js        # Validates filters and driver route params
+├── drivers.constants.js            # Sort options and trust/fairness labels
+├── drivers.controller.js           # Handles HTTP request/response flow
+├── drivers.dao.js                  # Reads and filters driver catalog data
+├── drivers.model.js                # Public driver catalog model source
+├── drivers.route.js                # Authenticated public driver routes
+├── drivers.service.js              # Driver trust, route, and risk business logic
+└── drivers.route.test.js           # Route coverage for list/profile/insight APIs
+```
+
+### API Usage
+
+All drivers endpoints require a bearer access token from the auth module.
+
+```http
+Authorization: Bearer <access_token>
+```
+
+Available endpoints:
+
+```text
+GET /api/v1/public/drivers
+GET /api/v1/public/drivers?vehicleType=cab_economy&sortBy=route_fairness&limit=5
+GET /api/v1/public/drivers/:driverId
+GET /api/v1/public/drivers/:driverId/trust
+GET /api/v1/public/drivers/:driverId/route-fairness
+GET /api/v1/public/drivers/:driverId/cancellation-risk
+```
+
+Supported list filters:
+
+```text
+vehicleType: bike | auto | cab_economy | cab_premium
+riskLevel: low | medium | high
+sortBy: trust_score | eta | rating | route_fairness | cancellation_risk
+limit: 1-30
+```
+
+Users can use this module to:
+
+- Compare available drivers by trust score, ETA, rating, and cancellation risk.
+- Open a driver profile before selecting a ride.
+- Check whether a driver usually follows fair routes.
+- Review cancellation-risk guidance for time-sensitive rides.
+- Build a transparent driver selection UI in the rider app.
+
+---
+
 ## Docker & Local Development
 
 This project uses **Docker Compose** to manage the local development environment seamlessly.
