@@ -123,7 +123,7 @@ This is the planned module direction, not the current implementation state.
 
 Current implementation status:
 
-- **Implemented now:** `src/modules/public/auth`, `src/modules/public/profile`, `src/modules/public/fare`, `src/modules/public/ride-booking`, `src/modules/public/rides`, `src/modules/public/drivers`
+- **Implemented now:** `src/modules/public/auth`, `src/modules/public/profile`, `src/modules/public/fare`, `src/modules/public/ride-booking`, `src/modules/public/rides`, `src/modules/public/drivers`, `src/modules/public/payments`
 - **Reserved for upcoming work:** `src/modules/private`
 - **Planned later:** `src/modules/core`
 
@@ -344,13 +344,89 @@ Users can use this module to:
 
 ---
 
+## Implemented Module: Public Payments
+
+The public payments module exposes rider-facing payment APIs for supported payment methods, wallet balance, ride payment capture, payment history, payment details, and refund requests.
+
+Current payment behavior is dummy/local simulated. The module does not call a real payment gateway yet, and no payment keys are required in `.env` for the current implementation. Payment references are generated locally, and wallet balance uses module constants.
+
+When a real gateway is integrated later, add gateway keys to `.env` and wire them through `src/config/env.js` and the payments service:
+
+```env
+PAYMENT_GATEWAY=razorpay
+RAZORPAY_KEY_ID=your_key_id
+RAZORPAY_KEY_SECRET=your_key_secret
+PAYMENT_WEBHOOK_SECRET=your_webhook_secret
+```
+
+### Problem It Solves
+
+Ride payments often become a black box after booking: users do not know which amount was captured, whether wallet balance changed correctly, whether a ride has already been paid, or how to request a refund. This module creates a transparent ride-linked payment ledger so every payment can be traced back to a ride, method, fare amount, wallet movement, and refund status.
+
+### Module Hierarchy
+
+```text
+src/modules/public/payments/
+├── dto/
+│   └── payments.dto.js             # Shapes public payment, wallet, method, and refund responses
+├── validators/
+│   └── payments.validator.js       # Validates payment query, ride payment body, and refund body
+├── payments.constants.js           # Payment methods, statuses, refund reasons, and wallet defaults
+├── payments.controller.js          # Handles HTTP request/response flow
+├── payments.dao.js                 # Reads and writes payment records
+├── payments.model.js               # Mongo payment transaction schema
+├── payments.route.js               # Authenticated public payment routes
+├── payments.service.js             # Payment capture, duplicate guard, wallet, and refund logic
+└── payments.route.test.js          # Route coverage for methods, wallet, payment, history, and refunds
+```
+
+### API Usage
+
+All payments endpoints require a bearer access token from the auth module.
+
+```http
+Authorization: Bearer <access_token>
+```
+
+Available endpoints:
+
+```text
+GET /api/v1/public/payments/methods
+GET /api/v1/public/payments/wallet
+GET /api/v1/public/payments/history
+GET /api/v1/public/payments/history?status=succeeded&limit=5
+POST /api/v1/public/payments/rides/:rideId/pay
+GET /api/v1/public/payments/:paymentId
+POST /api/v1/public/payments/:paymentId/refund
+```
+
+Supported payment methods:
+
+```text
+personal_wallet
+upi
+card
+cash
+```
+
+Users can use this module to:
+
+- See available payment methods before paying for a ride.
+- Check wallet balance and wallet movement after payment.
+- Pay for a confirmed ride with wallet, UPI, card, or cash.
+- Prevent duplicate successful payment for the same ride.
+- View payment history and individual ride-linked receipts.
+- Request a refund with a clear reason and optional amount.
+
+---
+
 ## Docker & Local Development
 
 This project uses **Docker Compose** to manage the local development environment seamlessly.
 
 ## Current API Surface
 
-The currently implemented public modules are authentication, profile management, fare estimates, ride booking, rides, and driver transparency. They follow the layered flow described above:
+The currently implemented public modules are authentication, profile management, fare estimates, ride booking, rides, driver transparency, and payments. They follow the layered flow described above:
 
 `routes -> validators/middlewares -> controller -> service -> dao -> Mongo model`
 
@@ -671,6 +747,104 @@ eta
 rating
 route_fairness
 cancellation_risk
+```
+
+### Payments Module
+
+Base path: `/api/v1/public/payments`
+
+All payments routes require `Authorization: Bearer <accessToken>`.
+
+#### GitHub Description
+
+The public payments module connects confirmed rides with transparent payment records. It supports payment method discovery, wallet summary, ride payment capture, payment history, payment detail lookup, and refund requests. Each payment stores the ride snapshot, fare amount, method, wallet balance movement, gateway reference, capture status, and refund status.
+
+Current implementation note: payments are dummy/local simulated. No payment gateway request is made, no Razorpay or Stripe key is required in `.env`, and wallet balance is currently driven by module constants. For real gateway integration later, add keys such as:
+
+```env
+PAYMENT_GATEWAY=razorpay
+RAZORPAY_KEY_ID=your_key_id
+RAZORPAY_KEY_SECRET=your_key_secret
+PAYMENT_WEBHOOK_SECRET=your_webhook_secret
+```
+
+#### How This Helps Users
+
+- Users can see supported payment options before paying.
+- Wallet balance is visible before payment, and wallet balance after payment is returned.
+- Duplicate successful payment for the same ride is blocked.
+- Every transaction is linked to a ride booking code and driver snapshot.
+- Payment history gives users a simple ledger for past ride payments.
+- Refund requests are captured with a reason, note, amount, and review status.
+
+#### API Routes
+
+| Method | Path | Description |
+| --- | --- | --- |
+| GET | `/methods` | Fetch supported payment methods and wallet balance |
+| GET | `/wallet` | Fetch wallet summary |
+| GET | `/history` | Fetch payment history for the authenticated user |
+| POST | `/rides/:rideId/pay` | Pay for a confirmed ride |
+| GET | `/:paymentId` | Fetch a payment record |
+| POST | `/:paymentId/refund` | Request a refund for a successful payment |
+
+#### Ride Payment Body
+
+```json
+{
+  "paymentMethod": "personal_wallet",
+  "tipAmount": 0,
+  "discountAmount": 0,
+  "idempotencyKey": "ride-pay-0001"
+}
+```
+
+Supported payment methods:
+
+```text
+personal_wallet
+upi
+card
+cash
+```
+
+Supported payment history statuses:
+
+```text
+pending
+succeeded
+failed
+refund_requested
+refunded
+```
+
+#### Refund Body
+
+```json
+{
+  "reason": "overcharged",
+  "note": "Fare was higher than expected",
+  "amount": 120
+}
+```
+
+Supported refund reasons:
+
+```text
+driver_cancelled
+overcharged
+wrong_route
+duplicate_payment
+other
+```
+
+#### Payment Query Examples
+
+```text
+/api/v1/public/payments/methods
+/api/v1/public/payments/wallet
+/api/v1/public/payments/history?status=succeeded&limit=5
+/api/v1/public/payments/rides/<rideId>/pay
 ```
 
 ### Quick Start Commands
