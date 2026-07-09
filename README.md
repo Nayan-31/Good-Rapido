@@ -123,8 +123,8 @@ This is the planned module direction, not the current implementation state.
 
 Current implementation status:
 
-- **Implemented now:** `src/modules/public/auth`, `src/modules/public/profile`, `src/modules/public/fare`, `src/modules/public/ride-booking`, `src/modules/public/rides`, `src/modules/public/drivers`, `src/modules/public/payments`, `src/modules/public/promos`, `src/modules/public/ratings`, `src/modules/public/disputes`, `src/modules/public/notifications`, `src/modules/public/support`
-- **Reserved for upcoming work:** `src/modules/private`
+- **Implemented now:** `src/modules/public/auth`, `src/modules/public/profile`, `src/modules/public/fare`, `src/modules/public/ride-booking`, `src/modules/public/rides`, `src/modules/public/drivers`, `src/modules/public/payments`, `src/modules/public/promos`, `src/modules/public/ratings`, `src/modules/public/disputes`, `src/modules/public/notifications`, `src/modules/public/support`, `src/modules/private/auth`, `src/modules/private/admin`
+- **Reserved for upcoming work:** remaining `src/modules/private/*` modules
 - **Planned later:** `src/modules/core`
 
 After public authentication, the platform should grow as a modular monolith with three clear module layers:
