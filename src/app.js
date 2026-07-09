@@ -6,6 +6,15 @@ import authRoutes from './modules/public/auth/auth.route.js';
 import fareRoutes from './modules/public/fare/fare.route.js';
 import profileRoutes from './modules/public/profile/profile.route.js';
 import rideBookingRoutes from './modules/public/ride-booking/ride-booking.route.js';
+import ridesRoutes from './modules/public/rides/rides.route.js';
+import driversRoutes from './modules/public/drivers/drivers.route.js';
+import paymentsRoutes from './modules/public/payments/payments.route.js';
+import promosRoutes from './modules/public/promos/promos.route.js';
+import ratingsRoutes from './modules/public/ratings/ratings.route.js';
+import disputesRoutes from './modules/public/disputes/disputes.route.js';
+import notificationsRoutes from './modules/public/notifications/notifications.route.js';
+import supportRoutes from './modules/public/support/support.route.js';
+import privateAuthRoutes from './modules/private/auth/auth.route.js';
 import { errorMiddleware, notFoundMiddleware } from './shared/middlewares/error.middleware.js';
 
 export default function createApp() {
@@ -27,6 +36,15 @@ export default function createApp() {
     app.use('/api/v1/public/profile', profileRoutes);
     app.use('/api/v1/public/fare', fareRoutes);
     app.use('/api/v1/public/ride-booking', rideBookingRoutes);
+    app.use('/api/v1/public/rides', ridesRoutes);
+    app.use('/api/v1/public/drivers', driversRoutes);
+    app.use('/api/v1/public/payments', paymentsRoutes);
+    app.use('/api/v1/public/promos', promosRoutes);
+    app.use('/api/v1/public/ratings', ratingsRoutes);
+    app.use('/api/v1/public/disputes', disputesRoutes);
+    app.use('/api/v1/public/notifications', notificationsRoutes);
+    app.use('/api/v1/public/support', supportRoutes);
+    app.use('/api/v1/private/auth', privateAuthRoutes);
 
     app.use(notFoundMiddleware);
     app.use(errorMiddleware);

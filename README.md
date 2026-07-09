@@ -123,8 +123,8 @@ This is the planned module direction, not the current implementation state.
 
 Current implementation status:
 
-- **Implemented now:** `src/modules/public/auth`, `src/modules/public/profile`, `src/modules/public/fare`, `src/modules/public/ride-booking`
-- **Reserved for upcoming work:** `src/modules/private`
+- **Implemented now:** `src/modules/public/auth`, `src/modules/public/profile`, `src/modules/public/fare`, `src/modules/public/ride-booking`, `src/modules/public/rides`, `src/modules/public/drivers`, `src/modules/public/payments`, `src/modules/public/promos`, `src/modules/public/ratings`, `src/modules/public/disputes`, `src/modules/public/notifications`, `src/modules/public/support`, `src/modules/private/auth`
+- **Reserved for upcoming work:** remaining `src/modules/private/*` modules
 - **Planned later:** `src/modules/core`
 
 After public authentication, the platform should grow as a modular monolith with three clear module layers:
@@ -281,13 +281,152 @@ The next practical module after public auth and public profile should be **priva
 
 ---
 
+## Implemented Module: Public Drivers
+
+The public drivers module exposes rider-facing driver transparency APIs. It helps users compare drivers before or during booking using trust score, route fairness, cancellation risk, ETA, rating, vehicle details, and completed ride history.
+
+### Problem It Solves
+
+Traditional ride-booking apps often show only the nearest or cheapest driver. Users cannot easily understand whether a driver is reliable, likely to cancel, or known for fair routing. This module turns driver selection into a transparent decision by exposing safety and trust signals in a structured API response.
+
+### Module Hierarchy
+
+```text
+src/modules/public/drivers/
+├── dto/
+│   └── drivers.dto.js              # Shapes public driver API responses
+├── validators/
+│   └── drivers.validator.js        # Validates filters and driver route params
+├── drivers.constants.js            # Sort options and trust/fairness labels
+├── drivers.controller.js           # Handles HTTP request/response flow
+├── drivers.dao.js                  # Reads and filters driver catalog data
+├── drivers.model.js                # Public driver catalog model source
+├── drivers.route.js                # Authenticated public driver routes
+├── drivers.service.js              # Driver trust, route, and risk business logic
+└── drivers.route.test.js           # Route coverage for list/profile/insight APIs
+```
+
+### API Usage
+
+All drivers endpoints require a bearer access token from the auth module.
+
+```http
+Authorization: Bearer <access_token>
+```
+
+Available endpoints:
+
+```text
+GET /api/v1/public/drivers
+GET /api/v1/public/drivers?vehicleType=cab_economy&sortBy=route_fairness&limit=5
+GET /api/v1/public/drivers/:driverId
+GET /api/v1/public/drivers/:driverId/trust
+GET /api/v1/public/drivers/:driverId/route-fairness
+GET /api/v1/public/drivers/:driverId/cancellation-risk
+```
+
+Supported list filters:
+
+```text
+vehicleType: bike | auto | cab_economy | cab_premium
+riskLevel: low | medium | high
+sortBy: trust_score | eta | rating | route_fairness | cancellation_risk
+limit: 1-30
+```
+
+Users can use this module to:
+
+- Compare available drivers by trust score, ETA, rating, and cancellation risk.
+- Open a driver profile before selecting a ride.
+- Check whether a driver usually follows fair routes.
+- Review cancellation-risk guidance for time-sensitive rides.
+- Build a transparent driver selection UI in the rider app.
+
+---
+
+## Implemented Module: Public Payments
+
+The public payments module exposes rider-facing payment APIs for supported payment methods, wallet balance, ride payment capture, payment history, payment details, and refund requests.
+
+Current payment behavior is dummy/local simulated. The module does not call a real payment gateway yet, and no payment keys are required in `.env` for the current implementation. Payment references are generated locally, and wallet balance uses module constants.
+
+When a real gateway is integrated later, add gateway keys to `.env` and wire them through `src/config/env.js` and the payments service:
+
+```env
+PAYMENT_GATEWAY=razorpay
+RAZORPAY_KEY_ID=your_key_id
+RAZORPAY_KEY_SECRET=your_key_secret
+PAYMENT_WEBHOOK_SECRET=your_webhook_secret
+```
+
+### Problem It Solves
+
+Ride payments often become a black box after booking: users do not know which amount was captured, whether wallet balance changed correctly, whether a ride has already been paid, or how to request a refund. This module creates a transparent ride-linked payment ledger so every payment can be traced back to a ride, method, fare amount, wallet movement, and refund status.
+
+### Module Hierarchy
+
+```text
+src/modules/public/payments/
+├── dto/
+│   └── payments.dto.js             # Shapes public payment, wallet, method, and refund responses
+├── validators/
+│   └── payments.validator.js       # Validates payment query, ride payment body, and refund body
+├── payments.constants.js           # Payment methods, statuses, refund reasons, and wallet defaults
+├── payments.controller.js          # Handles HTTP request/response flow
+├── payments.dao.js                 # Reads and writes payment records
+├── payments.model.js               # Mongo payment transaction schema
+├── payments.route.js               # Authenticated public payment routes
+├── payments.service.js             # Payment capture, duplicate guard, wallet, and refund logic
+└── payments.route.test.js          # Route coverage for methods, wallet, payment, history, and refunds
+```
+
+### API Usage
+
+All payments endpoints require a bearer access token from the auth module.
+
+```http
+Authorization: Bearer <access_token>
+```
+
+Available endpoints:
+
+```text
+GET /api/v1/public/payments/methods
+GET /api/v1/public/payments/wallet
+GET /api/v1/public/payments/history
+GET /api/v1/public/payments/history?status=succeeded&limit=5
+POST /api/v1/public/payments/rides/:rideId/pay
+GET /api/v1/public/payments/:paymentId
+POST /api/v1/public/payments/:paymentId/refund
+```
+
+Supported payment methods:
+
+```text
+personal_wallet
+upi
+card
+cash
+```
+
+Users can use this module to:
+
+- See available payment methods before paying for a ride.
+- Check wallet balance and wallet movement after payment.
+- Pay for a confirmed ride with wallet, UPI, card, or cash.
+- Prevent duplicate successful payment for the same ride.
+- View payment history and individual ride-linked receipts.
+- Request a refund with a clear reason and optional amount.
+
+---
+
 ## Docker & Local Development
 
 This project uses **Docker Compose** to manage the local development environment seamlessly.
 
 ## Current API Surface
 
-The currently implemented public modules are authentication, profile management, fare estimates, and ride booking. They follow the layered flow described above:
+The currently implemented public modules are authentication, profile management, fare estimates, ride booking, rides, driver transparency, and payments. They follow the layered flow described above:
 
 `routes -> validators/middlewares -> controller -> service -> dao -> Mongo model`
 
@@ -562,6 +701,150 @@ changed_plans
 safety_concern
 wrong_pickup
 other
+```
+
+### Drivers Module
+
+Base path: `/api/v1/public/drivers`
+
+All driver transparency routes require `Authorization: Bearer <accessToken>`.
+
+#### GitHub Description
+
+The public drivers module gives riders and passengers a transparent driver profile before or during booking. It exposes driver trust score, route fairness, cancellation risk, average fare per km, arrival reliability, detour history, completed rides, and vehicle identity.
+
+#### How This Helps Users
+
+- Users can compare drivers by trust instead of only distance.
+- Driver fare behavior is visible through average fare per km.
+- Route fairness and detour percentage make route behavior easier to understand.
+- Cancellation risk is explicit before the user commits to a driver.
+- Trust reports explain the dimensions behind the driver score.
+
+#### API Routes
+
+| Method | Path | Description |
+| --- | --- | --- |
+| GET | `/` | List public driver transparency summaries |
+| GET | `/:driverId` | Fetch a public driver profile |
+| GET | `/:driverId/trust` | Fetch driver trust score details |
+| GET | `/:driverId/route-fairness` | Fetch route fairness and detour signals |
+| GET | `/:driverId/cancellation-risk` | Fetch cancellation risk and rider guidance |
+
+#### Driver List Query Examples
+
+```text
+/api/v1/public/drivers
+/api/v1/public/drivers?vehicleType=cab_economy&sortBy=route_fairness&limit=3
+/api/v1/public/drivers?riskLevel=low&sortBy=cancellation_risk
+```
+
+Supported sort options:
+
+```text
+trust_score
+eta
+rating
+route_fairness
+cancellation_risk
+```
+
+### Payments Module
+
+Base path: `/api/v1/public/payments`
+
+All payments routes require `Authorization: Bearer <accessToken>`.
+
+#### GitHub Description
+
+The public payments module connects confirmed rides with transparent payment records. It supports payment method discovery, wallet summary, ride payment capture, payment history, payment detail lookup, and refund requests. Each payment stores the ride snapshot, fare amount, method, wallet balance movement, gateway reference, capture status, and refund status.
+
+Current implementation note: payments are dummy/local simulated. No payment gateway request is made, no Razorpay or Stripe key is required in `.env`, and wallet balance is currently driven by module constants. For real gateway integration later, add keys such as:
+
+```env
+PAYMENT_GATEWAY=razorpay
+RAZORPAY_KEY_ID=your_key_id
+RAZORPAY_KEY_SECRET=your_key_secret
+PAYMENT_WEBHOOK_SECRET=your_webhook_secret
+```
+
+#### How This Helps Users
+
+- Users can see supported payment options before paying.
+- Wallet balance is visible before payment, and wallet balance after payment is returned.
+- Duplicate successful payment for the same ride is blocked.
+- Every transaction is linked to a ride booking code and driver snapshot.
+- Payment history gives users a simple ledger for past ride payments.
+- Refund requests are captured with a reason, note, amount, and review status.
+
+#### API Routes
+
+| Method | Path | Description |
+| --- | --- | --- |
+| GET | `/methods` | Fetch supported payment methods and wallet balance |
+| GET | `/wallet` | Fetch wallet summary |
+| GET | `/history` | Fetch payment history for the authenticated user |
+| POST | `/rides/:rideId/pay` | Pay for a confirmed ride |
+| GET | `/:paymentId` | Fetch a payment record |
+| POST | `/:paymentId/refund` | Request a refund for a successful payment |
+
+#### Ride Payment Body
+
+```json
+{
+  "paymentMethod": "personal_wallet",
+  "tipAmount": 0,
+  "discountAmount": 0,
+  "idempotencyKey": "ride-pay-0001"
+}
+```
+
+Supported payment methods:
+
+```text
+personal_wallet
+upi
+card
+cash
+```
+
+Supported payment history statuses:
+
+```text
+pending
+succeeded
+failed
+refund_requested
+refunded
+```
+
+#### Refund Body
+
+```json
+{
+  "reason": "overcharged",
+  "note": "Fare was higher than expected",
+  "amount": 120
+}
+```
+
+Supported refund reasons:
+
+```text
+driver_cancelled
+overcharged
+wrong_route
+duplicate_payment
+other
+```
+
+#### Payment Query Examples
+
+```text
+/api/v1/public/payments/methods
+/api/v1/public/payments/wallet
+/api/v1/public/payments/history?status=succeeded&limit=5
+/api/v1/public/payments/rides/<rideId>/pay
 ```
 
 ### Quick Start Commands
