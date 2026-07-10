@@ -16,6 +16,7 @@ import notificationsRoutes from './modules/public/notifications/notifications.ro
 import supportRoutes from './modules/public/support/support.route.js';
 import privateAuthRoutes from './modules/private/auth/auth.route.js';
 import privateAdminRoutes from './modules/private/admin/admin.route.js';
+import privateDriverRoutes from './modules/private/driver/driver.route.js';
 import { errorMiddleware, notFoundMiddleware } from './shared/middlewares/error.middleware.js';
 
 export default function createApp() {
@@ -47,6 +48,7 @@ export default function createApp() {
     app.use('/api/v1/public/support', supportRoutes);
     app.use('/api/v1/private/auth', privateAuthRoutes);
     app.use('/api/v1/private/admin', privateAdminRoutes);
+    app.use('/api/v1/private/driver', privateDriverRoutes);
 
     app.use(notFoundMiddleware);
     app.use(errorMiddleware);
