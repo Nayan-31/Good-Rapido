@@ -13,6 +13,11 @@ import {
     DRIVER_AVAILABILITY_STATUSES,
     DRIVER_LOCATION_SOURCES
 } from '../driver-availability/driver-availability.constants.js';
+import {
+    DRIVER_DOCUMENT_COLLECTION_STATUSES,
+    DRIVER_DOCUMENT_STATUSES,
+    DRIVER_DOCUMENT_TYPES
+} from '../driver-documents/driver-documents.constants.js';
 
 const driverPublicProfileSchema = new mongoose.Schema(
     {
@@ -260,6 +265,101 @@ const availabilitySchema = new mongoose.Schema(
     { _id: false }
 );
 
+const driverDocumentItemSchema = new mongoose.Schema(
+    {
+        type: {
+            type: String,
+            enum: Object.values(DRIVER_DOCUMENT_TYPES),
+            required: true
+        },
+        status: {
+            type: String,
+            enum: Object.values(DRIVER_DOCUMENT_STATUSES),
+            default: DRIVER_DOCUMENT_STATUSES.UPLOADED,
+            index: true
+        },
+        documentNumber: {
+            type: String,
+            trim: true,
+            maxlength: 80
+        },
+        holderName: {
+            type: String,
+            trim: true,
+            maxlength: 120
+        },
+        fileUrl: {
+            type: String,
+            required: true,
+            trim: true,
+            maxlength: 500
+        },
+        backFileUrl: {
+            type: String,
+            trim: true,
+            maxlength: 500
+        },
+        issuedAt: {
+            type: Date
+        },
+        expiresAt: {
+            type: Date
+        },
+        uploadedAt: {
+            type: Date,
+            required: true
+        },
+        submittedAt: {
+            type: Date
+        },
+        reviewedAt: {
+            type: Date
+        },
+        reviewedBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'PrivateAuthUser'
+        },
+        rejectionReason: {
+            type: String,
+            trim: true,
+            maxlength: 500
+        },
+        notes: {
+            type: String,
+            trim: true,
+            maxlength: 240
+        }
+    },
+    { _id: false }
+);
+
+const driverDocumentsSchema = new mongoose.Schema(
+    {
+        status: {
+            type: String,
+            enum: Object.values(DRIVER_DOCUMENT_COLLECTION_STATUSES),
+            default: DRIVER_DOCUMENT_COLLECTION_STATUSES.NOT_STARTED,
+            index: true
+        },
+        items: {
+            type: [driverDocumentItemSchema],
+            default: []
+        },
+        submittedAt: {
+            type: Date
+        },
+        reviewedAt: {
+            type: Date
+        },
+        rejectionReason: {
+            type: String,
+            trim: true,
+            maxlength: 500
+        }
+    },
+    { _id: false }
+);
+
 const driverProfileSchema = new mongoose.Schema(
     {
         authUserId: {
@@ -303,6 +403,10 @@ const driverProfileSchema = new mongoose.Schema(
             type: availabilitySchema,
             default: {}
         },
+        documents: {
+            type: driverDocumentsSchema,
+            default: {}
+        },
         latestActivityAt: {
             type: Date,
             required: true,
@@ -322,6 +426,8 @@ driverProfileSchema.index({ 'service.serviceZone': 1, approvalStatus: 1 });
 driverProfileSchema.index({ 'availability.status': 1, 'availability.lastHeartbeatAt': -1 });
 driverProfileSchema.index({ 'availability.activeServiceZones': 1, 'availability.status': 1 });
 driverProfileSchema.index({ 'availability.currentLocation': '2dsphere' }, { sparse: true });
+driverProfileSchema.index({ 'documents.status': 1, 'documents.submittedAt': 1 });
+driverProfileSchema.index({ 'documents.items.type': 1, 'documents.items.status': 1 });
 
 const DriverProfile = mongoose.models.DriverProfile
     || mongoose.model('DriverProfile', driverProfileSchema);
