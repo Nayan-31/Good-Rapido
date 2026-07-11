@@ -123,7 +123,7 @@ This is the planned module direction, not the current implementation state.
 
 Current implementation status:
 
-- **Implemented now:** `src/modules/public/auth`, `src/modules/public/profile`, `src/modules/public/fare`, `src/modules/public/ride-booking`, `src/modules/public/rides`, `src/modules/public/drivers`, `src/modules/public/payments`, `src/modules/public/promos`, `src/modules/public/ratings`, `src/modules/public/disputes`, `src/modules/public/notifications`, `src/modules/public/support`, `src/modules/private/auth`, `src/modules/private/admin`, `src/modules/private/driver`
+- **Implemented now:** `src/modules/public/auth`, `src/modules/public/profile`, `src/modules/public/fare`, `src/modules/public/ride-booking`, `src/modules/public/rides`, `src/modules/public/drivers`, `src/modules/public/payments`, `src/modules/public/promos`, `src/modules/public/ratings`, `src/modules/public/disputes`, `src/modules/public/notifications`, `src/modules/public/support`, `src/modules/private/auth`, `src/modules/private/admin`, `src/modules/private/driver`, `src/modules/private/driver-availability`
 - **Reserved for upcoming work:** remaining `src/modules/private/*` modules
 - **Planned later:** `src/modules/core`
 
