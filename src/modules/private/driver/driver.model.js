@@ -18,6 +18,11 @@ import {
     DRIVER_DOCUMENT_STATUSES,
     DRIVER_DOCUMENT_TYPES
 } from '../driver-documents/driver-documents.constants.js';
+import {
+    VEHICLE_FUEL_TYPES,
+    VEHICLE_OWNERSHIP_TYPES,
+    VEHICLE_STATUSES
+} from '../vehicle/vehicle.constants.js';
 
 const driverPublicProfileSchema = new mongoose.Schema(
     {
@@ -360,6 +365,135 @@ const driverDocumentsSchema = new mongoose.Schema(
     { _id: false }
 );
 
+const vehicleComplianceSchema = new mongoose.Schema(
+    {
+        number: {
+            type: String,
+            trim: true,
+            maxlength: 80
+        },
+        expiresAt: {
+            type: Date
+        }
+    },
+    { _id: false }
+);
+
+const driverVehicleSchema = new mongoose.Schema(
+    {
+        vehicleId: {
+            type: String,
+            required: true,
+            trim: true,
+            uppercase: true,
+            maxlength: 40
+        },
+        type: {
+            type: String,
+            enum: Object.values(DRIVER_VEHICLE_TYPES),
+            required: true,
+            index: true
+        },
+        make: {
+            type: String,
+            required: true,
+            trim: true,
+            maxlength: 80
+        },
+        model: {
+            type: String,
+            required: true,
+            trim: true,
+            maxlength: 80
+        },
+        variant: {
+            type: String,
+            trim: true,
+            maxlength: 80
+        },
+        color: {
+            type: String,
+            required: true,
+            trim: true,
+            maxlength: 40
+        },
+        registrationNumber: {
+            type: String,
+            required: true,
+            trim: true,
+            uppercase: true,
+            maxlength: 24
+        },
+        manufacturingYear: {
+            type: Number,
+            min: 1990,
+            max: 2100
+        },
+        ownershipType: {
+            type: String,
+            enum: Object.values(VEHICLE_OWNERSHIP_TYPES),
+            default: VEHICLE_OWNERSHIP_TYPES.OWNED
+        },
+        fuelType: {
+            type: String,
+            enum: Object.values(VEHICLE_FUEL_TYPES),
+            default: VEHICLE_FUEL_TYPES.PETROL
+        },
+        insurance: {
+            type: vehicleComplianceSchema,
+            default: {}
+        },
+        permit: {
+            type: vehicleComplianceSchema,
+            default: {}
+        },
+        fitness: {
+            type: vehicleComplianceSchema,
+            default: {}
+        },
+        status: {
+            type: String,
+            enum: Object.values(VEHICLE_STATUSES),
+            default: VEHICLE_STATUSES.DRAFT,
+            index: true
+        },
+        isPrimary: {
+            type: Boolean,
+            default: false,
+            index: true
+        },
+        submittedAt: {
+            type: Date
+        },
+        reviewedAt: {
+            type: Date
+        },
+        reviewedBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'PrivateAuthUser'
+        },
+        rejectionReason: {
+            type: String,
+            trim: true,
+            maxlength: 500
+        },
+        notes: {
+            type: String,
+            trim: true,
+            maxlength: 240
+        },
+        createdAt: {
+            type: Date,
+            required: true
+        },
+        updatedAt: {
+            type: Date,
+            required: true
+        }
+    },
+    { _id: false }
+);
+
 const driverProfileSchema = new mongoose.Schema(
     {
         authUserId: {
@@ -407,6 +541,10 @@ const driverProfileSchema = new mongoose.Schema(
             type: driverDocumentsSchema,
             default: {}
         },
+        vehicles: {
+            type: [driverVehicleSchema],
+            default: []
+        },
         latestActivityAt: {
             type: Date,
             required: true,
@@ -428,6 +566,9 @@ driverProfileSchema.index({ 'availability.activeServiceZones': 1, 'availability.
 driverProfileSchema.index({ 'availability.currentLocation': '2dsphere' }, { sparse: true });
 driverProfileSchema.index({ 'documents.status': 1, 'documents.submittedAt': 1 });
 driverProfileSchema.index({ 'documents.items.type': 1, 'documents.items.status': 1 });
+driverProfileSchema.index({ 'vehicles.vehicleId': 1 });
+driverProfileSchema.index({ 'vehicles.registrationNumber': 1 });
+driverProfileSchema.index({ 'vehicles.status': 1, 'vehicles.submittedAt': 1 });
 
 const DriverProfile = mongoose.models.DriverProfile
     || mongoose.model('DriverProfile', driverProfileSchema);
