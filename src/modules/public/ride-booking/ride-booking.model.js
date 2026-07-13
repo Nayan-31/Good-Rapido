@@ -201,6 +201,79 @@ const cancellationSchema = new mongoose.Schema(
     { _id: false }
 );
 
+const rideOpsActionSchema = new mongoose.Schema(
+    {
+        action: {
+            type: String,
+            required: true,
+            trim: true,
+            maxlength: 60
+        },
+        note: {
+            type: String,
+            trim: true,
+            maxlength: 500
+        },
+        actorId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'PrivateAuthUser'
+        },
+        actorRole: {
+            type: String,
+            trim: true,
+            maxlength: 40
+        },
+        createdAt: {
+            type: Date,
+            required: true
+        }
+    },
+    { _id: false }
+);
+
+const rideOpsSchema = new mongoose.Schema(
+    {
+        priority: {
+            type: String,
+            enum: ['normal', 'high', 'urgent'],
+            default: 'normal',
+            index: true
+        },
+        issueStatus: {
+            type: String,
+            enum: ['none', 'monitoring', 'escalated', 'resolved'],
+            default: 'none',
+            index: true
+        },
+        assignedOpsUserId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'PrivateAuthUser'
+        },
+        lastAction: {
+            type: String,
+            trim: true,
+            maxlength: 60
+        },
+        lastActionNote: {
+            type: String,
+            trim: true,
+            maxlength: 500
+        },
+        lastActionAt: {
+            type: Date
+        },
+        lastActionBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'PrivateAuthUser'
+        },
+        actionLog: {
+            type: [rideOpsActionSchema],
+            default: []
+        }
+    },
+    { _id: false }
+);
+
 const rideBookingSchema = new mongoose.Schema(
     {
         bookingCode: {
@@ -282,6 +355,10 @@ const rideBookingSchema = new mongoose.Schema(
         cancellation: {
             type: cancellationSchema,
             default: null
+        },
+        ops: {
+            type: rideOpsSchema,
+            default: {}
         }
     },
     {
@@ -293,6 +370,10 @@ const rideBookingSchema = new mongoose.Schema(
 
 rideBookingSchema.index({ authUserId: 1, role: 1, createdAt: -1 });
 rideBookingSchema.index({ authUserId: 1, role: 1, status: 1, createdAt: -1 });
+rideBookingSchema.index({ status: 1, createdAt: -1 });
+rideBookingSchema.index({ vehicleType: 1, status: 1, createdAt: -1 });
+rideBookingSchema.index({ 'selectedDriver.driverId': 1, status: 1, createdAt: -1 });
+rideBookingSchema.index({ 'ops.priority': 1, 'ops.issueStatus': 1, updatedAt: -1 });
 
 const RideBooking = mongoose.models.RideBooking || mongoose.model('RideBooking', rideBookingSchema);
 
