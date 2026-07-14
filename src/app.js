@@ -16,6 +16,7 @@ import notificationsRoutes from './modules/public/notifications/notifications.ro
 import supportRoutes from './modules/public/support/support.route.js';
 import privateAuthRoutes from './modules/private/auth/auth.route.js';
 import privateAdminRoutes from './modules/private/admin/admin.route.js';
+import privateAnalyticsRoutes from './modules/private/analytics/analytics.route.js';
 import privateDriverRoutes from './modules/private/driver/driver.route.js';
 import privateDriverAvailabilityRoutes from './modules/private/driver-availability/driver-availability.route.js';
 import privateDriverDocumentsRoutes from './modules/private/driver-documents/driver-documents.route.js';
@@ -58,6 +59,7 @@ export default function createApp() {
     app.use('/api/v1/public/support', supportRoutes);
     app.use('/api/v1/private/auth', privateAuthRoutes);
     app.use('/api/v1/private/admin', privateAdminRoutes);
+    app.use('/api/v1/private/analytics', privateAnalyticsRoutes);
     app.use('/api/v1/private/driver', privateDriverRoutes);
     app.use('/api/v1/private/driver-availability', privateDriverAvailabilityRoutes);
     app.use('/api/v1/private/driver-documents', privateDriverDocumentsRoutes);
