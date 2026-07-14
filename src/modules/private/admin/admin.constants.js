@@ -27,6 +27,12 @@ export const ADMIN_DASHBOARD_MODULES = Object.freeze([
         requiredPermission: PRIVATE_AUTH_PERMISSIONS.PRICING_READ
     }),
     Object.freeze({
+        key: 'surge',
+        label: 'Surge controls',
+        description: 'Manage live surge windows, multipliers, and rider impact',
+        requiredPermission: PRIVATE_AUTH_PERMISSIONS.PRICING_READ
+    }),
+    Object.freeze({
         key: 'disputes',
         label: 'Dispute operations',
         description: 'Review user disputes and evidence',
