@@ -185,6 +185,68 @@ const trustSignalsSchema = new mongoose.Schema(
     { _id: false }
 );
 
+const disputeOpsActionSchema = new mongoose.Schema(
+    {
+        action: {
+            type: String,
+            required: true,
+            trim: true,
+            maxlength: 60
+        },
+        note: {
+            type: String,
+            trim: true,
+            maxlength: 500
+        },
+        actorId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'PrivateAuthUser'
+        },
+        actorRole: {
+            type: String,
+            trim: true,
+            maxlength: 40
+        },
+        createdAt: {
+            type: Date,
+            required: true
+        }
+    },
+    { _id: false }
+);
+
+const disputeOpsSchema = new mongoose.Schema(
+    {
+        assignedOpsUserId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'PrivateAuthUser',
+            index: true
+        },
+        lastAction: {
+            type: String,
+            trim: true,
+            maxlength: 60
+        },
+        lastActionNote: {
+            type: String,
+            trim: true,
+            maxlength: 500
+        },
+        lastActionAt: {
+            type: Date
+        },
+        lastActionBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'PrivateAuthUser'
+        },
+        actionLog: {
+            type: [disputeOpsActionSchema],
+            default: []
+        }
+    },
+    { _id: false }
+);
+
 const disputeSchema = new mongoose.Schema(
     {
         disputeCode: {
@@ -280,6 +342,10 @@ const disputeSchema = new mongoose.Schema(
             type: trustSignalsSchema,
             default: null
         },
+        ops: {
+            type: disputeOpsSchema,
+            default: {}
+        },
         latestActivityAt: {
             type: Date,
             required: true,
@@ -302,6 +368,7 @@ disputeSchema.index(
         partialFilterExpression: { status: { $in: DISPUTE_OPEN_STATUSES } }
     }
 );
+disputeSchema.index({ 'ops.assignedOpsUserId': 1, status: 1, latestActivityAt: -1 });
 
 const Dispute = mongoose.models.Dispute || mongoose.model('Dispute', disputeSchema);
 
