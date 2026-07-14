@@ -23,6 +23,7 @@ import privateDriverDocumentsRoutes from './modules/private/driver-documents/dri
 import privateDisputesRoutes from './modules/private/disputes/disputes.route.js';
 import privateEarningsRoutes from './modules/private/earnings/earnings.route.js';
 import privateFraudRoutes from './modules/private/fraud/fraud.route.js';
+import privateNotificationsRoutes from './modules/private/notifications/notifications.route.js';
 import privatePricingRoutes from './modules/private/pricing/pricing.route.js';
 import privateRideOpsRoutes from './modules/private/ride-ops/ride-ops.route.js';
 import privateSurgeRoutes from './modules/private/surge/surge.route.js';
@@ -66,6 +67,7 @@ export default function createApp() {
     app.use('/api/v1/private/disputes', privateDisputesRoutes);
     app.use('/api/v1/private/earnings', privateEarningsRoutes);
     app.use('/api/v1/private/fraud', privateFraudRoutes);
+    app.use('/api/v1/private/notifications', privateNotificationsRoutes);
     app.use('/api/v1/private/pricing', privatePricingRoutes);
     app.use('/api/v1/private/ride-ops', privateRideOpsRoutes);
     app.use('/api/v1/private/surge', privateSurgeRoutes);
