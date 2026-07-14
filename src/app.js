@@ -21,6 +21,7 @@ import privateDriverAvailabilityRoutes from './modules/private/driver-availabili
 import privateDriverDocumentsRoutes from './modules/private/driver-documents/driver-documents.route.js';
 import privatePricingRoutes from './modules/private/pricing/pricing.route.js';
 import privateRideOpsRoutes from './modules/private/ride-ops/ride-ops.route.js';
+import privateSurgeRoutes from './modules/private/surge/surge.route.js';
 import privateVehicleRoutes from './modules/private/vehicle/vehicle.route.js';
 import { errorMiddleware, notFoundMiddleware } from './shared/middlewares/error.middleware.js';
 
@@ -58,6 +59,7 @@ export default function createApp() {
     app.use('/api/v1/private/driver-documents', privateDriverDocumentsRoutes);
     app.use('/api/v1/private/pricing', privatePricingRoutes);
     app.use('/api/v1/private/ride-ops', privateRideOpsRoutes);
+    app.use('/api/v1/private/surge', privateSurgeRoutes);
     app.use('/api/v1/private/vehicle', privateVehicleRoutes);
 
     app.use(notFoundMiddleware);
