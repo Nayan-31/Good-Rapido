@@ -19,6 +19,7 @@ import privateAdminRoutes from './modules/private/admin/admin.route.js';
 import privateDriverRoutes from './modules/private/driver/driver.route.js';
 import privateDriverAvailabilityRoutes from './modules/private/driver-availability/driver-availability.route.js';
 import privateDriverDocumentsRoutes from './modules/private/driver-documents/driver-documents.route.js';
+import privateDisputesRoutes from './modules/private/disputes/disputes.route.js';
 import privateEarningsRoutes from './modules/private/earnings/earnings.route.js';
 import privateFraudRoutes from './modules/private/fraud/fraud.route.js';
 import privatePricingRoutes from './modules/private/pricing/pricing.route.js';
@@ -60,6 +61,7 @@ export default function createApp() {
     app.use('/api/v1/private/driver', privateDriverRoutes);
     app.use('/api/v1/private/driver-availability', privateDriverAvailabilityRoutes);
     app.use('/api/v1/private/driver-documents', privateDriverDocumentsRoutes);
+    app.use('/api/v1/private/disputes', privateDisputesRoutes);
     app.use('/api/v1/private/earnings', privateEarningsRoutes);
     app.use('/api/v1/private/fraud', privateFraudRoutes);
     app.use('/api/v1/private/pricing', privatePricingRoutes);
