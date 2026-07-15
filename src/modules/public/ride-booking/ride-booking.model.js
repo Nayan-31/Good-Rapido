@@ -6,6 +6,7 @@ import {
     RIDE_BOOKING_RISK_LEVELS,
     RIDE_BOOKING_STATUSES
 } from './ride-booking.constants.js';
+import { RIDE_LIFECYCLE_EVENTS } from '../../core/ride-lifecycle/ride-lifecycle.constants.js';
 
 const locationSnapshotSchema = new mongoose.Schema(
     {
@@ -274,6 +275,74 @@ const rideOpsSchema = new mongoose.Schema(
     { _id: false }
 );
 
+const rideLifecycleTransitionSchema = new mongoose.Schema(
+    {
+        event: {
+            type: String,
+            enum: Object.values(RIDE_LIFECYCLE_EVENTS),
+            required: true
+        },
+        note: {
+            type: String,
+            trim: true,
+            maxlength: 500
+        },
+        actorId: {
+            type: String,
+            trim: true,
+            maxlength: 80
+        },
+        actorRole: {
+            type: String,
+            trim: true,
+            maxlength: 40
+        },
+        occurredAt: {
+            type: Date,
+            required: true
+        },
+        createdAt: {
+            type: Date,
+            required: true
+        }
+    },
+    { _id: false }
+);
+
+const rideLifecycleSchema = new mongoose.Schema(
+    {
+        driverArrivedAt: {
+            type: Date
+        },
+        rideStartedAt: {
+            type: Date
+        },
+        completedAt: {
+            type: Date
+        },
+        cancelledAt: {
+            type: Date
+        },
+        lastTransition: {
+            type: String,
+            enum: Object.values(RIDE_LIFECYCLE_EVENTS)
+        },
+        lastTransitionAt: {
+            type: Date
+        },
+        lastTransitionBy: {
+            type: String,
+            trim: true,
+            maxlength: 80
+        },
+        transitionLog: {
+            type: [rideLifecycleTransitionSchema],
+            default: []
+        }
+    },
+    { _id: false }
+);
+
 const rideBookingSchema = new mongoose.Schema(
     {
         bookingCode: {
@@ -358,6 +427,10 @@ const rideBookingSchema = new mongoose.Schema(
         },
         ops: {
             type: rideOpsSchema,
+            default: {}
+        },
+        lifecycle: {
+            type: rideLifecycleSchema,
             default: {}
         }
     },

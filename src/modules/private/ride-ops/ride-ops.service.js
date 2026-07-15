@@ -1,5 +1,6 @@
 import { buildSuccessResponse } from '../../../shared/utils/apiResponse.js';
 import AppError from '../../../shared/utils/appError.js';
+import { buildRideLifecycle } from '../../core/ride-lifecycle/ride-lifecycle.engine.js';
 import {
     PRIVATE_AUTH_ACCOUNT_STATUSES,
     PRIVATE_AUTH_PERMISSIONS,
@@ -285,8 +286,8 @@ export default class RideOpsService {
     }
 
     toOpsRide(booking = {}) {
-        const timeline = buildTimeline(booking);
-        const lifecycleStatus = resolveLifecycleStatus(booking, timeline, this.now());
+        const lifecycle = buildRideLifecycle(booking, { now: this.now() });
+        const { timeline, lifecycleStatus, progress } = lifecycle;
         const ops = normalizeOpsState(booking.ops);
         const ride = {
             id: getId(booking),
@@ -303,13 +304,8 @@ export default class RideOpsService {
             trustSignals: booking.trustSignals,
             paymentMethod: booking.paymentMethod,
             riderNote: booking.riderNote,
-            timeline: {
-                ...timeline,
-                completedAt: lifecycleStatus === RIDE_LIFECYCLE_STATUSES.COMPLETED
-                    ? timeline.estimatedDropoffAt
-                    : null
-            },
-            progress: buildProgress(lifecycleStatus, timeline, this.now()),
+            timeline,
+            progress,
             cancellation: booking.cancellation || null,
             ops,
             createdAt: booking.createdAt,
@@ -496,6 +492,7 @@ const resolveBookingStatusQuery = (query = {}) => {
     if ([
         RIDE_OPS_FILTERS.ACTIVE,
         RIDE_OPS_FILTERS.DRIVER_EN_ROUTE,
+        RIDE_OPS_FILTERS.DRIVER_ARRIVED,
         RIDE_OPS_FILTERS.IN_PROGRESS,
         RIDE_OPS_FILTERS.COMPLETED
     ].includes(query.status)) {
@@ -510,6 +507,7 @@ const resolveBookingStatusQuery = (query = {}) => {
 const needsDerivedFiltering = (status) => [
     RIDE_OPS_FILTERS.ACTIVE,
     RIDE_OPS_FILTERS.DRIVER_EN_ROUTE,
+    RIDE_OPS_FILTERS.DRIVER_ARRIVED,
     RIDE_OPS_FILTERS.IN_PROGRESS,
     RIDE_OPS_FILTERS.COMPLETED,
     RIDE_OPS_FILTERS.HIGH_RISK
@@ -523,6 +521,7 @@ const matchesRideOpsFilter = (ride = {}, status = RIDE_OPS_FILTERS.ALL) => {
     if (status === RIDE_OPS_FILTERS.ACTIVE) {
         return [
             RIDE_LIFECYCLE_STATUSES.DRIVER_EN_ROUTE,
+            RIDE_LIFECYCLE_STATUSES.DRIVER_ARRIVED,
             RIDE_LIFECYCLE_STATUSES.IN_PROGRESS
         ].includes(ride.lifecycleStatus);
     }
@@ -545,6 +544,7 @@ const buildRideOpsSummary = (rides = []) => {
 
         if ([
             RIDE_LIFECYCLE_STATUSES.DRIVER_EN_ROUTE,
+            RIDE_LIFECYCLE_STATUSES.DRIVER_ARRIVED,
             RIDE_LIFECYCLE_STATUSES.IN_PROGRESS
         ].includes(ride.lifecycleStatus)) {
             accumulator.activeRides += 1;
