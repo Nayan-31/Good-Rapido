@@ -16,6 +16,7 @@ import notificationsRoutes from './modules/public/notifications/notifications.ro
 import supportRoutes from './modules/public/support/support.route.js';
 import identityRoutes from './modules/core/identity/identity.route.js';
 import rideLifecycleRoutes from './modules/core/ride-lifecycle/ride-lifecycle.route.js';
+import pricingEngineRoutes from './modules/core/pricing-engine/pricing-engine.route.js';
 import privateAuthRoutes from './modules/private/auth/auth.route.js';
 import privateAdminRoutes from './modules/private/admin/admin.route.js';
 import privateAnalyticsRoutes from './modules/private/analytics/analytics.route.js';
@@ -62,6 +63,7 @@ export default function createApp() {
     app.use('/api/v1/public/support', supportRoutes);
     app.use('/api/v1/core/identity', identityRoutes);
     app.use('/api/v1/core/ride-lifecycle', rideLifecycleRoutes);
+    app.use('/api/v1/core/pricing-engine', pricingEngineRoutes);
     app.use('/api/v1/private/auth', privateAuthRoutes);
     app.use('/api/v1/private/admin', privateAdminRoutes);
     app.use('/api/v1/private/analytics', privateAnalyticsRoutes);

@@ -1,5 +1,6 @@
 import { buildSuccessResponse } from '../../../shared/utils/apiResponse.js';
 import AppError from '../../../shared/utils/appError.js';
+import { simulatePricingFromRule } from '../../core/pricing-engine/pricing-engine.engine.js';
 import {
     PRIVATE_AUTH_ACCOUNT_STATUSES,
     PRIVATE_AUTH_PERMISSIONS,
@@ -398,31 +399,11 @@ const baselineRuleFor = (vehicleType) => {
 };
 
 const simulateFare = (rule, { distanceKm, durationMinutes, requestedAt }) => {
-    const pricing = rule.pricing;
-    const resolvedDurationMinutes = durationMinutes
-        || Math.max(2, Math.round((distanceKm / pricing.averageSpeedKmph) * 60 + 4));
-    const surge = calculateSurge(rule.surgeRules, requestedAt);
-    const breakdown = calculateBreakdown({
-        pricing,
+    return simulatePricingFromRule(rule, {
         distanceKm,
-        durationMinutes: resolvedDurationMinutes,
-        surgeMultiplier: surge.multiplier
+        durationMinutes,
+        requestedAt
     });
-
-    return {
-        currency: pricing.currency,
-        distanceKm: roundDistance(distanceKm),
-        durationMinutes: resolvedDurationMinutes,
-        surge,
-        breakdown,
-        guidance: {
-            withinMinimumFare: breakdown.minFareAdjustment > 0,
-            highSurge: surge.level === FARE_SURGE_LEVELS.HIGH,
-            nextAction: surge.level === FARE_SURGE_LEVELS.HIGH
-                ? 'Review surge impact before activation'
-                : 'Pricing output is within normal policy range'
-        }
-    };
 };
 
 const calculateSurge = (surgeRules, requestedAt = new Date()) => {
