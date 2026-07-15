@@ -8,6 +8,7 @@ import {
     FARE_TAX_RATE,
     FARE_VEHICLE_PRICING
 } from './fare.constants.js';
+import { buildPricingQuote } from '../../core/pricing-engine/pricing-engine.engine.js';
 import { buildSuccessResponse } from '../../../shared/utils/apiResponse.js';
 import AppError from '../../../shared/utils/appError.js';
 import { toPublicFareEstimate, toPublicFareHistoryItem } from './dto/fare.dto.js';
@@ -24,20 +25,11 @@ export default class FareService {
         const requestedAt = this.normalizeRequestedAt(payload.requestedAt);
         const pickup = this.normalizeLocation(payload.pickup);
         const dropoff = this.normalizeLocation(payload.dropoff);
-        const distanceKm = this.calculateRouteDistanceKm(pickup, dropoff);
-        const durationMinutes = this.calculateDurationMinutes(distanceKm, payload.vehicleType);
-        const surge = this.calculateSurge(requestedAt);
-        const breakdown = this.calculateBreakdown({
-            distanceKm,
-            durationMinutes,
-            vehicleType: payload.vehicleType,
-            surgeMultiplier: surge.multiplier
-        });
-        const confidence = this.calculateConfidence({ distanceKm, requestedAt, surge });
-        const alternativePickups = this.calculateAlternativePickups({
+        const pricingQuote = buildPricingQuote({
             pickup,
-            currentTotalFare: breakdown.totalFare,
-            surge
+            dropoff,
+            vehicleType: payload.vehicleType,
+            requestedAt
         });
 
         const estimate = await this.dao.create({
@@ -47,13 +39,13 @@ export default class FareService {
             dropoff,
             vehicleType: payload.vehicleType,
             requestedAt,
-            distanceKm,
-            durationMinutes,
-            breakdown,
-            surge,
-            confidence,
-            alternativePickups,
-            validUntil: addMinutes(new Date(), FARE_ESTIMATE_WINDOW_MINUTES),
+            distanceKm: pricingQuote.distanceKm,
+            durationMinutes: pricingQuote.durationMinutes,
+            breakdown: pricingQuote.breakdown,
+            surge: pricingQuote.surge,
+            confidence: pricingQuote.confidence,
+            alternativePickups: pricingQuote.alternativePickups,
+            validUntil: pricingQuote.validity.validUntil,
             lock: {
                 isLocked: false,
                 lockedUntil: null
