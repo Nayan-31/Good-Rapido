@@ -95,6 +95,8 @@ const toPublicTimeline = (timeline = {}) => ({
     bookedAt: timeline.bookedAt || null,
     confirmedAt: timeline.confirmedAt || null,
     driverArrivalEtaAt: timeline.driverArrivalEtaAt || null,
+    driverArrivedAt: timeline.driverArrivedAt || null,
+    rideStartedAt: timeline.rideStartedAt || null,
     estimatedDropoffAt: timeline.estimatedDropoffAt || null,
     completedAt: timeline.completedAt || null,
     cancelledAt: timeline.cancelledAt || null

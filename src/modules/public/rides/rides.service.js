@@ -1,5 +1,6 @@
 import { buildSuccessResponse } from '../../../shared/utils/apiResponse.js';
 import AppError from '../../../shared/utils/appError.js';
+import { buildRideLifecycle } from '../../core/ride-lifecycle/ride-lifecycle.engine.js';
 import { RIDE_BOOKING_STATUSES } from '../ride-booking/ride-booking.constants.js';
 import {
     RIDE_HISTORY_FILTERS,
@@ -115,8 +116,8 @@ export default class RidesService {
 
     toRide(booking) {
         const bookingObject = toPlainObject(booking);
-        const timeline = this.buildTimeline(bookingObject);
-        const lifecycleStatus = this.resolveLifecycleStatus(bookingObject, timeline);
+        const lifecycle = buildRideLifecycle(bookingObject, { now: this.now() });
+        const { timeline, lifecycleStatus, progress } = lifecycle;
 
         return {
             id: getId(bookingObject),
@@ -133,11 +134,8 @@ export default class RidesService {
             trustSignals: bookingObject.trustSignals,
             paymentMethod: bookingObject.paymentMethod,
             riderNote: bookingObject.riderNote,
-            timeline: {
-                ...timeline,
-                completedAt: lifecycleStatus === RIDE_LIFECYCLE_STATUSES.COMPLETED ? timeline.estimatedDropoffAt : null
-            },
-            progress: this.buildProgress(lifecycleStatus, timeline),
+            timeline,
+            progress,
             cancellation: bookingObject.cancellation || null,
             createdAt: bookingObject.createdAt,
             updatedAt: bookingObject.updatedAt
@@ -310,6 +308,7 @@ export default class RidesService {
     isActiveRide(ride) {
         return [
             RIDE_LIFECYCLE_STATUSES.DRIVER_EN_ROUTE,
+            RIDE_LIFECYCLE_STATUSES.DRIVER_ARRIVED,
             RIDE_LIFECYCLE_STATUSES.IN_PROGRESS
         ].includes(ride.lifecycleStatus);
     }
