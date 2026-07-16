@@ -12,7 +12,6 @@ import {
     FRAUD_CASE_STATUSES,
     FRAUD_CASE_TYPES,
     FRAUD_RESOLUTION_DECISIONS,
-    FRAUD_SEVERITY_LEVELS,
     FRAUD_SUBJECT_TYPES
 } from './fraud.constants.js';
 import {
@@ -22,6 +21,15 @@ import {
     toFraudOptions,
     toFraudScoreSimulation
 } from './dto/fraud.dto.js';
+import {
+    buildFraudAssessment as buildCoreFraudAssessment,
+    buildFraudGuidance as buildCoreFraudGuidance,
+    normalizeFraudActions,
+    normalizeFraudEvidence,
+    normalizeFraudSignals,
+    recommendedFraudActionsFor,
+    resolveFraudSeverity
+} from '../../core/fraud-engine/fraud-engine.engine.js';
 
 export default class FraudService {
     constructor({ fraudDao, now = () => new Date() }) {
@@ -477,19 +485,14 @@ const buildFraudAssessment = ({
     severity,
     status,
     signals
-} = {}) => {
-    const normalizedSignals = normalizeSignals(signals);
-    const normalizedRiskScore = clampScore(riskScore ?? resolveRiskScore(normalizedSignals, caseType));
-    const normalizedSeverity = severity || resolveSeverity(normalizedRiskScore);
-
-    return {
-        riskScore: normalizedRiskScore,
-        confidenceScore: clampScore(confidenceScore ?? resolveConfidenceScore(normalizedSignals, riskScore)),
-        severity: normalizedSeverity,
-        status: status || FRAUD_CASE_STATUSES.OPEN,
-        signals: normalizedSignals
-    };
-};
+} = {}) => buildCoreFraudAssessment({
+    caseType,
+    riskScore,
+    confidenceScore,
+    severity,
+    status,
+    signals
+});
 
 const normalizeFraudCase = (fraudCase) => {
     if (!fraudCase) {
@@ -514,27 +517,9 @@ const normalizeFraudCase = (fraudCase) => {
     };
 };
 
-const normalizeSignals = (signals = {}) => ({
-    promoAbuseScore: clampScore(signals.promoAbuseScore || 0),
-    paymentRiskScore: clampScore(signals.paymentRiskScore || 0),
-    gpsMismatchScore: clampScore(signals.gpsMismatchScore || 0),
-    deviceReuseScore: clampScore(signals.deviceReuseScore || 0),
-    cancellationAbuseScore: clampScore(signals.cancellationAbuseScore || 0),
-    disputePatternScore: clampScore(signals.disputePatternScore || 0),
-    velocityScore: clampScore(signals.velocityScore || 0)
-});
+const normalizeSignals = (signals = {}) => normalizeFraudSignals(signals);
 
-const normalizeEvidence = (evidence = []) => (
-    Array.isArray(evidence)
-        ? evidence.map((item) => ({
-            type: item.type,
-            label: trimToNull(item.label),
-            url: trimToNull(item.url),
-            note: trimToNull(item.note),
-            capturedAt: item.capturedAt || null
-        }))
-        : []
-);
+const normalizeEvidence = (evidence = []) => normalizeFraudEvidence(evidence);
 
 const normalizeLinkedEntities = (linkedEntities = {}) => ({
     rideId: trimToNull(linkedEntities.rideId),
@@ -544,14 +529,7 @@ const normalizeLinkedEntities = (linkedEntities = {}) => ({
     ipAddress: trimToNull(linkedEntities.ipAddress)
 });
 
-const normalizeActions = (actions = {}) => ({
-    accountBlocked: Boolean(actions.accountBlocked),
-    payoutHeld: Boolean(actions.payoutHeld),
-    promoDisabled: Boolean(actions.promoDisabled),
-    rideBookingBlocked: Boolean(actions.rideBookingBlocked),
-    reason: trimToNull(actions.reason),
-    expiresAt: actions.expiresAt || null
-});
+const normalizeActions = (actions = {}) => normalizeFraudActions(actions);
 
 const normalizeResolution = (resolution = {}) => ({
     decision: resolution.decision || null,
@@ -560,113 +538,11 @@ const normalizeResolution = (resolution = {}) => ({
     resolvedBy: resolution.resolvedBy || null
 });
 
-const resolveRiskScore = (signals = {}, caseType) => {
-    const values = Object.values(signals);
-    const highestSignal = values.length ? Math.max(...values) : 0;
-    const averageSignal = values.length
-        ? values.reduce((sum, value) => sum + value, 0) / values.length
-        : 0;
-    const caseTypeBoost = resolveCaseTypeBoost(caseType);
+const resolveSeverity = (riskScore) => resolveFraudSeverity(riskScore);
 
-    return clampScore(highestSignal * 0.6 + averageSignal * 0.4 + caseTypeBoost);
-};
+const recommendedActionsFor = (fraudCase = {}) => recommendedFraudActionsFor(fraudCase);
 
-const resolveConfidenceScore = (signals = {}, explicitRiskScore) => {
-    if (explicitRiskScore !== undefined) {
-        return 60;
-    }
-
-    const positiveSignals = Object.values(signals).filter((score) => score > 0).length;
-
-    return clampScore(35 + positiveSignals * 10);
-};
-
-const resolveCaseTypeBoost = (caseType) => {
-    if ([
-        FRAUD_CASE_TYPES.ACCOUNT_TAKEOVER,
-        FRAUD_CASE_TYPES.CHARGEBACK,
-        FRAUD_CASE_TYPES.COLLUSION
-    ].includes(caseType)) {
-        return 8;
-    }
-
-    if ([
-        FRAUD_CASE_TYPES.FAKE_GPS,
-        FRAUD_CASE_TYPES.PAYMENT_RISK,
-        FRAUD_CASE_TYPES.DUPLICATE_ACCOUNT
-    ].includes(caseType)) {
-        return 5;
-    }
-
-    return 0;
-};
-
-const resolveSeverity = (riskScore) => {
-    if (riskScore >= 80) {
-        return FRAUD_SEVERITY_LEVELS.CRITICAL;
-    }
-
-    if (riskScore >= 60) {
-        return FRAUD_SEVERITY_LEVELS.HIGH;
-    }
-
-    if (riskScore >= 40) {
-        return FRAUD_SEVERITY_LEVELS.MEDIUM;
-    }
-
-    return FRAUD_SEVERITY_LEVELS.LOW;
-};
-
-const recommendedActionsFor = (fraudCase = {}) => {
-    const severity = fraudCase.severity || resolveSeverity(fraudCase.riskScore || 0);
-    const caseType = fraudCase.caseType;
-
-    return normalizeActions({
-        accountBlocked: severity === FRAUD_SEVERITY_LEVELS.CRITICAL,
-        rideBookingBlocked: [
-            FRAUD_SEVERITY_LEVELS.HIGH,
-            FRAUD_SEVERITY_LEVELS.CRITICAL
-        ].includes(severity),
-        payoutHeld: [
-            FRAUD_CASE_TYPES.PAYMENT_RISK,
-            FRAUD_CASE_TYPES.CHARGEBACK,
-            FRAUD_CASE_TYPES.COLLUSION
-        ].includes(caseType) || (
-            fraudCase.subjectType === FRAUD_SUBJECT_TYPES.DRIVER
-            && severity === FRAUD_SEVERITY_LEVELS.CRITICAL
-        ),
-        promoDisabled: caseType === FRAUD_CASE_TYPES.PROMO_ABUSE,
-        reason: resolveActionReason(fraudCase)
-    });
-};
-
-const resolveActionReason = (fraudCase = {}) => {
-    if (fraudCase.severity === FRAUD_SEVERITY_LEVELS.CRITICAL) {
-        return 'Critical fraud risk controls recommended';
-    }
-
-    if (fraudCase.severity === FRAUD_SEVERITY_LEVELS.HIGH) {
-        return 'High fraud risk controls recommended';
-    }
-
-    return null;
-};
-
-const buildAssessmentGuidance = (assessment = {}) => ({
-    shouldEscalate: [
-        FRAUD_SEVERITY_LEVELS.HIGH,
-        FRAUD_SEVERITY_LEVELS.CRITICAL
-    ].includes(assessment.severity),
-    suggestedStatus: assessment.status,
-    suggestedSeverity: assessment.severity,
-    nextAction: assessment.severity === FRAUD_SEVERITY_LEVELS.CRITICAL
-        ? 'Escalate and apply immediate controls'
-        : assessment.severity === FRAUD_SEVERITY_LEVELS.HIGH
-            ? 'Assign reviewer and verify evidence'
-            : assessment.severity === FRAUD_SEVERITY_LEVELS.MEDIUM
-                ? 'Monitor signals and collect supporting evidence'
-                : 'Keep case open only if new signals arrive'
-});
+const buildAssessmentGuidance = (assessment = {}) => buildCoreFraudGuidance(assessment);
 
 const resolveDefaultDecision = (status) => (
     status === FRAUD_CASE_STATUSES.CONFIRMED
