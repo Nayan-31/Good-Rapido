@@ -1,82 +1,58 @@
-# Good Rapido Frontend
+# TypeScript Setup
 
-This folder contains the frontend workspace for Good Rapido.
+TypeScript is configured from `frontend/tsconfig.base.json`.
 
-The rider app is set up with React, Vite, and TypeScript. Screen implementation has not started yet. The shared UI package contains design-system primitives based on `UI_DESIGN_DIRECTION.md`.
-
-## Source Of Truth
-
-- `FRONTEND_FLOW.md`: product flow, screens, and user journeys.
-- `UI_DESIGN_DIRECTION.md`: final visual direction based on the approved references.
-
-## Structure
+The rider app uses:
 
 ```text
-frontend/
-  apps/
-    rider-app/
-      index.html
-      package.json
-      public/
-        assets/
-        icons/
-        images/
-      src/
-        app/
-        assets/
-        components/
-        config/
-        constants/
-        features/
-        hooks/
-        layouts/
-        lib/
-        routes/
-        services/
-        store/
-        styles/
-        types/
-        utils/
-      tsconfig.app.json
-      tsconfig.json
-      tsconfig.node.json
-      vite.config.ts
-  packages/
-    api-client/
-    config/
-    ui/
-      src/
-        components/
-        styles/
-        tokens/
-        types/
+frontend/apps/rider-app/tsconfig.json
+frontend/apps/rider-app/tsconfig.app.json
+frontend/apps/rider-app/tsconfig.node.json
+frontend/apps/rider-app/src/vite-env.d.ts
 ```
 
-## Commands
-
-Install frontend dependencies from this folder:
+The shared UI package uses:
 
 ```text
-cd frontend
-npm install
+frontend/packages/ui/tsconfig.json
+frontend/packages/ui/src/types/css-modules.d.ts
 ```
 
-Run the rider app:
+Important setup choices:
 
 ```text
-npm run dev:rider
+target: ES2022
+module: ESNext
+moduleResolution: Bundler
+jsx: react-jsx
+strict: true
+noEmit: true
 ```
 
-Type-check the rider app:
+The rider app TypeScript config explicitly sets:
+
+```json
+"types": ["vite/client", "react", "react-dom"]
+```
+
+This keeps TypeScript from scanning unnecessary global type folders.
+
+The rider app supports `@/*` imports through:
+
+```json
+"paths": {
+  "@/*": ["src/*"]
+}
+```
+
+The same alias is also configured in:
 
 ```text
-npm run typecheck:rider
+frontend/apps/rider-app/vite.config.ts
 ```
 
-## Build Order
+Type checking runs with:
 
-1. Create base app shell and route placeholders.
-2. Define API client contracts for backend modules.
-3. Build rider app screen routes.
-4. Connect route screens to backend services.
-5. Add state management, validation, loading states, and error states.
+```text
+npm --prefix frontend run typecheck:rider
+```

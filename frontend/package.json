@@ -5,11 +5,13 @@
   "type": "module",
   "workspaces": [
     "apps/*",
-    "packages/ui"
+    "packages/ui",
+    "packages/api-client"
   ],
   "scripts": {
     "dev:rider": "npm --workspace @good-rapido/rider-app run dev",
     "build:rider": "npm --workspace @good-rapido/rider-app run build",
-    "typecheck:rider": "npm --workspace @good-rapido/rider-app run typecheck"
+    "typecheck:rider": "npm --workspace @good-rapido/rider-app run typecheck",
+    "typecheck:api-client": "npm --workspace @good-rapido/api-client run typecheck"
   }
 }
