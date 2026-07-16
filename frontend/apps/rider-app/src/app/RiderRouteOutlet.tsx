@@ -1,5 +1,6 @@
 import { BookingHomeScreen } from "@/features/booking";
 import { IdentityFlow } from "@/features/identity";
+import { NotificationScreen } from "@/features/notifications";
 import { PricingEstimateScreen } from "@/features/pricing";
 import { ConfirmRideScreen } from "@/features/ride-lifecycle";
 import type { RiderRoute } from "@/routes";
@@ -23,6 +24,10 @@ export function RiderRouteOutlet({ route }: RiderRouteOutletProps) {
 
   if (route.id === "confirm") {
     return <ConfirmRideScreen />;
+  }
+
+  if (route.id === "notifications") {
+    return <NotificationScreen />;
   }
 
   return null;

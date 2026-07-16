@@ -1,4 +1,12 @@
-export type RiderRouteId = "home" | "estimate" | "confirm" | "history" | "safety" | "profile" | "identity";
+export type RiderRouteId =
+  | "home"
+  | "estimate"
+  | "confirm"
+  | "history"
+  | "safety"
+  | "notifications"
+  | "profile"
+  | "identity";
 
 export interface RiderRoute {
   id: RiderRouteId;
@@ -42,6 +50,13 @@ export const riderRoutes = [
     path: "/safety",
     title: "Safety & Help",
     navLabel: "Safety",
+    showInBottomNav: false
+  },
+  {
+    id: "notifications",
+    path: "/notifications",
+    title: "Notifications",
+    navLabel: "Alerts",
     showInBottomNav: false
   },
   {
