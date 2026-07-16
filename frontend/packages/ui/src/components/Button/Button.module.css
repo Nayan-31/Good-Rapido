@@ -1,0 +1,97 @@
+.root {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gr-space-2);
+  border: 1px solid transparent;
+  border-radius: var(--gr-radius-control);
+  font-weight: var(--gr-font-weight-bold);
+  line-height: 1;
+  min-width: 0;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.root:focus-visible {
+  outline: none;
+  box-shadow: var(--gr-shadow-focus-ring);
+}
+
+.root:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.root:disabled {
+  opacity: 0.62;
+}
+
+.fullWidth {
+  width: 100%;
+}
+
+.sm {
+  min-height: 34px;
+  padding: 0 var(--gr-space-3);
+  font-size: 13px;
+}
+
+.md {
+  min-height: 44px;
+  padding: 0 var(--gr-space-4);
+  font-size: 14px;
+}
+
+.lg {
+  min-height: 52px;
+  padding: 0 var(--gr-space-5);
+  font-size: 15px;
+}
+
+.primary {
+  background: var(--gr-color-dark-navy);
+  color: var(--gr-color-card);
+}
+
+.secondary {
+  background: var(--gr-color-card);
+  border-color: var(--gr-color-dark-navy);
+  color: var(--gr-color-dark-navy);
+}
+
+.ghost {
+  background: transparent;
+  color: var(--gr-color-dark-navy);
+}
+
+.danger {
+  background: var(--gr-color-danger);
+  color: var(--gr-color-card);
+}
+
+.mint {
+  background: var(--gr-color-mint);
+  color: var(--gr-color-dark-navy);
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid currentColor;
+  border-bottom-color: transparent;
+  border-radius: var(--gr-radius-pill);
+  animation: spin 700ms linear infinite;
+}
+
+.loadingLabel {
+  opacity: 0.82;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

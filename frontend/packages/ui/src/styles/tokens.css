@@ -1,0 +1,53 @@
+:root {
+  --gr-color-mint: #63ebd5;
+  --gr-color-deep-teal: #008c7a;
+  --gr-color-dark-navy: #071f35;
+  --gr-color-ink: #071a2f;
+  --gr-color-bg: #f4f7fa;
+  --gr-color-card: #ffffff;
+  --gr-color-muted: #667085;
+  --gr-color-success: #00a86b;
+  --gr-color-warning: #f59e0b;
+  --gr-color-danger: #d92d20;
+  --gr-color-info: #2563eb;
+  --gr-color-soft-mint: #e9fffa;
+  --gr-color-soft-red: #fff0ef;
+  --gr-color-soft-gray: #f1f3f6;
+  --gr-color-border: rgba(7, 31, 53, 0.1);
+
+  --gr-font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  --gr-text-screen-title: 20px;
+  --gr-text-section-title: 18px;
+  --gr-text-card-title: 16px;
+  --gr-text-body: 14px;
+  --gr-text-label: 11px;
+  --gr-text-hero-number: 48px;
+
+  --gr-font-weight-regular: 400;
+  --gr-font-weight-medium: 500;
+  --gr-font-weight-semibold: 600;
+  --gr-font-weight-bold: 700;
+  --gr-font-weight-heavy: 800;
+
+  --gr-line-height-tight: 1.2;
+  --gr-line-height-body: 1.5;
+
+  --gr-space-1: 4px;
+  --gr-space-2: 8px;
+  --gr-space-3: 12px;
+  --gr-space-4: 16px;
+  --gr-space-5: 20px;
+  --gr-space-6: 24px;
+  --gr-space-8: 32px;
+  --gr-space-10: 40px;
+
+  --gr-radius-control: 8px;
+  --gr-radius-card: 12px;
+  --gr-radius-bottom-sheet: 24px;
+  --gr-radius-pill: 999px;
+
+  --gr-shadow-card: 0 10px 30px rgba(7, 31, 53, 0.08);
+  --gr-shadow-heavy-panel: 0 16px 40px rgba(7, 31, 53, 0.16);
+  --gr-shadow-focus-ring: 0 0 0 3px rgba(99, 235, 213, 0.35);
+}

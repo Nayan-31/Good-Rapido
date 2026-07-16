@@ -1,8 +1,8 @@
 # Good Rapido Frontend
 
-This folder contains the frontend skeleton for Good Rapido.
+This folder contains the frontend workspace for Good Rapido.
 
-No UI implementation code has been added yet. Use this structure as the starting point before building screens, components, state management, and backend API integration.
+The rider app is set up with React, Vite, and TypeScript. Screen implementation has not started yet. The shared UI package contains design-system primitives based on `UI_DESIGN_DIRECTION.md`.
 
 ## Source Of Truth
 
@@ -15,6 +15,8 @@ No UI implementation code has been added yet. Use this structure as the starting
 frontend/
   apps/
     rider-app/
+      index.html
+      package.json
       public/
         assets/
         icons/
@@ -35,16 +37,46 @@ frontend/
         styles/
         types/
         utils/
+      tsconfig.app.json
+      tsconfig.json
+      tsconfig.node.json
+      vite.config.ts
   packages/
     api-client/
     config/
     ui/
+      src/
+        components/
+        styles/
+        tokens/
+        types/
+```
+
+## Commands
+
+Install frontend dependencies from this folder:
+
+```text
+cd frontend
+npm install
+```
+
+Run the rider app:
+
+```text
+npm run dev:rider
+```
+
+Type-check the rider app:
+
+```text
+npm run typecheck:rider
 ```
 
 ## Build Order
 
-1. Finalize frontend stack and package setup.
-2. Create shared design tokens and base layout.
+1. Create base app shell and route placeholders.
+2. Define API client contracts for backend modules.
 3. Build rider app screen routes.
-4. Connect backend modules through the API client.
+4. Connect route screens to backend services.
 5. Add state management, validation, loading states, and error states.

@@ -1,0 +1,59 @@
+.root {
+  border: 1px solid var(--gr-color-border);
+  border-radius: var(--gr-radius-card);
+  box-shadow: var(--gr-shadow-card);
+}
+
+.paddingSM {
+  padding: var(--gr-space-3);
+}
+
+.paddingMD {
+  padding: var(--gr-space-4);
+}
+
+.paddingLG {
+  padding: var(--gr-space-5);
+}
+
+.default {
+  background: var(--gr-color-card);
+  color: var(--gr-color-ink);
+}
+
+.soft {
+  background: var(--gr-color-soft-gray);
+  color: var(--gr-color-ink);
+  box-shadow: none;
+}
+
+.navy {
+  background: var(--gr-color-dark-navy);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: var(--gr-color-card);
+}
+
+.mint {
+  background: var(--gr-color-soft-mint);
+  border-color: rgba(0, 140, 122, 0.18);
+  color: var(--gr-color-dark-navy);
+}
+
+.danger {
+  background: var(--gr-color-soft-red);
+  border-color: rgba(217, 45, 32, 0.18);
+  color: var(--gr-color-danger);
+}
+
+.interactive {
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.interactive:hover {
+  border-color: rgba(0, 140, 122, 0.34);
+  box-shadow: var(--gr-shadow-heavy-panel);
+  transform: translateY(-1px);
+}
