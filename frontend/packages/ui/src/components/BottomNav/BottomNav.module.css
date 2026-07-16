@@ -1,0 +1,64 @@
+.root {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+  align-items: center;
+  gap: var(--gr-space-1);
+  padding: var(--gr-space-2) var(--gr-space-3);
+  background: var(--gr-color-card);
+  border-top: 1px solid var(--gr-color-border);
+}
+
+.item {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gr-space-1);
+  min-width: 0;
+  min-height: 52px;
+  border: 0;
+  border-radius: var(--gr-radius-pill);
+  background: transparent;
+  color: var(--gr-color-muted);
+  font-size: 12px;
+  font-weight: var(--gr-font-weight-bold);
+}
+
+.item:focus-visible {
+  outline: none;
+  box-shadow: var(--gr-shadow-focus-ring);
+}
+
+.active {
+  background: var(--gr-color-mint);
+  color: var(--gr-color-dark-navy);
+}
+
+.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 18px;
+}
+
+.label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.badge {
+  position: absolute;
+  top: 6px;
+  right: 18px;
+  min-width: 16px;
+  min-height: 16px;
+  padding: 0 5px;
+  border-radius: var(--gr-radius-pill);
+  background: var(--gr-color-danger);
+  color: var(--gr-color-card);
+  font-size: 10px;
+  line-height: 16px;
+}

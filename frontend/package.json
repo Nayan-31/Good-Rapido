@@ -1,0 +1,15 @@
+{
+  "name": "@good-rapido/frontend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/ui"
+  ],
+  "scripts": {
+    "dev:rider": "npm --workspace @good-rapido/rider-app run dev",
+    "build:rider": "npm --workspace @good-rapido/rider-app run build",
+    "typecheck:rider": "npm --workspace @good-rapido/rider-app run typecheck"
+  }
+}
