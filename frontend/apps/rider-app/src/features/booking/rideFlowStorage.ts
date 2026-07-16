@@ -9,6 +9,7 @@ export interface RideFlowDraft {
   selectedDriver?: unknown;
   booking?: unknown;
   lifecycle?: unknown;
+  notificationPlan?: unknown;
   updatedAt: string;
 }
 
