@@ -3,6 +3,7 @@ import { useCallback, useState } from "react";
 import { ApiClientError } from "@good-rapido/api-client";
 import { DEFAULT_BOOKING_FORM } from "./booking.constants";
 import { bookingService } from "./booking.service";
+import { rideFlowStorage } from "./rideFlowStorage";
 import type { BookingHomeErrors, BookingHomeForm, BookingLocationForm, FareEstimate, VehicleType } from "./booking.types";
 import { hasBookingHomeErrors, validateBookingHomeForm } from "./booking.utils";
 
@@ -50,8 +51,19 @@ export function useBookingHome() {
 
     try {
       const response = await bookingService.createFareEstimate(form);
-      setEstimate(response.data?.estimate ?? null);
+      const nextEstimate = response.data?.estimate ?? null;
+
+      setEstimate(nextEstimate);
       setMessage(response.message);
+
+      if (nextEstimate) {
+        rideFlowStorage.save({
+          form,
+          fareEstimate: nextEstimate,
+          updatedAt: new Date().toISOString()
+        });
+        window.location.hash = "/estimate";
+      }
     } catch (error) {
       setMessage(resolveErrorMessage(error));
     } finally {

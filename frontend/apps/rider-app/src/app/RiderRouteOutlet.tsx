@@ -1,5 +1,7 @@
 import { BookingHomeScreen } from "@/features/booking";
 import { IdentityFlow } from "@/features/identity";
+import { PricingEstimateScreen } from "@/features/pricing";
+import { ConfirmRideScreen } from "@/features/ride-lifecycle";
 import type { RiderRoute } from "@/routes";
 
 export interface RiderRouteOutletProps {
@@ -13,6 +15,14 @@ export function RiderRouteOutlet({ route }: RiderRouteOutletProps) {
 
   if (route.id === "identity") {
     return <IdentityFlow />;
+  }
+
+  if (route.id === "estimate") {
+    return <PricingEstimateScreen />;
+  }
+
+  if (route.id === "confirm") {
+    return <ConfirmRideScreen />;
   }
 
   return null;

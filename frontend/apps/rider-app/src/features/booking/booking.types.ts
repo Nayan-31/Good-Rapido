@@ -22,6 +22,16 @@ export interface BookingHomeErrors {
 export interface FareEstimate {
   id: string;
   vehicleType: VehicleType;
+  pickup: {
+    address: string | null;
+    latitude: number;
+    longitude: number;
+  };
+  dropoff: {
+    address: string | null;
+    latitude: number;
+    longitude: number;
+  };
   distanceKm: number;
   durationMinutes: number;
   breakdown: {
@@ -39,4 +49,8 @@ export interface FareEstimate {
     factors: string[];
   };
   validUntil: string | null;
+  lock?: {
+    isLocked: boolean;
+    lockedUntil: string | null;
+  };
 }
