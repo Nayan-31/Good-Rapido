@@ -1,0 +1,141 @@
+.root {
+  display: grid;
+  gap: var(--gr-space-4);
+  width: min(100%, 760px);
+  margin: 0 auto;
+}
+
+.hero,
+.section {
+  display: grid;
+  gap: var(--gr-space-4);
+}
+
+.heroHeader,
+.sectionHeader,
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gr-space-3);
+}
+
+.heroHeader strong {
+  display: block;
+  margin-top: var(--gr-space-1);
+  font-size: 42px;
+  font-weight: var(--gr-font-weight-heavy);
+  line-height: 1;
+}
+
+.sectionHeader h3 {
+  margin: var(--gr-space-1) 0 0;
+  color: inherit;
+  font-size: var(--gr-text-section-title);
+  letter-spacing: 0;
+  line-height: var(--gr-line-height-tight);
+}
+
+.eyebrow {
+  margin: 0;
+  color: var(--gr-color-muted);
+  font-size: var(--gr-text-label);
+  font-weight: var(--gr-font-weight-bold);
+  letter-spacing: 0;
+  line-height: var(--gr-line-height-tight);
+  text-transform: uppercase;
+}
+
+.hero .eyebrow,
+.heroNote {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.heroNote,
+.copy,
+.alternative small {
+  margin: 0;
+  color: var(--gr-color-muted);
+  line-height: var(--gr-line-height-body);
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--gr-space-3);
+}
+
+.factorList {
+  display: grid;
+  gap: var(--gr-space-2);
+  margin: 0;
+  padding-left: var(--gr-space-5);
+  color: var(--gr-color-muted);
+}
+
+.breakdown {
+  display: grid;
+  gap: var(--gr-space-3);
+  margin: 0;
+}
+
+.breakdown div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--gr-space-4);
+}
+
+.breakdown dt {
+  color: var(--gr-color-muted);
+}
+
+.breakdown dd {
+  margin: 0;
+  font-weight: var(--gr-font-weight-bold);
+}
+
+.dangerRow dt,
+.dangerRow dd {
+  color: var(--gr-color-danger);
+}
+
+.alternatives {
+  display: grid;
+  gap: var(--gr-space-3);
+}
+
+.alternative {
+  display: grid;
+  gap: var(--gr-space-1);
+  padding: var(--gr-space-3);
+  border: 1px solid rgba(0, 140, 122, 0.18);
+  border-radius: var(--gr-radius-control);
+  background: var(--gr-color-card);
+}
+
+.alternative span {
+  color: var(--gr-color-deep-teal);
+  font-weight: var(--gr-font-weight-bold);
+}
+
+.actions {
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+  .heroHeader,
+  .sectionHeader,
+  .actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .actions > * {
+    width: 100%;
+  }
+}
