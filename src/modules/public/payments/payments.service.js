@@ -2,11 +2,8 @@ import { buildSuccessResponse } from '../../../shared/utils/apiResponse.js';
 import AppError from '../../../shared/utils/appError.js';
 import { RIDE_BOOKING_STATUSES } from '../ride-booking/ride-booking.constants.js';
 import {
-    PAYMENT_CURRENCY,
-    PAYMENT_METHOD_CATALOG,
     PAYMENT_METHODS,
-    PAYMENT_STATUSES,
-    PAYMENT_WALLET_OPENING_BALANCE
+    PAYMENT_STATUSES
 } from './payments.constants.js';
 import {
     toPublicPayment,
@@ -15,6 +12,17 @@ import {
     toPublicRefund,
     toPublicWallet
 } from './dto/payments.dto.js';
+import {
+    buildPaymentGuidance as buildCorePaymentGuidance,
+    buildPaymentHistorySummary,
+    buildPaymentIntent,
+    buildRidePaymentSnapshot,
+    buildWalletSummary as buildCoreWalletSummary,
+    calculateRefundPreview,
+    createPaymentCode,
+    resolvePaymentMethod as resolveCorePaymentMethod
+} from '../../core/payment-engine/payment-engine.engine.js';
+import { PAYMENT_ENGINE_METHOD_CATALOG } from '../../core/payment-engine/payment-engine.constants.js';
 
 export default class PaymentsService {
     constructor({ paymentsDao, ridesDao, now = () => new Date() }) {
@@ -31,7 +39,7 @@ export default class PaymentsService {
             message: 'Payment methods fetched successfully',
             data: {
                 wallet: toPublicWallet(wallet),
-                methods: PAYMENT_METHOD_CATALOG.map((method) => toPublicPaymentMethod(method, wallet))
+                methods: PAYMENT_ENGINE_METHOD_CATALOG.map((method) => toPublicPaymentMethod(method, wallet))
             }
         });
     }
@@ -91,14 +99,18 @@ export default class PaymentsService {
             throw AppError.conflict('Ride payment is already completed');
         }
 
-        const paymentMethod = this.resolvePaymentMethod(payload.paymentMethod);
-        const wallet = this.buildWalletSummary();
-        const fareAmount = roundMoney(rideObject.fareSnapshot?.totalFare || 0);
-        const tipAmount = roundMoney(payload.tipAmount || 0);
-        const discountAmount = roundMoney(payload.discountAmount || 0);
-        const amount = roundMoney(Math.max(0, fareAmount + tipAmount - discountAmount));
+        const paymentIntent = buildPaymentIntent({
+            rideId: getId(rideObject),
+            paymentMethod: payload.paymentMethod,
+            fareAmount: rideObject.fareSnapshot?.totalFare || 0,
+            tipAmount: payload.tipAmount || 0,
+            discountAmount: payload.discountAmount || 0,
+            requestedAt: this.now()
+        });
+        const paymentMethod = paymentIntent.method;
+        const { breakdown, wallet, settlement, capture } = paymentIntent;
 
-        if (paymentMethod.code === PAYMENT_METHODS.PERSONAL_WALLET && amount > wallet.availableBalance) {
+        if (paymentMethod.code === PAYMENT_METHODS.PERSONAL_WALLET && !wallet.hasSufficientBalance) {
             throw AppError.badRequest('Insufficient wallet balance');
         }
 
@@ -110,20 +122,18 @@ export default class PaymentsService {
             rideId: getId(rideObject),
             rideSnapshot: this.toRideSnapshot(rideObject),
             method: paymentMethod.code,
-            status: isCashPayment ? PAYMENT_STATUSES.PENDING : PAYMENT_STATUSES.SUCCEEDED,
-            currency: PAYMENT_CURRENCY,
-            fareAmount,
-            tipAmount,
-            discountAmount,
-            amount,
-            walletBalanceBefore: paymentMethod.code === PAYMENT_METHODS.PERSONAL_WALLET ? wallet.availableBalance : undefined,
-            walletBalanceAfter: paymentMethod.code === PAYMENT_METHODS.PERSONAL_WALLET
-                ? roundMoney(wallet.availableBalance - amount)
-                : undefined,
-            gatewayReference: createGatewayReference(paymentMethod.code, this.now()),
+            status: settlement.paymentStatus,
+            currency: paymentIntent.currency,
+            fareAmount: breakdown.fareAmount,
+            tipAmount: breakdown.tipAmount,
+            discountAmount: breakdown.discountAmount,
+            amount: breakdown.amount,
+            walletBalanceBefore: wallet.before ?? undefined,
+            walletBalanceAfter: wallet.after ?? undefined,
+            gatewayReference: capture.gatewayReference,
             idempotencyKey: payload.idempotencyKey,
-            capturedAt: isCashPayment ? null : this.now(),
-            refundableUntil: isCashPayment ? null : addDays(this.now(), 7)
+            capturedAt: capture.capturedAt,
+            refundableUntil: capture.refundableUntil
         });
 
         return buildSuccessResponse({
@@ -131,7 +141,7 @@ export default class PaymentsService {
             message: isCashPayment ? 'Cash payment recorded successfully' : 'Ride payment completed successfully',
             data: {
                 payment: toPublicPayment(toPlainObject(payment)),
-                guidance: this.buildPaymentGuidance(paymentMethod.code, amount)
+                guidance: paymentIntent.guidance
             }
         });
     }
@@ -152,7 +162,12 @@ export default class PaymentsService {
             throw AppError.badRequest('Refund window has expired for this payment');
         }
 
-        const refundAmount = roundMoney(payload.amount || payment.amount);
+        const refundPreview = calculateRefundPreview({
+            payment,
+            ...payload,
+            requestedAt: this.now()
+        });
+        const refundAmount = refundPreview.amount;
 
         if (refundAmount > payment.amount) {
             throw AppError.badRequest('Refund amount cannot be greater than payment amount');
@@ -190,62 +205,23 @@ export default class PaymentsService {
     }
 
     resolvePaymentMethod(methodCode) {
-        return PAYMENT_METHOD_CATALOG.find((method) => method.code === methodCode)
-            || PAYMENT_METHOD_CATALOG.find((method) => method.code === PAYMENT_METHODS.PERSONAL_WALLET);
+        return resolveCorePaymentMethod(methodCode);
     }
 
     buildWalletSummary() {
-        return {
-            currency: PAYMENT_CURRENCY,
-            openingBalance: PAYMENT_WALLET_OPENING_BALANCE,
-            availableBalance: PAYMENT_WALLET_OPENING_BALANCE,
-            reservedBalance: 0,
-            lowBalance: PAYMENT_WALLET_OPENING_BALANCE < 200,
-            message: 'Wallet balance is available for instant ride payments and faster refunds'
-        };
+        return buildCoreWalletSummary();
     }
 
     buildHistorySummary(payments, query) {
-        return {
-            resultCount: payments.length,
-            filters: {
-                status: query.status || null
-            },
-            totalPaid: roundMoney(payments
-                .filter((payment) => payment.status === PAYMENT_STATUSES.SUCCEEDED)
-                .reduce((sum, payment) => sum + (payment.amount || 0), 0)),
-            refundableCount: payments.filter((payment) => (
-                payment.status === PAYMENT_STATUSES.SUCCEEDED
-                && (!payment.refundableUntil || new Date(payment.refundableUntil) >= this.now())
-            )).length
-        };
+        return buildPaymentHistorySummary(payments, query, this.now());
     }
 
     toRideSnapshot(ride) {
-        return {
-            bookingCode: ride.bookingCode,
-            pickup: ride.pickup,
-            dropoff: ride.dropoff,
-            vehicleType: ride.vehicleType,
-            driver: {
-                driverId: ride.selectedDriver?.driverId || null,
-                fullName: ride.selectedDriver?.fullName || null,
-                vehicleName: ride.selectedDriver?.vehicleName || null,
-                vehicleNumber: ride.selectedDriver?.vehicleNumber || null
-            }
-        };
+        return buildRidePaymentSnapshot(ride);
     }
 
     buildPaymentGuidance(methodCode, amount) {
-        if (methodCode === PAYMENT_METHODS.CASH) {
-            return 'Cash payment is pending until the driver collects it at ride completion';
-        }
-
-        if (methodCode === PAYMENT_METHODS.PERSONAL_WALLET) {
-            return `Wallet paid ${PAYMENT_CURRENCY} ${amount}. Refunds can return to wallet faster when eligible`;
-        }
-
-        return 'Digital payment is captured with a ride-linked receipt and refund tracking';
+        return buildCorePaymentGuidance(methodCode, amount);
     }
 
     assertAuthContext(authContext) {
@@ -260,11 +236,3 @@ export default class PaymentsService {
 const toPlainObject = (document) => document?.toObject ? document.toObject() : document;
 
 const getId = (document) => document._id?.toString?.() || document.id;
-
-const roundMoney = (value) => Number((value || 0).toFixed(2));
-
-const addDays = (date, days) => new Date(date.getTime() + days * 24 * 60 * 60 * 1000);
-
-const createPaymentCode = (date) => `PAY-GR-${date.getTime()}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
-
-const createGatewayReference = (methodCode, date) => `${methodCode.toUpperCase()}-${date.getTime()}`;
