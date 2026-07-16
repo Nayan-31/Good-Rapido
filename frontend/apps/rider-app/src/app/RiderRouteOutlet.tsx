@@ -3,6 +3,7 @@ import { IdentityFlow } from "@/features/identity";
 import { NotificationScreen } from "@/features/notifications";
 import { PricingEstimateScreen } from "@/features/pricing";
 import { ConfirmRideScreen } from "@/features/ride-lifecycle";
+import { SafetyScreen } from "@/features/safety";
 import type { RiderRoute } from "@/routes";
 
 export interface RiderRouteOutletProps {
@@ -28,6 +29,8 @@ export function RiderRouteOutlet({ route }: RiderRouteOutletProps) {
 
   if (route.id === "notifications") {
     return <NotificationScreen />;
+  if (route.id === "safety") {
+    return <SafetyScreen />;
   }
 
   return null;
