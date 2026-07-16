@@ -1,5 +1,9 @@
 import { toPublicFareEstimate } from '../fare/dto/fare.dto.js';
 import { buildDriverMatches } from '../../core/matching-engine/matching-engine.engine.js';
+import {
+    buildRideTrustSignals,
+    buildRideTrustSummary
+} from '../../core/trust-engine/trust-engine.engine.js';
 import { buildSuccessResponse } from '../../../shared/utils/apiResponse.js';
 import AppError from '../../../shared/utils/appError.js';
 import {
@@ -257,38 +261,11 @@ export default class RideBookingService {
     }
 
     buildTrustSignals(driver, fareSource) {
-        return {
-            driverTrustScore: driver.trustScore,
-            driverReliabilityScore: driver.reliabilityScore,
-            routeFairnessScore: driver.routeFairnessScore,
-            routeAccuracyScore: Math.min(99, Math.round((driver.routeFairnessScore + driver.onTimeArrivalScore) / 2)),
-            cancellationRiskScore: driver.cancellationRiskScore,
-            cancellationRiskLevel: driver.cancellationRiskLevel,
-            cancellationRatio: driver.cancellationRatio,
-            detourPercentage: driver.detourPercentage,
-            onTimeArrivalScore: driver.onTimeArrivalScore,
-            fairPriceScore: fareSource.confidence?.score || fareSource.confidenceScore || 0
-        };
+        return buildRideTrustSignals({ driver, fareSource });
     }
 
     buildTrustSummary(driverOptions, fareEstimate) {
-        const bestDriver = driverOptions[0]; //array me se first driver ko best driver maana ja raha hai. Kyunki pehle wale function me drivers already ranking/sorting ke baad aaye honge.
-
-        if (!bestDriver) {
-            return {
-                fairPriceScore: fareEstimate.confidence?.score || 0,
-                routeAccuracyScore: 0,
-                cancellationRiskLevel: 'high',
-                message: 'No trusted drivers are currently available'
-            };
-        }
-
-        return {
-            fairPriceScore: fareEstimate.confidence?.score || 0,
-            routeAccuracyScore: Math.min(99, Math.round((bestDriver.routeFairnessScore + bestDriver.onTimeArrivalScore) / 2)),
-            cancellationRiskLevel: bestDriver.cancellationRiskLevel,
-            message: 'Best matches are ranked by trust, route fairness, arrival reliability, and cancellation behavior'
-        };
+        return buildRideTrustSummary({ driverOptions, fareEstimate });
     }
 
     getBookingExpiry(fareEstimate) {

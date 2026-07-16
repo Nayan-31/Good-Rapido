@@ -6,12 +6,18 @@ import {
     PRIVATE_AUTH_ROLES
 } from '../auth/auth.constants.js';
 import {
+    buildTrustAssessment as buildCoreTrustAssessment,
+    buildTrustAssessmentGuidance as buildCoreTrustAssessmentGuidance,
+    normalizeTrustMetrics,
+    normalizeTrustRestrictions,
+    normalizeTrustScores
+} from '../../core/trust-engine/trust-engine.engine.js';
+import {
     TRUST_ACTION_LOG_LIMIT,
     TRUST_ACTION_TYPES,
     TRUST_PROFILE_STATUSES,
     TRUST_REVIEW_STATUSES,
     TRUST_RISK_LEVELS,
-    TRUST_SCORE_DEFAULT,
     TRUST_SUBJECT_TYPES
 } from './trust.constants.js';
 import {
@@ -380,19 +386,13 @@ const buildTrustAssessment = ({
     riskLevel,
     status,
     reviewStatus
-} = {}) => {
-    const normalizedMetrics = normalizeMetrics(metrics);
-    const normalizedScores = normalizeScores(scores, normalizedMetrics);
-    const normalizedRiskLevel = riskLevel || resolveRiskLevel(normalizedScores.overall);
-
-    return {
-        scores: normalizedScores,
-        metrics: normalizedMetrics,
-        riskLevel: normalizedRiskLevel,
-        status: status || resolveStatus(normalizedRiskLevel),
-        reviewStatus: reviewStatus || resolveReviewStatus(normalizedRiskLevel)
-    };
-};
+} = {}) => buildCoreTrustAssessment({
+    scores,
+    metrics,
+    riskLevel,
+    status,
+    reviewStatus
+});
 
 const normalizeProfile = (profile) => {
     if (!profile) {
@@ -412,110 +412,13 @@ const normalizeProfile = (profile) => {
     };
 };
 
-const normalizeScores = (scores = {}, metrics = {}) => {
-    const derivedScores = deriveScoresFromMetrics(normalizeMetrics(metrics));
-    const componentScores = {
-        safety: clampScore(scores.safety ?? derivedScores.safety),
-        reliability: clampScore(scores.reliability ?? derivedScores.reliability),
-        payment: clampScore(scores.payment ?? derivedScores.payment),
-        cancellation: clampScore(scores.cancellation ?? derivedScores.cancellation),
-        fraud: clampScore(scores.fraud ?? derivedScores.fraud)
-    };
-    const overall = scores.overall ?? average(Object.values(componentScores));
+const normalizeScores = (scores = {}, metrics = {}) => normalizeTrustScores(scores, metrics);
 
-    return {
-        overall: clampScore(overall),
-        ...componentScores
-    };
-};
+const normalizeMetrics = (metrics = {}) => normalizeTrustMetrics(metrics);
 
-const normalizeMetrics = (metrics = {}) => ({
-    completedRides: numberOrZero(metrics.completedRides),
-    cancelledRides: numberOrZero(metrics.cancelledRides),
-    disputeCount: numberOrZero(metrics.disputeCount),
-    incidentCount: numberOrZero(metrics.incidentCount),
-    paymentFailureCount: numberOrZero(metrics.paymentFailureCount),
-    ratingAverage: Number.isFinite(metrics.ratingAverage) ? metrics.ratingAverage : null,
-    lastRideAt: metrics.lastRideAt || null
-});
+const normalizeRestrictions = (restrictions = {}) => normalizeTrustRestrictions(restrictions);
 
-const normalizeRestrictions = (restrictions = {}) => ({
-    rideBookingBlocked: Boolean(restrictions.rideBookingBlocked),
-    driverPayoutHold: Boolean(restrictions.driverPayoutHold),
-    promoBlocked: Boolean(restrictions.promoBlocked),
-    reason: trimToNull(restrictions.reason),
-    expiresAt: restrictions.expiresAt || null
-});
-
-const deriveScoresFromMetrics = (metrics = {}) => {
-    const totalRideAttempts = metrics.completedRides + metrics.cancelledRides;
-    const cancellationRate = totalRideAttempts ? metrics.cancelledRides / totalRideAttempts : 0;
-    const ratingScore = Number.isFinite(metrics.ratingAverage)
-        ? (metrics.ratingAverage / 5) * 100
-        : TRUST_SCORE_DEFAULT;
-
-    return {
-        safety: clampScore(ratingScore - metrics.incidentCount * 12 - metrics.disputeCount * 4),
-        reliability: clampScore(TRUST_SCORE_DEFAULT - cancellationRate * 80 - metrics.incidentCount * 5),
-        payment: clampScore(TRUST_SCORE_DEFAULT - metrics.paymentFailureCount * 10),
-        cancellation: clampScore(TRUST_SCORE_DEFAULT - cancellationRate * 100),
-        fraud: clampScore(TRUST_SCORE_DEFAULT - metrics.incidentCount * 10 - metrics.disputeCount * 6 - metrics.paymentFailureCount * 4)
-    };
-};
-
-const resolveRiskLevel = (overallScore) => {
-    if (overallScore >= 80) {
-        return TRUST_RISK_LEVELS.LOW;
-    }
-
-    if (overallScore >= 60) {
-        return TRUST_RISK_LEVELS.MEDIUM;
-    }
-
-    if (overallScore >= 40) {
-        return TRUST_RISK_LEVELS.HIGH;
-    }
-
-    return TRUST_RISK_LEVELS.CRITICAL;
-};
-
-const resolveStatus = (riskLevel) => {
-    if (riskLevel === TRUST_RISK_LEVELS.CRITICAL) {
-        return TRUST_PROFILE_STATUSES.SUSPENDED;
-    }
-
-    if (riskLevel === TRUST_RISK_LEVELS.HIGH) {
-        return TRUST_PROFILE_STATUSES.RESTRICTED;
-    }
-
-    if (riskLevel === TRUST_RISK_LEVELS.MEDIUM) {
-        return TRUST_PROFILE_STATUSES.MONITORING;
-    }
-
-    return TRUST_PROFILE_STATUSES.CLEAR;
-};
-
-const resolveReviewStatus = (riskLevel) => (
-    riskLevel === TRUST_RISK_LEVELS.LOW
-        ? TRUST_REVIEW_STATUSES.RESOLVED
-        : TRUST_REVIEW_STATUSES.OPEN
-);
-
-const buildAssessmentGuidance = ({ riskLevel, status, reviewStatus }) => ({
-    shouldEscalate: [
-        TRUST_RISK_LEVELS.HIGH,
-        TRUST_RISK_LEVELS.CRITICAL
-    ].includes(riskLevel),
-    suggestedStatus: status,
-    suggestedReviewStatus: reviewStatus,
-    nextAction: riskLevel === TRUST_RISK_LEVELS.CRITICAL
-        ? 'Escalate and apply account restrictions'
-        : riskLevel === TRUST_RISK_LEVELS.HIGH
-            ? 'Assign reviewer and inspect recent ride history'
-            : riskLevel === TRUST_RISK_LEVELS.MEDIUM
-                ? 'Monitor trust signals before restricting the account'
-                : 'Keep account clear'
-});
+const buildAssessmentGuidance = (assessment = {}) => buildCoreTrustAssessmentGuidance(assessment);
 
 const appendActionLog = (profile = {}, { action, note, actor, now }) => [
     ...(Array.isArray(profile.actionLog) ? profile.actionLog : []).slice(-(TRUST_ACTION_LOG_LIMIT - 1)),
@@ -547,18 +450,6 @@ const createTrustCode = (subjectType, subjectId, date) => {
 
     return `TRUST-${subjectType.toUpperCase()}-${normalizedSubject || 'SUBJECT'}-${compactTimestamp}`;
 };
-
-const average = (values = []) => {
-    if (!values.length) {
-        return TRUST_SCORE_DEFAULT;
-    }
-
-    return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
-};
-
-const clampScore = (value) => Math.max(0, Math.min(100, Math.round(Number.isFinite(value) ? value : TRUST_SCORE_DEFAULT)));
-
-const numberOrZero = (value) => Number.isFinite(value) ? value : 0;
 
 const trimToNull = (value) => {
     if (typeof value !== 'string') {
