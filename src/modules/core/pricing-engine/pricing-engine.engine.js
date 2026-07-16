@@ -3,19 +3,21 @@ import {
     FARE_CURRENCY,
     FARE_ESTIMATE_WINDOW_MINUTES,
     FARE_LOCK_WINDOW_MINUTES,
-    FARE_ROUTE_DISTANCE_MULTIPLIER,
     FARE_SURGE_LEVELS,
     FARE_TAX_RATE,
     FARE_VEHICLE_PRICING,
     FARE_VEHICLE_TYPES
 } from '../../public/fare/fare.constants.js';
 import {
+    buildRoutePlan,
+    calculateRouteDistanceKm as calculateCoreRouteDistanceKm,
+    calculateRouteDurationMinutes
+} from '../route-engine/route-engine.engine.js';
+import {
     PRICING_ENGINE_DEFAULT_SERVICE_ZONE,
     PRICING_ENGINE_DEFAULT_SURGE_RULES,
     PRICING_ENGINE_RULE_SOURCES
 } from './pricing-engine.constants.js';
-
-const EARTH_RADIUS_KM = 6371;
 
 export const buildPricingQuote = ({
     pickup,
@@ -31,8 +33,17 @@ export const buildPricingQuote = ({
     const normalizedRequestedAt = normalizeDate(requestedAt);
     const resolvedRule = normalizePricingRule(pricingRule, vehicleType, serviceZone);
     const pricing = resolvedRule.pricing;
-    const distanceKm = calculateRouteDistanceKm(normalizedPickup, normalizedDropoff);
-    const durationMinutes = calculateDurationMinutes(distanceKm, pricing);
+    const routePlan = buildRoutePlan({
+        pickup: normalizedPickup,
+        dropoff: normalizedDropoff,
+        vehicleType,
+        serviceZone,
+        requestedAt: normalizedRequestedAt,
+        averageSpeedKmph: pricing.averageSpeedKmph,
+        now
+    });
+    const distanceKm = routePlan.distance.routeDistanceKm;
+    const durationMinutes = routePlan.duration.estimatedMinutes;
     const surge = calculatePricingSurge(resolvedRule.surgeRules, normalizedRequestedAt);
     const breakdown = calculatePricingBreakdown({
         pricing,
@@ -61,6 +72,7 @@ export const buildPricingQuote = ({
         dropoff: normalizedDropoff,
         distanceKm,
         durationMinutes,
+        route: routePlan,
         pricingRule: toQuoteRuleSnapshot(resolvedRule),
         breakdown,
         surge,
@@ -84,7 +96,7 @@ export const simulatePricingFromRule = (rule, {
     const pricing = resolvedRule.pricing;
     const resolvedDistanceKm = roundDistance(distanceKm);
     const resolvedDurationMinutes = durationMinutes
-        || calculateDurationMinutes(resolvedDistanceKm, pricing);
+        || calculateDurationMinutes(resolvedDistanceKm, pricing, requestedAt);
     const surge = calculatePricingSurge(resolvedRule.surgeRules, requestedAt);
     const breakdown = calculatePricingBreakdown({
         pricing,
@@ -170,20 +182,13 @@ export const baselinePricingRuleFor = (
     };
 };
 
-export const calculateRouteDistanceKm = (pickup, dropoff) => {
-    const pickupLatitude = degreesToRadians(pickup.latitude);
-    const dropoffLatitude = degreesToRadians(dropoff.latitude);
-    const latitudeDelta = degreesToRadians(dropoff.latitude - pickup.latitude);
-    const longitudeDelta = degreesToRadians(dropoff.longitude - pickup.longitude);
-    const haversine = Math.sin(latitudeDelta / 2) ** 2
-        + Math.cos(pickupLatitude) * Math.cos(dropoffLatitude) * Math.sin(longitudeDelta / 2) ** 2;
-    const straightLineDistance = 2 * EARTH_RADIUS_KM * Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine));
+export const calculateRouteDistanceKm = (pickup, dropoff) => calculateCoreRouteDistanceKm([pickup, dropoff]);
 
-    return roundDistance(straightLineDistance * FARE_ROUTE_DISTANCE_MULTIPLIER);
-};
-
-export const calculateDurationMinutes = (distanceKm, pricing) => (
-    Math.max(2, Math.round((distanceKm / pricing.averageSpeedKmph) * 60 + 4))
+export const calculateDurationMinutes = (distanceKm, pricing, requestedAt = new Date()) => (
+    calculateRouteDurationMinutes(distanceKm, {
+        averageSpeedKmph: pricing.averageSpeedKmph,
+        requestedAt
+    }).estimatedMinutes
 );
 
 export const calculatePricingSurge = (surgeRules = {}, requestedAt = new Date()) => {
