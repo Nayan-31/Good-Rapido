@@ -1,11 +1,7 @@
 import { buildSuccessResponse } from '../../../shared/utils/apiResponse.js';
 import AppError from '../../../shared/utils/appError.js';
 import {
-    DEFAULT_NOTIFICATION_PREFERENCES,
-    NOTIFICATION_CATEGORIES,
-    NOTIFICATION_PRIORITIES,
-    NOTIFICATION_STATUSES,
-    NOTIFICATION_TYPES
+    NOTIFICATION_STATUSES
 } from './notifications.constants.js';
 import {
     toPublicDevice,
@@ -16,6 +12,13 @@ import {
     toPublicNotificationPreferences,
     toPublicNotificationSummary
 } from './dto/notifications.dto.js';
+import {
+    buildNotificationSummaryFromNotifications,
+    mergeNotificationPreferences,
+    normalizeNotificationDevice,
+    normalizeNotificationPreferences,
+    normalizeNotificationSummary
+} from '../../core/notification-engine/notification-engine.engine.js';
 
 export default class NotificationsService {
     constructor({ notificationsDao, now = () => new Date() }) {
@@ -170,13 +173,7 @@ export default class NotificationsService {
         const existingPreferences = toPreferencesObject(
             await this.notificationsDao.findPreferencesForUser(userId, role)
         );
-        const device = {
-            token: payload.token.trim(),
-            platform: payload.platform,
-            appVersion: payload.appVersion?.trim() || null,
-            enabled: payload.enabled !== false,
-            lastSeenAt: this.now()
-        };
+        const device = normalizeNotificationDevice(payload, this.now());
         const preferencesPayload = {
             ...existingPreferences,
             devices: [
@@ -219,102 +216,12 @@ export default class NotificationsService {
 
 const toPlainObject = (document) => document?.toObject ? document.toObject() : document;
 
-const toPreferencesObject = (preferences) => ({
-    channels: {
-        ...DEFAULT_NOTIFICATION_PREFERENCES.channels,
-        ...(toPlainObject(preferences)?.channels || {})
-    },
-    categories: {
-        ...DEFAULT_NOTIFICATION_PREFERENCES.categories,
-        ...(toPlainObject(preferences)?.categories || {})
-    },
-    quietHours: {
-        ...DEFAULT_NOTIFICATION_PREFERENCES.quietHours,
-        ...(toPlainObject(preferences)?.quietHours || {})
-    },
-    devices: toPlainObject(preferences)?.devices || [],
-    updatedAt: toPlainObject(preferences)?.updatedAt || null
-});
+const toPreferencesObject = (preferences) => normalizeNotificationPreferences(toPlainObject(preferences) || {});
 
-const mergePreferences = (existingPreferences, payload = {}) => ({
-    channels: {
-        ...existingPreferences.channels,
-        ...(payload.channels || {})
-    },
-    categories: {
-        ...existingPreferences.categories,
-        ...(payload.categories || {})
-    },
-    quietHours: {
-        ...existingPreferences.quietHours,
-        ...(payload.quietHours || {})
-    },
-    devices: existingPreferences.devices || []
-});
+const mergePreferences = (existingPreferences, payload = {}) => mergeNotificationPreferences(existingPreferences, payload);
 
-const normalizeSummary = (summary = {}) => {
-    const totals = summary.totals?.[0] || summary;
+const normalizeSummary = (summary = {}) => normalizeNotificationSummary(summary);
 
-    return {
-        totalNotifications: totals.totalNotifications || 0,
-        unreadCount: totals.unreadCount || 0,
-        readCount: totals.readCount || 0,
-        archivedCount: totals.archivedCount || 0,
-        urgentCount: totals.urgentCount || 0,
-        byStatus: rowsToCounts(summary.statuses),
-        byType: rowsToCounts(summary.types),
-        byCategory: rowsToCounts(summary.categories),
-        latestNotificationAt: totals.latestNotificationAt || null
-    };
-};
-
-const buildSummaryFromNotifications = (notifications = []) => notifications.reduce((summary, notification) => {
-    summary.totalNotifications += 1;
-    summary.byStatus[notification.status] = (summary.byStatus[notification.status] || 0) + 1;
-    summary.byType[notification.type] = (summary.byType[notification.type] || 0) + 1;
-    summary.byCategory[notification.category] = (summary.byCategory[notification.category] || 0) + 1;
-    summary.latestNotificationAt = maxDate(summary.latestNotificationAt, notification.createdAt);
-
-    if (notification.status === NOTIFICATION_STATUSES.READ) {
-        summary.readCount += 1;
-    }
-
-    if (notification.status === NOTIFICATION_STATUSES.ARCHIVED) {
-        summary.archivedCount += 1;
-    }
-
-    if (notification.priority === NOTIFICATION_PRIORITIES.URGENT) {
-        summary.urgentCount += 1;
-    }
-
-    return summary;
-}, {
-    totalNotifications: 0,
-    unreadCount: 0,
-    readCount: 0,
-    archivedCount: 0,
-    urgentCount: 0,
-    byStatus: {},
-    byType: {},
-    byCategory: {},
-    latestNotificationAt: null
-});
-
-const rowsToCounts = (rows = []) => rows.reduce((result, row) => ({
-    ...result,
-    [row._id]: row.count
-}), {});
-
-const maxDate = (left, right) => {
-    if (!left) {
-        return right || null;
-    }
-
-    if (!right) {
-        return left;
-    }
-
-    return new Date(left) > new Date(right) ? left : right;
-};
+const buildSummaryFromNotifications = (notifications = []) => buildNotificationSummaryFromNotifications(notifications);
 
 const numberOrZero = (value) => Number.isFinite(value) ? value : 0;

@@ -6,11 +6,7 @@ import {
     PRIVATE_AUTH_ROLES
 } from '../auth/auth.constants.js';
 import {
-    NOTIFICATION_CHANNELS,
-    NOTIFICATION_PRIORITIES,
-    NOTIFICATION_STATUSES,
-    NOTIFICATION_TYPE_CATALOG,
-    NOTIFICATION_TYPES
+    NOTIFICATION_STATUSES
 } from '../../public/notifications/notifications.constants.js';
 import {
     PRIVATE_NOTIFICATION_ACTION_LOG_LIMIT,
@@ -25,6 +21,12 @@ import {
     toPrivateNotificationList,
     toPrivateNotificationOptions
 } from './dto/notifications.dto.js';
+import {
+    buildNotificationPayload,
+    buildOpsActionMetadata,
+    normalizeNotification as normalizeCoreNotification,
+    normalizeNotificationRecipients
+} from '../../core/notification-engine/notification-engine.engine.js';
 
 export default class PrivateNotificationsService {
     constructor({ notificationsDao, now = () => new Date() }) {
@@ -283,98 +285,36 @@ export default class PrivateNotificationsService {
 }
 
 const normalizeCreatePayload = (payload = {}, { actor, now, recipient }) => {
-    const typeProfile = resolveTypeProfile(payload.type);
-    const scheduledAt = payload.scheduledAt || null;
-    const metadata = buildMetadata({ metadata: payload.metadata || {} }, {
-        action: PRIVATE_NOTIFICATION_ACTIONS.CREATE,
-        note: scheduledAt ? 'Notification scheduled by ops' : 'Notification created by ops',
+    const notificationPayload = buildNotificationPayload(payload, {
         actor,
-        now
+        now,
+        recipient
     });
+    const { deliveryPlan: _deliveryPlan, ...persistedPayload } = notificationPayload;
 
-    return {
-        notificationCode: createNotificationCode(payload.type, now, recipient.authUserId),
-        authUserId: recipient.authUserId,
-        role: recipient.role,
-        type: payload.type,
-        category: payload.category || typeProfile.category,
-        priority: payload.priority || typeProfile.defaultPriority || NOTIFICATION_PRIORITIES.MEDIUM,
-        status: NOTIFICATION_STATUSES.UNREAD,
-        channel: payload.channel || typeProfile.defaultChannel || NOTIFICATION_CHANNELS.IN_APP,
-        title: payload.title.trim(),
-        message: payload.message.trim(),
-        actionLabel: payload.actionLabel?.trim() || null,
-        actionUrl: payload.actionUrl?.trim() || null,
-        relatedEntity: payload.relatedEntity || null,
-        delivery: {
-            scheduledAt,
-            sentAt: scheduledAt ? null : now
-        },
-        expiresAt: payload.expiresAt || null,
-        metadata
-    };
+    return persistedPayload;
 };
 
 const normalizeNotification = (notification) => {
-    if (!notification) {
-        return null;
-    }
-
-    return {
-        ...notification,
-        delivery: notification.delivery || {},
-        metadata: notification.metadata || {}
-    };
+    return normalizeCoreNotification(notification);
 };
 
-const normalizeRecipients = (payload = {}) => {
-    if (payload.recipient) {
-        return [payload.recipient];
-    }
-
-    return payload.recipients || [];
-};
+const normalizeRecipients = (payload = {}) => normalizeNotificationRecipients(payload);
 
 const buildMetadata = (notification = {}, { action, note, actor, now }) => {
-    const metadata = {
-        ...(notification.metadata || {})
-    };
-    const actionLog = Array.isArray(metadata.opsActionLog) ? metadata.opsActionLog : [];
-
-    return {
-        ...metadata,
-        lastOpsAction: action,
-        lastOpsNote: note || null,
-        lastOpsActionAt: now,
-        lastOpsActionBy: getId(actor),
-        opsActionLog: [
-            ...actionLog.slice(-(PRIVATE_NOTIFICATION_ACTION_LOG_LIMIT - 1)),
-            {
-                action,
-                note: note || null,
-                actorId: getId(actor),
-                actorRole: actor?.role || null,
-                createdAt: now
-            }
-        ]
-    };
+    return buildOpsActionMetadata(notification, {
+        action,
+        note,
+        actor,
+        now,
+        limit: PRIVATE_NOTIFICATION_ACTION_LOG_LIMIT
+    });
 };
-
-const resolveTypeProfile = (type) => NOTIFICATION_TYPE_CATALOG.find((item) => item.type === type)
-    || NOTIFICATION_TYPE_CATALOG.find((item) => item.type === NOTIFICATION_TYPES.SYSTEM);
 
 const assertNotArchived = (notification = {}, message) => {
     if (notification.status === NOTIFICATION_STATUSES.ARCHIVED) {
         throw AppError.badRequest(message);
     }
-};
-
-const createNotificationCode = (type, date, authUserId) => {
-    const compactTimestamp = date.toISOString().replace(/[-:.TZ]/g, '').slice(0, 14);
-    const normalizedType = type.replace(/[^a-z0-9]+/gi, '-').toUpperCase();
-    const normalizedUser = authUserId.replace(/[^a-z0-9]+/gi, '').slice(-6).toUpperCase() || 'USER';
-
-    return `NTF-${normalizedType}-${normalizedUser}-${compactTimestamp}`;
 };
 
 const toPlainObject = (document) => document?.toObject ? document.toObject() : document;
