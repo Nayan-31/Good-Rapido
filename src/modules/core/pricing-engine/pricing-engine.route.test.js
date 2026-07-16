@@ -164,6 +164,7 @@ describe('core pricing engine routes', () => {
         expect(response.statusCode).toBe(200);
         expect(response.body.data.quote.vehicleType).toBe(FARE_VEHICLE_TYPES.BIKE);
         expect(response.body.data.quote.breakdown.totalFare).toBeGreaterThan(0);
+        expect(response.body.data.quote.route.quality.score).toBeGreaterThan(0);
         expect(response.body.data.quote.pricingRule.source).toBe(PRICING_ENGINE_RULE_SOURCES.BASELINE);
         expect(response.body.data.quote.alternativePickups).toHaveLength(2);
         expect(dependencies.pricingEngineDao.findActivePricingRule).toHaveBeenCalledWith({

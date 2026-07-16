@@ -29,6 +29,7 @@ export const toPricingEngineQuote = (quote = {}) => ({
     dropoff: toLocation(quote.dropoff),
     distanceKm: numberOrZero(quote.distanceKm),
     durationMinutes: numberOrZero(quote.durationMinutes),
+    route: toRouteSnapshot(quote.route),
     pricingRule: toPricingRuleSnapshot(quote.pricingRule),
     breakdown: toBreakdown(quote.breakdown),
     surge: toSurge(quote.surge),
@@ -89,6 +90,26 @@ const toPricingRuleSnapshot = (rule = {}) => ({
     effectiveFrom: rule.effectiveFrom || null,
     effectiveUntil: rule.effectiveUntil || null
 });
+
+const toRouteSnapshot = (route = null) => {
+    if (!route) {
+        return null;
+    }
+
+    return {
+        providerSource: route.providerSource || null,
+        routePreference: route.routePreference || null,
+        traffic: {
+            level: route.traffic?.level || null,
+            multiplier: numberOrZero(route.traffic?.multiplier)
+        },
+        quality: {
+            score: numberOrZero(route.quality?.score),
+            level: route.quality?.level || null,
+            routeAccuracyScore: numberOrZero(route.quality?.routeAccuracyScore)
+        }
+    };
+};
 
 const toBreakdown = (breakdown = {}) => ({
     currency: breakdown.currency || FARE_CURRENCY,
