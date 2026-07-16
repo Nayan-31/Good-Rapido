@@ -45,7 +45,10 @@ export const toPublicDriverOption = (driver) => ({
     reliabilityScore: numberOrZero(driver.reliabilityScore),
     cancellationRiskScore: numberOrZero(driver.cancellationRiskScore),
     cancellationRiskLevel: driver.cancellationRiskLevel,
-    completedRides: numberOrZero(driver.completedRides)
+    completedRides: numberOrZero(driver.completedRides),
+    matchRank: numberOrZero(driver.matchRank),
+    matchScore: numberOrZero(driver.matchScore),
+    matchReasons: driver.matchReasons || []
 });
 
 export const toPublicRideSearch = ({ fareEstimate, driverOptions, trustSummary }) => ({

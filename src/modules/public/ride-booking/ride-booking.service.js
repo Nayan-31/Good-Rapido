@@ -1,4 +1,5 @@
 import { toPublicFareEstimate } from '../fare/dto/fare.dto.js';
+import { buildDriverMatches } from '../../core/matching-engine/matching-engine.engine.js';
 import { buildSuccessResponse } from '../../../shared/utils/apiResponse.js';
 import AppError from '../../../shared/utils/appError.js';
 import {
@@ -22,7 +23,7 @@ export default class RideBookingService {
         const { userId, role } = this.assertAuthContext(authContext);
         const fareEstimate = await this.findUsableFareEstimate(payload.fareEstimateId, userId, role);
         const fareEstimateObject = toPlainObject(fareEstimate);
-        const driverOptions = this.findDriverOptions(fareEstimateObject.vehicleType, payload.limit);
+        const driverOptions = this.findDriverOptions(fareEstimateObject.vehicleType, payload.limit, fareEstimateObject);
 
         return buildSuccessResponse({
             message: 'Ride search completed successfully',
@@ -40,7 +41,7 @@ export default class RideBookingService {
         const { userId, role } = this.assertAuthContext(authContext);
         const fareEstimate = await this.findUsableFareEstimate(payload.fareEstimateId, userId, role);
         const fareEstimateObject = toPlainObject(fareEstimate);
-        const selectedDriver = this.resolveDriver(fareEstimateObject.vehicleType, payload.selectedDriverId);
+        const selectedDriver = this.resolveDriver(fareEstimateObject.vehicleType, payload.selectedDriverId, fareEstimateObject);
         const booking = await this.bookingDao.create({
             bookingCode: createBookingCode(),
             authUserId: userId,
@@ -63,7 +64,7 @@ export default class RideBookingService {
             message: 'Ride booking created successfully',
             data: {
                 booking: toPublicRideBooking(booking),
-                driverOptions: this.findDriverOptions(fareEstimateObject.vehicleType, 3).map(toPublicDriverOption)
+                driverOptions: this.findDriverOptions(fareEstimateObject.vehicleType, 3, fareEstimateObject).map(toPublicDriverOption)
             }
         });
     }
@@ -88,7 +89,7 @@ export default class RideBookingService {
         const { userId, role } = this.assertAuthContext(authContext);
         const booking = await this.getMutableBooking(bookingId, userId, role);
         const bookingObject = toPlainObject(booking);
-        const selectedDriver = this.resolveDriver(bookingObject.vehicleType, driverId);
+        const selectedDriver = this.resolveDriver(bookingObject.vehicleType, driverId, bookingObject);
         const updatedBooking = await this.bookingDao.updateSelectedDriver(
             bookingId,
             userId,
@@ -200,21 +201,17 @@ export default class RideBookingService {
         return booking;
     }
 
-    findDriverOptions(vehicleType, limit = 3) {
-        return RIDE_BOOKING_DRIVER_POOL
-            .filter((driver) => driver.vehicleType === vehicleType)
-            .sort((first, second) => {
-                if (second.trustScore !== first.trustScore) {
-                    return second.trustScore - first.trustScore;
-                }
-
-                return first.etaMinutes - second.etaMinutes;
-            })
-            .slice(0, limit);
+    findDriverOptions(vehicleType, limit = 3, rideContext = {}) {
+        return buildDriverMatches({
+            pickup: rideContext.pickup,
+            vehicleType,
+            drivers: RIDE_BOOKING_DRIVER_POOL,
+            limit
+        }).matches;
     }
 
-    resolveDriver(vehicleType, driverId) {
-        const options = this.findDriverOptions(vehicleType, 5);
+    resolveDriver(vehicleType, driverId, rideContext = {}) {
+        const options = this.findDriverOptions(vehicleType, 5, rideContext);
 
         if (!options.length) {
             throw AppError.notFound('No trusted drivers are currently available for this ride');
@@ -224,7 +221,7 @@ export default class RideBookingService {
             return options[0];
         }
 
-        const selectedDriver = options.find((driver) => driver.id === driverId);
+        const selectedDriver = options.find((driver) => driver.driverId === driverId || driver.id === driverId);
 
         if (!selectedDriver) {
             throw AppError.badRequest('Selected driver is not available for this fare estimate');
@@ -235,7 +232,7 @@ export default class RideBookingService {
 
     toSelectedDriverSnapshot(driver) {
         return {
-            driverId: driver.id,
+            driverId: driver.driverId || driver.id,
             fullName: driver.fullName,
             rating: driver.rating,
             vehicleName: driver.vehicleName,
