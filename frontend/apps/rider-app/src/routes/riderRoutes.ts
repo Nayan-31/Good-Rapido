@@ -1,4 +1,4 @@
-export type RiderRouteId = "home" | "estimate" | "confirm" | "history" | "safety" | "profile";
+export type RiderRouteId = "home" | "estimate" | "confirm" | "history" | "safety" | "profile" | "identity";
 
 export interface RiderRoute {
   id: RiderRouteId;
@@ -50,6 +50,13 @@ export const riderRoutes = [
     title: "Profile",
     navLabel: "Profile",
     showInBottomNav: true
+  },
+  {
+    id: "identity",
+    path: "/identity",
+    title: "Identity Verification",
+    navLabel: "Identity",
+    showInBottomNav: false
   }
 ] as const satisfies readonly RiderRoute[];
 
