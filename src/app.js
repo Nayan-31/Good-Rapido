@@ -20,6 +20,7 @@ import pricingEngineRoutes from './modules/core/pricing-engine/pricing-engine.ro
 import matchingEngineRoutes from './modules/core/matching-engine/matching-engine.route.js';
 import trustEngineRoutes from './modules/core/trust-engine/trust-engine.route.js';
 import routeEngineRoutes from './modules/core/route-engine/route-engine.route.js';
+import fraudEngineRoutes from './modules/core/fraud-engine/fraud-engine.route.js';
 import privateAuthRoutes from './modules/private/auth/auth.route.js';
 import privateAdminRoutes from './modules/private/admin/admin.route.js';
 import privateAnalyticsRoutes from './modules/private/analytics/analytics.route.js';
@@ -70,6 +71,7 @@ export default function createApp() {
     app.use('/api/v1/core/matching-engine', matchingEngineRoutes);
     app.use('/api/v1/core/trust-engine', trustEngineRoutes);
     app.use('/api/v1/core/route-engine', routeEngineRoutes);
+    app.use('/api/v1/core/fraud-engine', fraudEngineRoutes);
     app.use('/api/v1/private/auth', privateAuthRoutes);
     app.use('/api/v1/private/admin', privateAdminRoutes);
     app.use('/api/v1/private/analytics', privateAnalyticsRoutes);
