@@ -1,0 +1,96 @@
+.root {
+  min-height: 100vh;
+  background: #f4f7fb;
+  color: #0b1f33;
+}
+
+.main {
+  width: min(100% - 32px, 560px);
+  margin: 0 auto;
+  padding: 32px 0 48px;
+}
+
+.hero {
+  display: grid;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.eyebrow {
+  margin: 0 0 6px;
+  color: #6b778d;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 0;
+  font-size: 28px;
+  line-height: 1.1;
+}
+
+.copy {
+  margin: 0;
+  color: #526072;
+  line-height: 1.5;
+}
+
+.tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 6px;
+  border: 1px solid #dce4ef;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.tab,
+.selectedTab {
+  min-height: 42px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #6b778d;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.selectedTab {
+  background: #5be1cf;
+  color: #06253b;
+}
+
+.form {
+  display: grid;
+  gap: 16px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.actions {
+  display: grid;
+  gap: 10px;
+}
+
+@media (max-width: 640px) {
+  .main {
+    width: min(100% - 24px, 560px);
+    padding-top: 20px;
+  }
+
+  .title {
+    font-size: 24px;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

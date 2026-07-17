@@ -23,7 +23,7 @@ export class HttpClient {
   constructor(options: ApiClientOptions = {}) {
     this.baseUrl = options.baseUrl?.replace(/\/+$/, "") ?? "";
     this.defaultHeaders = options.defaultHeaders;
-    this.fetcher = options.fetcher ?? fetch;
+    this.fetcher = options.fetcher ?? ((input, init) => globalThis.fetch(input, init));
     this.getAccessToken = options.getAccessToken;
   }
 
