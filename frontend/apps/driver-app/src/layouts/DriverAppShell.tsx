@@ -6,13 +6,24 @@ import styles from "./DriverAppShell.module.css";
 
 export interface DriverAppShellProps {
   activeRoute: DriverRoute;
+  isAuthenticated?: boolean;
+  userName?: string | null;
   onNavigate: (routeId: DriverRouteId) => void;
+  onSignOut?: () => void;
   children?: ReactNode;
 }
 
-export function DriverAppShell({ activeRoute, onNavigate, children }: DriverAppShellProps) {
+export function DriverAppShell({
+  activeRoute,
+  isAuthenticated = false,
+  userName,
+  onNavigate,
+  onSignOut,
+  children
+}: DriverAppShellProps) {
   const activeNavId = activeRoute.showInBottomNav ? activeRoute.id : "availability";
   const activeStep = driverRoutes.findIndex((route) => route.id === activeRoute.id) + 1;
+  const driverInitials = resolveInitials(userName);
 
   return (
     <div className={styles.shell}>
@@ -40,11 +51,24 @@ export function DriverAppShell({ activeRoute, onNavigate, children }: DriverAppS
           ))}
         </nav>
         <div className={styles.headerActions}>
-          <Button size="sm" variant="mint" type="button" onClick={() => onNavigate("availability")}>
-            Go online
-          </Button>
+          {isAuthenticated ? (
+            <>
+              <Button size="sm" variant="mint" type="button" onClick={() => onNavigate("availability")}>
+                Go online
+              </Button>
+              {onSignOut ? (
+                <Button size="sm" variant="ghost" type="button" onClick={onSignOut}>
+                  Logout
+                </Button>
+              ) : null}
+            </>
+          ) : (
+            <Button size="sm" variant="secondary" type="button" onClick={() => onNavigate("auth")}>
+              Login
+            </Button>
+          )}
           <span className={styles.avatar} aria-hidden="true">
-            DR
+            {driverInitials}
           </span>
         </div>
       </header>
@@ -72,3 +96,18 @@ export function DriverAppShell({ activeRoute, onNavigate, children }: DriverAppS
     </div>
   );
 }
+
+const resolveInitials = (name?: string | null) => {
+  if (!name) {
+    return "DR";
+  }
+
+  const initials = name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("");
+
+  return initials || "DR";
+};
