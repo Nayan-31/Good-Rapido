@@ -21,52 +21,45 @@ export function BookingHomeScreen() {
 
   return (
     <section className={styles.root}>
-      <div className={styles.mapPanel} aria-hidden="true">
-        <div className={styles.routeLine} />
-        <span className={styles.pickupPin} />
-        <span className={styles.dropoffPin} />
-        <div className={styles.badges}>
-          <Badge tone="trust">Fair Price Score: 98%</Badge>
-          <Badge tone="info">Accuracy: 95%</Badge>
-          <Badge tone="success">Low Cancellation</Badge>
-        </div>
-      </div>
-
-      <Card className={styles.bookingCard}>
-        <div className={styles.sectionHeader}>
-          <div>
-            <p className={styles.eyebrow}>Book Ride</p>
-            <h2>Choose pickup, dropoff, and ride type</h2>
-          </div>
-          <Badge tone="trust">Transparent Fare</Badge>
+      <aside className={styles.sidePanel}>
+        <div className={styles.panelHeader}>
+          <p className={styles.kicker}>Where to?</p>
+          <h2>Book a transparent ride</h2>
         </div>
 
-        <LocationFields
-          label="Pickup"
-          value={form.pickup}
-          errors={errors.pickup}
-          onChange={(patch) => updateLocation("pickup", patch)}
-        />
-        <LocationFields
-          label="Dropoff"
-          value={form.dropoff}
-          errors={errors.dropoff}
-          onChange={(patch) => updateLocation("dropoff", patch)}
-        />
-
-        <TextField
-          label="Passengers"
-          type="number"
-          min={1}
-          max={6}
-          value={form.passengers}
-          error={errors.passengers}
-          onChange={(event) => updatePassengers(event.target.value)}
-        />
+        <div className={styles.fieldStack}>
+          <LocationFields
+            label="Pickup"
+            value={form.pickup}
+            errors={errors.pickup}
+            onChange={(patch) => updateLocation("pickup", patch)}
+          />
+          <LocationFields
+            label="Dropoff"
+            value={form.dropoff}
+            errors={errors.dropoff}
+            onChange={(patch) => updateLocation("dropoff", patch)}
+          />
+          <details className={styles.advancedFields}>
+            <summary>Ride details</summary>
+            <TextField
+              label="Passengers"
+              type="number"
+              min={1}
+              max={6}
+              value={form.passengers}
+              error={errors.passengers}
+              onChange={(event) => updatePassengers(event.target.value)}
+            />
+          </details>
+        </div>
 
         <div className={styles.vehicleSection}>
-          <p className={styles.eyebrow}>Choose Your Ride</p>
-          <div className={styles.vehicleGrid}>
+          <div className={styles.sectionHeader}>
+            <p className={styles.eyebrow}>Available Rides</p>
+            <Badge tone="trust" size="sm">Live</Badge>
+          </div>
+          <div className={styles.vehicleList}>
             {VEHICLE_OPTIONS.map((vehicle) => (
               <VehicleOption
                 key={vehicle.type}
@@ -75,6 +68,8 @@ export function BookingHomeScreen() {
                 eta={vehicle.eta}
                 capacity={vehicle.capacity}
                 description={vehicle.description}
+                displayPrice={vehicle.displayPrice}
+                iconLabel={vehicle.iconLabel}
                 isSelected={form.vehicleType === vehicle.type}
                 onSelect={selectVehicle}
               />
@@ -82,36 +77,61 @@ export function BookingHomeScreen() {
           </div>
         </div>
 
-        <Button fullWidth isLoading={isEstimating} onClick={() => void createEstimate()}>
-          Get Fare Estimate
-        </Button>
-      </Card>
-
-      {message ? (
-        <Alert tone={estimate ? "trust" : "danger"} title={estimate ? "Estimate Ready" : "Estimate Failed"}>
-          {message}
-        </Alert>
-      ) : null}
-
-      {estimate ? (
-        <Card className={styles.estimateCard} variant="navy">
-          <div className={styles.estimateHeader}>
-            <div>
-              <p className={styles.eyebrow}>Estimated Total</p>
-              <strong>{formatCurrency(estimate.breakdown.totalFare, estimate.breakdown.currency)}</strong>
-            </div>
-            <Badge tone="trust">{estimate.confidence.level ?? "stable"}</Badge>
+        <Card className={styles.trustCard} variant="mint">
+          <div>
+            <p className={styles.eyebrow}>Trust Assurance</p>
+            <strong>98% Positive</strong>
           </div>
-          <div className={styles.metrics}>
-            <MetricCard label="Distance" value={`${estimate.distanceKm} km`} />
-            <MetricCard label="ETA" value={`${estimate.durationMinutes} min`} />
-            <MetricCard label="Surge" value={`${estimate.surge.multiplier}x`} />
-          </div>
-          {estimate.surge.reason ? (
-            <p className={styles.estimateNote}>{estimate.surge.reason}</p>
-          ) : null}
+          <span>No surge pricing currently. Drivers are rated 4.8+ stars.</span>
         </Card>
-      ) : null}
+
+        <div className={styles.panelFooter}>
+          <Button fullWidth isLoading={isEstimating} onClick={() => void createEstimate()}>
+            Estimate Fare
+          </Button>
+          {message ? (
+            <Alert tone={estimate ? "trust" : "danger"} title={estimate ? "Estimate Ready" : "Estimate Failed"}>
+              {message}
+            </Alert>
+          ) : null}
+        </div>
+
+        {estimate ? (
+          <Card className={styles.estimateCard} variant="navy">
+            <div className={styles.estimateHeader}>
+              <div>
+                <p className={styles.eyebrow}>Estimated Total</p>
+                <strong>{formatCurrency(estimate.breakdown.totalFare, estimate.breakdown.currency)}</strong>
+              </div>
+              <Badge tone="trust">{estimate.confidence.level ?? "stable"}</Badge>
+            </div>
+            <div className={styles.metrics}>
+              <MetricCard label="Distance" value={`${estimate.distanceKm} km`} />
+              <MetricCard label="ETA" value={`${estimate.durationMinutes} min`} />
+              <MetricCard label="Surge" value={`${estimate.surge.multiplier}x`} />
+            </div>
+            {estimate.surge.reason ? (
+              <p className={styles.estimateNote}>{estimate.surge.reason}</p>
+            ) : null}
+          </Card>
+        ) : null}
+      </aside>
+
+      <div className={styles.mapScene} aria-hidden="true">
+        <div className={styles.trustPills}>
+          <span><b>Trust Score</b> 98% Positive</span>
+          <span><b>Route Accuracy</b> 100% Reliable</span>
+          <span><b>Cancellation</b> Ultra Low</span>
+        </div>
+        <div className={styles.routePath}>
+          <span className={styles.routeSegmentOne} />
+          <span className={styles.routeSegmentTwo} />
+          <span className={styles.routeSegmentThree} />
+        </div>
+        <span className={styles.pickupPin}>Pickup</span>
+        <span className={styles.dropoffPin}>Dropoff</span>
+        <div className={styles.helpBubble}>Need Help?</div>
+      </div>
     </section>
   );
 }
@@ -131,20 +151,23 @@ function LocationFields({ label, value, errors, onChange }: LocationFieldsProps)
         value={value.address}
         onChange={(event) => onChange({ address: event.target.value })}
       />
-      <div className={styles.coordinateGrid}>
-        <TextField
-          label="Latitude"
-          value={value.latitude}
-          error={errors?.latitude}
-          onChange={(event) => onChange({ latitude: event.target.value })}
-        />
-        <TextField
-          label="Longitude"
-          value={value.longitude}
-          error={errors?.longitude}
-          onChange={(event) => onChange({ longitude: event.target.value })}
-        />
-      </div>
+      <details className={styles.coordinateDetails}>
+        <summary>Coordinates</summary>
+        <div className={styles.coordinateGrid}>
+          <TextField
+            label="Latitude"
+            value={value.latitude}
+            error={errors?.latitude}
+            onChange={(event) => onChange({ latitude: event.target.value })}
+          />
+          <TextField
+            label="Longitude"
+            value={value.longitude}
+            error={errors?.longitude}
+            onChange={(event) => onChange({ longitude: event.target.value })}
+          />
+        </div>
+      </details>
     </div>
   );
 }
@@ -155,11 +178,13 @@ interface VehicleOptionProps {
   eta: string;
   capacity: string;
   description: string;
+  displayPrice: string;
+  iconLabel: string;
   isSelected: boolean;
   onSelect: (vehicleType: VehicleType) => void;
 }
 
-function VehicleOption({ type, label, eta, capacity, description, isSelected, onSelect }: VehicleOptionProps) {
+function VehicleOption({ type, label, eta, capacity, description, displayPrice, iconLabel, isSelected, onSelect }: VehicleOptionProps) {
   return (
     <button
       className={isSelected ? `${styles.vehicleOption} ${styles.selectedVehicle}` : styles.vehicleOption}
@@ -167,10 +192,13 @@ function VehicleOption({ type, label, eta, capacity, description, isSelected, on
       aria-pressed={isSelected}
       onClick={() => onSelect(type)}
     >
-      <span>{label}</span>
-      <strong>{eta}</strong>
-      <em>{capacity}</em>
-      <small>{description}</small>
+      <span className={styles.vehicleIcon}>{iconLabel}</span>
+      <span className={styles.vehicleCopy}>
+        <strong>{label}</strong>
+        <small>{eta} away • {description}</small>
+        <em>{capacity}</em>
+      </span>
+      <b>{displayPrice}</b>
     </button>
   );
 }

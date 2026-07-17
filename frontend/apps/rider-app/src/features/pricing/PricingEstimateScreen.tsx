@@ -1,4 +1,4 @@
-import { Alert, Badge, Button, Card, MetricCard, ProgressBar } from "@good-rapido/ui";
+import { Alert, Badge, Button, Card, ProgressBar } from "@good-rapido/ui";
 
 import { usePricingEstimate } from "./usePricingEstimate";
 import { formatCurrency, formatVehicleType } from "./pricing.utils";
@@ -9,7 +9,7 @@ export function PricingEstimateScreen() {
 
   if (!draft?.form) {
     return (
-      <section className={styles.root}>
+      <section className={styles.emptyRoot}>
         <Alert
           tone="warning"
           title="Start With Pickup"
@@ -27,103 +27,96 @@ export function PricingEstimateScreen() {
 
   return (
     <section className={styles.root}>
-      <Card className={styles.hero} variant="navy">
-        <div className={styles.heroHeader}>
+      <div className={styles.mapPane} aria-hidden="true">
+        <span className={styles.routeLineOne} />
+        <span className={styles.routeLineTwo} />
+        <span className={styles.routeLineThree} />
+        <span className={styles.pickupMarker}>Pickup</span>
+        <span className={styles.dropoffMarker}>Drop-off</span>
+        <Card className={styles.routeCard}>
+          <h3>Fastest Route</h3>
+          <p>
+            Traffic is lighter than usual. Estimated travel time:{" "}
+            {quote?.durationMinutes ?? draft.fareEstimate?.durationMinutes ?? 42} mins.
+          </p>
+          <ProgressBar value={quote?.route?.quality?.score ?? 75} label="Route clarity" />
+          <strong>{quote?.route?.quality?.score ?? 75}% Clear</strong>
+        </Card>
+      </div>
+
+      <aside className={styles.farePanel}>
+        <div className={styles.panelTop}>
           <div>
             <p className={styles.eyebrow}>Estimated Total</p>
             <strong>{quote ? formatCurrency(quote.breakdown.totalFare, quote.breakdown.currency) : "Calculating"}</strong>
+            <span>Calculated for {formatVehicleType(quote?.vehicleType ?? draft.form.vehicleType)}</span>
           </div>
           <Badge tone={quote?.guidance.highSurge ? "danger" : "trust"}>
-            {quote?.surge.level ?? "Stable"}
+            {quote?.confidence.level ? `${quote.confidence.level} Confidence` : "High Confidence"}
           </Badge>
         </div>
-        <ProgressBar value={quote?.confidence.score ?? 0} label="Fare Confidence" showValue />
-        <p className={styles.heroNote}>{quote?.guidance.nextAction ?? "Pricing engine is preparing a transparent quote."}</p>
-      </Card>
 
-      {message ? (
-        <Alert tone={quote ? "trust" : "danger"} title={quote ? "Pricing Ready" : "Pricing Unavailable"}>
-          {message}
-        </Alert>
-      ) : null}
+        {message ? (
+          <Alert tone={quote ? "trust" : "danger"} title={quote ? "Pricing Ready" : "Pricing Unavailable"}>
+            {message}
+          </Alert>
+        ) : null}
 
-      {quote ? (
-        <>
-          <div className={styles.metrics}>
-            <MetricCard label="Vehicle" value={formatVehicleType(quote.vehicleType)} />
-            <MetricCard label="Distance" value={`${quote.distanceKm} km`} />
-            <MetricCard label="ETA" value={`${quote.durationMinutes} min`} />
-          </div>
-
-          <Card className={styles.section}>
-            <div className={styles.sectionHeader}>
-              <div>
-                <p className={styles.eyebrow}>Surge Transparency</p>
-                <h3>{quote.surge.multiplier}x Multiplier</h3>
+        {quote ? (
+          <>
+            <Card className={styles.breakdownCard}>
+              <div className={styles.sectionHeader}>
+                <h3>Detailed Breakdown</h3>
+                <Badge tone={quote.guidance.highSurge ? "danger" : "trust"}>{quote.surge.level ?? "stable"}</Badge>
               </div>
-              <Badge tone={quote.guidance.highSurge ? "danger" : "success"}>{quote.surge.level ?? "normal"}</Badge>
-            </div>
-            <p className={styles.copy}>{quote.surge.reason ?? "Demand and driver availability are normal."}</p>
-            {quote.confidence.factors.length ? (
-              <ul className={styles.factorList}>
-                {quote.confidence.factors.map((factor) => (
-                  <li key={factor}>{factor}</li>
-                ))}
-              </ul>
-            ) : null}
-          </Card>
-
-          <Card className={styles.section}>
-            <div className={styles.sectionHeader}>
-              <div>
-                <p className={styles.eyebrow}>Detailed Breakdown</p>
-                <h3>{formatCurrency(quote.breakdown.totalFare, quote.breakdown.currency)}</h3>
-              </div>
-              <Badge tone="navy">{quote.confidence.level ?? "confidence"}</Badge>
-            </div>
-            <dl className={styles.breakdown}>
-              <BreakdownRow label="Base fare" value={quote.breakdown.baseFare} currency={quote.breakdown.currency} />
-              <BreakdownRow label="Distance fare" value={quote.breakdown.distanceFare} currency={quote.breakdown.currency} />
-              <BreakdownRow label="Time fare" value={quote.breakdown.timeFare} currency={quote.breakdown.currency} />
-              <BreakdownRow label="Minimum adjustment" value={quote.breakdown.minFareAdjustment} currency={quote.breakdown.currency} />
-              <BreakdownRow label="Surge fare" value={quote.breakdown.surgeFare} currency={quote.breakdown.currency} tone="danger" />
-              <BreakdownRow label="Platform fee" value={quote.breakdown.platformFee} currency={quote.breakdown.currency} />
-              <BreakdownRow label="Tax" value={quote.breakdown.taxes} currency={quote.breakdown.currency} />
-            </dl>
-          </Card>
-
-          {quote.alternativePickups.length ? (
-            <Card className={styles.section} variant="mint">
-              <p className={styles.eyebrow}>Smart Pickup Tips</p>
-              <div className={styles.alternatives}>
-                {quote.alternativePickups.map((alternative) => (
-                  <div key={`${alternative.label}-${alternative.walkingDistanceMeters}`} className={styles.alternative}>
-                    <strong>{alternative.label}</strong>
-                    <span>
-                      Walk {alternative.walkingDistanceMeters}m and save{" "}
-                      {formatCurrency(alternative.estimatedSavings, quote.breakdown.currency)}
-                    </span>
-                    <small>{alternative.reason}</small>
-                  </div>
-                ))}
-              </div>
+              <dl className={styles.breakdown}>
+                <BreakdownRow label="Base Fare" value={quote.breakdown.baseFare} currency={quote.breakdown.currency} />
+                <BreakdownRow label={`Distance (${quote.distanceKm} km)`} value={quote.breakdown.distanceFare} currency={quote.breakdown.currency} />
+                <BreakdownRow label={`Time (${quote.durationMinutes} mins)`} value={quote.breakdown.timeFare} currency={quote.breakdown.currency} />
+                <BreakdownRow label={`Surge Pricing (${quote.surge.multiplier}x)`} value={quote.breakdown.surgeFare} currency={quote.breakdown.currency} tone="danger" />
+                <BreakdownRow label="Platform Fee" value={quote.breakdown.platformFee} currency={quote.breakdown.currency} />
+                <BreakdownRow label="Taxes & GST" value={quote.breakdown.taxes} currency={quote.breakdown.currency} />
+              </dl>
             </Card>
-          ) : null}
 
-          <div className={styles.actions}>
-            <Button variant="secondary" onClick={() => void loadQuote()} isLoading={isLoading}>
-              Refresh Quote
-            </Button>
-            <Button onClick={continueToConfirm}>Continue To Confirm</Button>
-          </div>
-        </>
-      ) : (
-        <Card className={styles.section}>
-          <Button fullWidth isLoading={isLoading} onClick={() => void loadQuote()}>
+            <Card className={styles.savingTip} variant="mint">
+              <div>
+                <p className={styles.eyebrow}>Smart Saving Tip</p>
+                <strong>{quote.alternativePickups[0]?.label ?? "Switch pickup nearby"}</strong>
+              </div>
+              <p>
+                Moving your pickup point {quote.alternativePickups[0]?.walkingDistanceMeters ?? 200}m could save you{" "}
+                {formatCurrency(quote.alternativePickups[0]?.estimatedSavings ?? 0, quote.breakdown.currency)} on surge pricing.
+              </p>
+              <button type="button">Switch Location</button>
+            </Card>
+
+            <div className={styles.contextBlock}>
+              <div className={styles.sectionHeader}>
+                <h3>Fare Context</h3>
+                <Badge tone={quote.guidance.highSurge ? "danger" : "trust"}>
+                  {quote.guidance.highSurge ? "Higher due to surge" : "Stable"}
+                </Badge>
+              </div>
+              <FareContextChart />
+            </div>
+
+            <div className={styles.actions}>
+              <Button variant="secondary" onClick={() => void loadQuote()} isLoading={isLoading}>
+                Lock Fare
+              </Button>
+              <Button onClick={continueToConfirm}>Book Ride</Button>
+            </div>
+          </>
+        ) : (
+          <Card className={styles.loadingCard}>
+            <p>{draft.form.pickup.address} to {draft.form.dropoff.address}</p>
+            <Button fullWidth isLoading={isLoading} onClick={() => void loadQuote()}>
             Calculate Fare Estimate
-          </Button>
-        </Card>
-      )}
+            </Button>
+          </Card>
+        )}
+      </aside>
     </section>
   );
 }
@@ -143,6 +136,20 @@ function BreakdownRow({
     <div className={tone === "danger" ? styles.dangerRow : undefined}>
       <dt>{label}</dt>
       <dd>{formatCurrency(value, currency)}</dd>
+    </div>
+  );
+}
+
+function FareContextChart() {
+  return (
+    <div className={styles.chart} aria-hidden="true">
+      <span />
+      <span />
+      <span />
+      <span />
+      <span className={styles.currentBar} />
+      <span />
+      <span />
     </div>
   );
 }

@@ -6,34 +6,44 @@ export const VEHICLE_OPTIONS: Array<{
   eta: string;
   capacity: string;
   description: string;
+  displayPrice: string;
+  iconLabel: string;
 }> = [
   {
     type: "bike",
     label: "Bike",
     eta: "2 min",
     capacity: "1 rider",
-    description: "Fastest pickup"
+    description: "Quickest",
+    displayPrice: "₹45",
+    iconLabel: "B"
   },
   {
     type: "auto",
     label: "Auto",
     eta: "4 min",
     capacity: "3 seats",
-    description: "Everyday city ride"
+    description: "Reliable",
+    displayPrice: "₹82",
+    iconLabel: "A"
   },
   {
     type: "cab_economy",
     label: "Economy Cab",
     eta: "6 min",
     capacity: "4 seats",
-    description: "Comfortable ride"
+    description: "AC Sedans",
+    displayPrice: "₹156",
+    iconLabel: "E"
   },
   {
     type: "cab_premium",
     label: "Premium Cab",
     eta: "8 min",
     capacity: "6 seats",
-    description: "More space"
+    description: "Top Drivers",
+    displayPrice: "₹240",
+    iconLabel: "P"
   }
 ];
 
