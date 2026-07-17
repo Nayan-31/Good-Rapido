@@ -10,8 +10,11 @@
   ],
   "scripts": {
     "dev:rider": "npm --workspace @good-rapido/rider-app run dev",
+    "dev:driver": "npm --workspace @good-rapido/driver-app run dev",
     "build:rider": "npm --workspace @good-rapido/rider-app run build",
+    "build:driver": "npm --workspace @good-rapido/driver-app run build",
     "typecheck:rider": "npm --workspace @good-rapido/rider-app run typecheck",
+    "typecheck:driver": "npm --workspace @good-rapido/driver-app run typecheck",
     "typecheck:api-client": "npm --workspace @good-rapido/api-client run typecheck"
   }
 }
