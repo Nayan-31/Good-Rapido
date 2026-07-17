@@ -1,47 +1,74 @@
-# Driver App Skeleton
+# Good Rapido Driver App
 
-## Purpose
+The driver app is the operational app for drivers. It focuses on authentication, onboarding, availability, ride execution, earnings clarity, trust improvement, and support.
 
-The driver app is the operational app for drivers. It should focus on availability, ride execution, earnings clarity, compliance, and trust improvement.
+Current status: in progress. The app shell, routing, feature structure, and real auth flow are implemented. The rest of the screens are UI-first and use hardcoded values until their backend services are connected.
 
-This folder currently contains the skeleton only. Screens and business logic should be added feature by feature after the rider MVP is stable.
+## What Is Real Now
 
-## Physical Structure
+- Driver registration.
+- Driver login.
+- JWT access and refresh token storage.
+- Session restore.
+- Logout.
+- Route protection based on auth state.
+- Header initials from the authenticated driver name.
+
+Backend module used now:
+
+```text
+server/src/modules/private/auth
+```
+
+MongoDB collection used now:
+
+```text
+private_auth_users
+```
+
+## What Is UI-First Now
+
+- Onboarding.
+- Availability dashboard.
+- Ride requests.
+- Active ride.
+- Earnings.
+- Trust dashboard.
+- Notifications.
+- Profile.
+- Support.
+
+These screens are present for flow and design direction, but their data is not fully backend-bound yet.
+
+## Structure
 
 ```text
 driver-app/
-└── src/
-    ├── app/
-    ├── assets/
-    ├── components/
-    ├── config/
-    ├── constants/
-    ├── features/
-    │   ├── auth/
-    │   ├── onboarding/
-    │   ├── availability/
-    │   ├── ride-requests/
-    │   ├── active-ride/
-    │   ├── earnings/
-    │   ├── trust/
-    │   ├── notifications/
-    │   ├── profile/
-    │   └── support/
-    ├── hooks/
-    ├── layouts/
-    ├── lib/
-    ├── routes/
-    ├── services/
-    ├── store/
-    ├── styles/
-    ├── types/
-    └── utils/
++-- src/
+    +-- app/
+    +-- components/
+    +-- features/
+    |   +-- auth/
+    |   +-- onboarding/
+    |   +-- availability/
+    |   +-- ride-requests/
+    |   +-- active-ride/
+    |   +-- earnings/
+    |   +-- trust/
+    |   +-- notifications/
+    |   +-- profile/
+    |   +-- support/
+    +-- layouts/
+    +-- routes/
+    +-- services/
+    +-- styles/
+    +-- types/
 ```
 
 ## Primary Driver Journey
 
 ```text
-Login
+Login or register
 -> restore session
 -> complete onboarding
 -> upload documents
@@ -61,146 +88,183 @@ Login
 
 ### auth
 
-- Driver login
-- Driver registration
-- Session restore
-- Token storage
-- Logout
+- Driver login.
+- Driver registration.
+- Session restore.
+- Token storage.
+- Logout.
 
-Backend modules:
+Backend module:
 
-- `private/auth`
+```text
+private/auth
+```
 
 ### onboarding
 
-- Driver profile setup
-- Document upload
-- Vehicle details
-- Approval status
-- Compliance blockers
+- Driver profile setup.
+- Document upload.
+- Vehicle details.
+- Approval status.
+- Compliance blockers.
 
-Backend modules:
+Backend modules to connect:
 
-- `private/driver`
-- `private/driver-documents`
-- `private/vehicle`
+```text
+private/driver
+private/driver-documents
+private/vehicle
+```
 
 ### availability
 
-- Online/offline toggle
-- Location sharing state
-- Active service zone
-- Availability warnings
+- Online/offline toggle.
+- Location sharing state.
+- Active service zone.
+- Availability warnings.
 
-Backend modules:
+Backend module to connect:
 
-- `private/driver-availability`
+```text
+private/driver-availability
+```
 
 ### ride-requests
 
-- Incoming ride request
-- Fare preview
-- Pickup route summary
-- Trust and cancellation guidance
-- Accept or decline actions
+- Incoming ride request.
+- Fare preview.
+- Pickup route summary.
+- Trust and cancellation guidance.
+- Accept or decline actions.
 
-Backend modules:
+Backend modules to connect:
 
-- `private/ride-ops`
-- `core/matching-engine`
-- `core/trust-engine`
+```text
+private/ride-ops
+core/matching-engine
+core/trust-engine
+```
 
 ### active-ride
 
-- Current ride state
-- Navigate to pickup
-- Mark arrived
-- Start ride
-- Complete ride
-- Route fairness and detour indicators
+- Current ride state.
+- Navigate to pickup.
+- Mark arrived.
+- Start ride.
+- Complete ride.
+- Route fairness and detour indicators.
 
-Backend modules:
+Backend modules to connect:
 
-- `private/ride-ops`
-- `core/ride-lifecycle`
-- `core/route-engine`
+```text
+private/ride-ops
+core/ride-lifecycle
+core/route-engine
+```
 
 ### earnings
 
-- Today's earnings
-- Ride earnings breakdown
-- Incentives
-- Deductions or penalties
-- Payout status
+- Today's earnings.
+- Ride earnings breakdown.
+- Incentives.
+- Deductions or penalties.
+- Payout status.
 
-Backend modules:
+Backend module to connect:
 
-- `private/earnings`
+```text
+private/earnings
+```
 
 ### trust
 
-- Driver trust score
-- Cancellation score
-- Route fairness score
-- Improvement tips
+- Driver trust score.
+- Cancellation score.
+- Route fairness score.
+- Improvement tips.
 
-Backend modules:
+Backend modules to connect:
 
-- `private/trust`
-- `core/trust-engine`
+```text
+private/trust
+core/trust-engine
+```
 
 ### notifications
 
-- Driver inbox
-- Ride alerts
-- Document approval alerts
-- Earnings and payout alerts
+- Driver inbox.
+- Ride alerts.
+- Document approval alerts.
+- Earnings and payout alerts.
 
-Backend modules:
+Backend modules to connect:
 
-- `private/notifications`
-- `core/notification-engine`
+```text
+private/notifications
+core/notification-engine
+```
 
 ### profile
 
-- Driver profile
-- Vehicle summary
-- Document status
-- Account settings
+- Driver profile.
+- Vehicle summary.
+- Document status.
+- Account settings.
 
-Backend modules:
+Backend modules to connect:
 
-- `private/driver`
-- `private/vehicle`
-- `private/driver-documents`
+```text
+private/driver
+private/vehicle
+private/driver-documents
+```
 
 ### support
 
-- Driver help center
-- Create support request
-- Track support tickets
+- Driver help center.
+- Create support request.
+- Track support tickets.
 
-Backend modules:
+Backend modules to connect:
 
-- `public/support`
-- `private/disputes`
+```text
+public/support
+private/disputes
+```
 
-## MVP Build Order
+## Run Locally
 
-1. Driver app Vite TypeScript setup
-2. Auth and session shell
-3. Onboarding and document status
-4. Availability dashboard
-5. Ride request accept/decline flow
-6. Active ride lifecycle controls
-7. Earnings dashboard
-8. Trust and profile screens
-9. Notifications and support
+From the frontend workspace:
 
-## Design Direction
+```bash
+npm run dev:driver
+```
 
-- Driver app should be mobile-first, but desktop-safe.
-- The first screen after login should show online status, today's earnings, approval status, and active ride/request.
-- Ride execution screens should be fast and action-focused.
-- Trust and compliance warnings should be visible before the driver goes online.
-- Earnings screens should explain gross fare, platform fee, incentives, deductions, and payout status clearly.
+If the backend is running on a custom port, run this from `frontend/apps/driver-app`:
+
+```bash
+VITE_API_BASE_URL=http://localhost:3001 npm run dev -- --host 0.0.0.0 --port 5174
+```
+
+## Verify
+
+```bash
+npm run typecheck
+npm run build
+```
+
+From the frontend workspace:
+
+```bash
+npm run typecheck:driver
+npm run build:driver
+```
+
+## Next Work
+
+- Connect availability API.
+- Connect onboarding, documents, and vehicle APIs.
+- Connect ride request accept/decline flow.
+- Connect active ride lifecycle actions.
+- Connect earnings and trust dashboards.
+- Replace hardcoded UI metrics with backend data.
