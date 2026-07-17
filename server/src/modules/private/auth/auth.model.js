@@ -76,12 +76,10 @@ const privateAuthUserSchema = new mongoose.Schema(
     }
 );
 
-privateAuthUserSchema.pre('validate', function applyDefaultPermissions(next) {
+privateAuthUserSchema.pre('validate', function applyDefaultPermissions() {
     if (!Array.isArray(this.permissions) || this.permissions.length === 0) {
         this.permissions = [...(DEFAULT_PRIVATE_ROLE_PERMISSIONS[this.role] || [])];
     }
-
-    next();
 });
 
 privateAuthUserSchema.index({ role: 1, phone: 1 }, { unique: true });
