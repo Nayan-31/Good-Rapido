@@ -1,7 +1,16 @@
 import dotenv from 'dotenv'
-dotenv.config({ quiet: process.env.NODE_ENV === 'test' })
+import { dirname, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import z from 'zod'
 import appConstant from '../shared/constant/app.constant.js'
+
+const currentDir = dirname(fileURLToPath(import.meta.url))
+const serverEnvPath = resolve(currentDir, '../../.env')
+const rootEnvPath = resolve(currentDir, '../../../.env')
+const quiet = process.env.NODE_ENV === 'test'
+
+dotenv.config({ path: rootEnvPath, quiet })
+dotenv.config({ path: serverEnvPath, override: true, quiet })
 
 const envSchema = z.object({
     PORT: z.coerce.number().default(appConstant.PORT),
