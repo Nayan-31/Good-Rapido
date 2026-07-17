@@ -9,12 +9,20 @@ import { RideRequestsScreen } from "@/features/ride-requests";
 import { SupportScreen } from "@/features/support";
 import { TrustScreen } from "@/features/trust";
 import type { DriverRoute } from "@/routes";
+import type { DriverLoginForm, DriverRegisterForm } from "@/features/auth";
 
 export interface DriverRouteOutletProps {
   route: DriverRoute;
+  auth: {
+    isRestoring: boolean;
+    onSignIn: (form: DriverLoginForm) => Promise<string>;
+    onRegister: (form: DriverRegisterForm) => Promise<string>;
+    onRestoreSession: () => Promise<string>;
+    onAuthenticated: (mode: "login" | "register") => void;
+  };
 }
 
-export function DriverRouteOutlet({ route }: DriverRouteOutletProps) {
+export function DriverRouteOutlet({ route, auth }: DriverRouteOutletProps) {
   if (route.id === "availability") {
     return <AvailabilityScreen />;
   }
@@ -48,7 +56,15 @@ export function DriverRouteOutlet({ route }: DriverRouteOutletProps) {
   }
 
   if (route.id === "auth") {
-    return <AuthScreen />;
+    return (
+      <AuthScreen
+        isRestoring={auth.isRestoring}
+        onAuthenticated={auth.onAuthenticated}
+        onRegister={auth.onRegister}
+        onRestoreSession={auth.onRestoreSession}
+        onSignIn={auth.onSignIn}
+      />
+    );
   }
 
   if (route.id === "support") {

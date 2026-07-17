@@ -1,32 +1,247 @@
-import { EmptyScreen } from "@/components";
+import { useState } from "react";
+import type { FormEvent } from "react";
 
-export function AuthScreen() {
+import { Alert, Badge, Button, TextField } from "@good-rapido/ui";
+import type { DriverLoginForm, DriverRegisterForm } from "./auth.types";
+import styles from "./AuthScreen.module.css";
+
+type AuthMode = "login" | "register";
+
+export interface AuthScreenProps {
+  onSignIn: (form: DriverLoginForm) => Promise<string>;
+  onRegister: (form: DriverRegisterForm) => Promise<string>;
+  onRestoreSession: () => Promise<string>;
+  onAuthenticated: (mode: AuthMode) => void;
+  isRestoring: boolean;
+}
+
+const defaultLoginForm: DriverLoginForm = {
+  identifier: "+919111111111",
+  password: "password123"
+};
+
+const defaultRegisterForm: DriverRegisterForm = {
+  fullName: "Amit Das",
+  email: "amit.driver@goodrapido.test",
+  phone: "+919111111111",
+  employeeCode: "DRV-001",
+  department: "driver_network",
+  serviceZone: "kolkata",
+  password: "password123"
+};
+
+export function AuthScreen({
+  onSignIn,
+  onRegister,
+  onRestoreSession,
+  onAuthenticated,
+  isRestoring
+}: AuthScreenProps) {
+  const [mode, setMode] = useState<AuthMode>("login");
+  const [loginForm, setLoginForm] = useState(defaultLoginForm);
+  const [registerForm, setRegisterForm] = useState(defaultRegisterForm);
+  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError(null);
+    setMessage(null);
+    setIsSubmitting(true);
+
+    try {
+      const nextMessage = mode === "login" ? await onSignIn(loginForm) : await onRegister(registerForm);
+      setMessage(nextMessage);
+      onAuthenticated(mode);
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : "Driver authentication failed");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleRestore = async () => {
+    setError(null);
+    setMessage(null);
+
+    try {
+      const nextMessage = await onRestoreSession();
+      setMessage(nextMessage);
+      onAuthenticated("login");
+    } catch (restoreError) {
+      setError(restoreError instanceof Error ? restoreError.message : "Driver session restore failed");
+    }
+  };
+
   return (
-    <EmptyScreen
-      eyebrow="Driver access"
-      title="Sign in to start your shift"
-      description="Amit Das is registered as a Kolkata driver partner with a verified bike profile."
-      badge="Step 01"
-      badgeTone="navy"
-      visualLabel="Secure driver access"
-      visualVariant="auth"
-      primaryAction="Send OTP"
-      secondaryAction="Restore session"
-      metrics={[
-        { label: "Phone", value: "+91 98xx xxx210", hint: "OTP login enabled", tone: "navy" },
-        { label: "Account", value: "Verified", hint: "Driver ID GRD-2048", tone: "good" },
-        { label: "Device", value: "Trusted", hint: "Last active 08:20 AM", tone: "good" }
-      ]}
-      panels={[
-        {
-          title: "Login checks",
-          items: [
-            { label: "Driver role", value: "Active", tone: "success" },
-            { label: "Token storage", value: "Ready", tone: "trust" },
-            { label: "Session restore", value: "Available", tone: "info" }
-          ]
-        }
-      ]}
-    />
+    <section className={styles.screen}>
+      <aside className={styles.hero}>
+        <Badge tone="navy">Step 01</Badge>
+        <p className={styles.eyebrow}>Driver access</p>
+        <h1>Sign in to start your shift</h1>
+        <p className={styles.copy}>Private driver APIs protect availability, ride execution, earnings, and trust data.</p>
+
+        <div className={styles.statusGrid}>
+          <div>
+            <span>Auth scope</span>
+            <strong>Private</strong>
+          </div>
+          <div>
+            <span>Role</span>
+            <strong>Driver</strong>
+          </div>
+          <div>
+            <span>Session</span>
+            <strong>{isRestoring ? "Restoring" : "Ready"}</strong>
+          </div>
+        </div>
+      </aside>
+
+      <section className={styles.formPanel}>
+        <div className={styles.tabs} aria-label="Driver authentication mode">
+          <button
+            className={mode === "login" ? styles.activeTab : styles.tab}
+            type="button"
+            onClick={() => {
+              setMode("login");
+              setError(null);
+              setMessage(null);
+            }}
+          >
+            Login
+          </button>
+          <button
+            className={mode === "register" ? styles.activeTab : styles.tab}
+            type="button"
+            onClick={() => {
+              setMode("register");
+              setError(null);
+              setMessage(null);
+            }}
+          >
+            Register
+          </button>
+        </div>
+
+        <form className={styles.form} onSubmit={(event) => void handleSubmit(event)}>
+          {mode === "login" ? (
+            <>
+              <TextField
+                label="Phone, email, or employee code"
+                value={loginForm.identifier}
+                onChange={(event) => setLoginForm((current) => ({ ...current, identifier: event.target.value }))}
+              />
+              <TextField
+                label="Password"
+                type="password"
+                value={loginForm.password}
+                onChange={(event) => setLoginForm((current) => ({ ...current, password: event.target.value }))}
+              />
+            </>
+          ) : (
+            <>
+              <TextField
+                label="Full name"
+                value={registerForm.fullName}
+                onChange={(event) => setRegisterForm((current) => ({ ...current, fullName: event.target.value }))}
+              />
+              <div className={styles.grid}>
+                <TextField
+                  label="Phone"
+                  value={registerForm.phone}
+                  onChange={(event) => setRegisterForm((current) => ({ ...current, phone: event.target.value }))}
+                />
+                <TextField
+                  label="Email"
+                  type="email"
+                  value={registerForm.email}
+                  onChange={(event) => setRegisterForm((current) => ({ ...current, email: event.target.value }))}
+                />
+              </div>
+              <div className={styles.grid}>
+                <TextField
+                  label="Employee code"
+                  value={registerForm.employeeCode}
+                  onChange={(event) =>
+                    setRegisterForm((current) => ({ ...current, employeeCode: event.target.value }))
+                  }
+                />
+                <TextField
+                  label="Service zone"
+                  value={registerForm.serviceZone}
+                  onChange={(event) => setRegisterForm((current) => ({ ...current, serviceZone: event.target.value }))}
+                />
+              </div>
+              <TextField
+                label="Department"
+                value={registerForm.department}
+                onChange={(event) => setRegisterForm((current) => ({ ...current, department: event.target.value }))}
+              />
+              <TextField
+                label="Password"
+                type="password"
+                value={registerForm.password}
+                onChange={(event) => setRegisterForm((current) => ({ ...current, password: event.target.value }))}
+              />
+            </>
+          )}
+
+          {error ? (
+            <Alert tone="danger" title="Authentication failed">
+              {error}
+            </Alert>
+          ) : null}
+
+          {message ? (
+            <Alert tone="trust" title="Driver session">
+              {message}
+            </Alert>
+          ) : null}
+
+          <div className={styles.actions}>
+            <Button fullWidth isLoading={isSubmitting} type="submit">
+              {mode === "login" ? "Login as driver" : "Create driver account"}
+            </Button>
+            <Button fullWidth isLoading={isRestoring} type="button" variant="secondary" onClick={() => void handleRestore()}>
+              Restore session
+            </Button>
+          </div>
+        </form>
+      </section>
+
+      <aside className={styles.insights}>
+        <section>
+          <h2>Token storage</h2>
+          <div className={styles.row}>
+            <span>Access token</span>
+            <Badge tone="trust">local</Badge>
+          </div>
+          <div className={styles.row}>
+            <span>Refresh token</span>
+            <Badge tone="trust">local</Badge>
+          </div>
+          <div className={styles.row}>
+            <span>Profile cache</span>
+            <Badge tone="info">enabled</Badge>
+          </div>
+        </section>
+        <section>
+          <h2>Backend routes</h2>
+          <div className={styles.row}>
+            <span>Login</span>
+            <Badge tone="success">private/auth</Badge>
+          </div>
+          <div className={styles.row}>
+            <span>Register</span>
+            <Badge tone="success">drivers</Badge>
+          </div>
+          <div className={styles.row}>
+            <span>Restore</span>
+            <Badge tone="success">refresh + me</Badge>
+          </div>
+        </section>
+      </aside>
+    </section>
   );
 }
