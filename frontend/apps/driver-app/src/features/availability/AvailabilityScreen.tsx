@@ -1,6 +1,5 @@
-import { useState } from "react";
-
-import { Badge, Button, ProgressBar } from "@good-rapido/ui";
+import { Alert, Badge, Button, ProgressBar, TextField } from "@good-rapido/ui";
+import { useDriverAvailability } from "./useDriverAvailability";
 import styles from "./AvailabilityScreen.module.css";
 
 const earnings = [
@@ -23,7 +22,11 @@ const notifications = [
 ];
 
 export function AvailabilityScreen() {
-  const [isOnline, setIsOnline] = useState(false);
+  const driverAvailability = useDriverAvailability();
+  const availability = driverAvailability.availability;
+  const isOnline = availability?.isOnline ?? false;
+  const blockers = availability?.guidance.blockers ?? [];
+  const locationFresh = availability?.guidance.locationFresh ?? false;
 
   return (
     <section className={styles.screen}>
@@ -39,7 +42,8 @@ export function AvailabilityScreen() {
             data-active={isOnline}
             type="button"
             aria-pressed={isOnline}
-            onClick={() => setIsOnline((current) => !current)}
+            disabled={driverAvailability.isSaving}
+            onClick={() => void driverAvailability.updateStatus(isOnline ? "offline" : "online")}
           >
             <span />
             {isOnline ? "Go offline" : "Go online"}
@@ -64,6 +68,17 @@ export function AvailabilityScreen() {
           </article>
         </div>
       </section>
+
+      {driverAvailability.error ? (
+        <Alert tone="danger" title="Availability update failed">
+          {driverAvailability.error}
+        </Alert>
+      ) : null}
+      {driverAvailability.message ? (
+        <Alert tone="trust" title="Availability update">
+          {driverAvailability.message}
+        </Alert>
+      ) : null}
 
       <section className={styles.mainGrid}>
         <article className={styles.requestPanel}>
@@ -108,13 +123,91 @@ export function AvailabilityScreen() {
           </div>
 
           <div className={styles.requestActions}>
-            <Button fullWidth type="button" variant="mint" disabled={!isOnline}>
+            <Button fullWidth type="button" variant="mint" disabled={!isOnline || driverAvailability.isSaving}>
               Accept ride
             </Button>
-            <Button fullWidth type="button" variant="secondary" disabled={!isOnline}>
+            <Button fullWidth type="button" variant="secondary" disabled={!isOnline || driverAvailability.isSaving}>
               Decline
             </Button>
           </div>
+        </article>
+
+        <article className={styles.card}>
+          <div className={styles.panelHeader}>
+            <div>
+              <span className={styles.eyebrow}>Availability controls</span>
+              <h2>Location and zones</h2>
+            </div>
+            <Badge tone={availability?.guidance.canGoOnline ? "success" : "warning"}>
+              {availability?.guidance.canGoOnline ? "Ready" : "Blocked"}
+            </Badge>
+          </div>
+          <div className={styles.formGrid}>
+            <TextField
+              label="Latitude"
+              type="number"
+              value={driverAvailability.locationForm.latitude}
+              onChange={(event) =>
+                driverAvailability.setLocationForm((current) => ({ ...current, latitude: event.target.value }))
+              }
+            />
+            <TextField
+              label="Longitude"
+              type="number"
+              value={driverAvailability.locationForm.longitude}
+              onChange={(event) =>
+                driverAvailability.setLocationForm((current) => ({ ...current, longitude: event.target.value }))
+              }
+            />
+            <TextField
+              label="Accuracy meters"
+              type="number"
+              value={driverAvailability.locationForm.accuracyMeters}
+              onChange={(event) =>
+                driverAvailability.setLocationForm((current) => ({ ...current, accuracyMeters: event.target.value }))
+              }
+            />
+            <TextField
+              label="Address label"
+              value={driverAvailability.locationForm.addressLabel}
+              onChange={(event) =>
+                driverAvailability.setLocationForm((current) => ({ ...current, addressLabel: event.target.value }))
+              }
+            />
+          </div>
+          <label className={styles.field}>
+            <span>Active service zones</span>
+            <input
+              value={driverAvailability.availabilityForm.activeServiceZones}
+              onChange={(event) =>
+                driverAvailability.setAvailabilityForm((current) => ({
+                  ...current,
+                  activeServiceZones: event.target.value
+                }))
+              }
+            />
+          </label>
+          <div className={styles.locationState}>
+            <span>Location sharing</span>
+            <Badge tone={locationFresh ? "success" : "warning"}>
+              {locationFresh ? "Fresh" : "Needs update"}
+            </Badge>
+          </div>
+          <div className={styles.requestActions}>
+            <Button fullWidth type="button" variant="secondary" isLoading={driverAvailability.isSaving} onClick={() => void driverAvailability.shareLocation()}>
+              Share location
+            </Button>
+            <Button fullWidth type="button" variant="secondary" isLoading={driverAvailability.isSaving} onClick={() => void driverAvailability.saveZones()}>
+              Save zones
+            </Button>
+          </div>
+          {blockers.length ? (
+            <div className={styles.warningList}>
+              {blockers.map((blocker) => (
+                <div className={styles.warningRow} key={blocker}>{blocker}</div>
+              ))}
+            </div>
+          ) : null}
         </article>
 
         <article className={styles.card}>
