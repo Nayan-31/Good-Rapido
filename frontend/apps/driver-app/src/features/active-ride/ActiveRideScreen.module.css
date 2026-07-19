@@ -1,0 +1,406 @@
+.screen {
+  display: grid;
+  gap: var(--gr-space-4);
+  min-height: calc(100vh - 90px);
+  padding: var(--gr-space-4);
+  background: #f4f7fa;
+}
+
+.hero,
+.panel,
+.mapPanel {
+  min-width: 0;
+  border: 1px solid var(--gr-color-border);
+  border-radius: var(--gr-radius-card);
+  background: var(--gr-color-card);
+  box-shadow: var(--gr-shadow-card);
+}
+
+.hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--gr-space-4);
+  padding: var(--gr-space-5);
+}
+
+.hero h1,
+.panelHeader h2,
+.rideTitle h2,
+.statusCard strong,
+.controlCard strong,
+.routeScore strong,
+.timelineStatus strong {
+  margin: 0;
+  color: var(--gr-color-ink);
+  letter-spacing: 0;
+}
+
+.hero h1 {
+  margin-top: var(--gr-space-2);
+  font-size: 34px;
+  line-height: 1.05;
+}
+
+.hero p {
+  max-width: 780px;
+  margin: var(--gr-space-2) 0 0;
+  color: var(--gr-color-muted);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.fareLock {
+  display: grid;
+  gap: var(--gr-space-1);
+  min-width: 150px;
+  padding: var(--gr-space-4);
+  border-radius: var(--gr-radius-control);
+  background: var(--gr-color-dark-navy);
+  color: var(--gr-color-card);
+  text-align: center;
+}
+
+.fareLock span,
+.eyebrow,
+.statusCard span,
+.controlCard span,
+.routeStep span,
+.timelineStatus span,
+.timelineItem span {
+  color: var(--gr-color-muted);
+  font-size: 11px;
+  font-weight: var(--gr-font-weight-heavy);
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.fareLock span,
+.fareLock small {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.fareLock strong {
+  color: var(--gr-color-card);
+  font-size: 28px;
+  line-height: 1;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(480px, 1.25fr) minmax(340px, 0.75fr);
+  gap: var(--gr-space-4);
+  align-items: start;
+}
+
+.mapPanel {
+  overflow: hidden;
+}
+
+.mapCanvas {
+  position: relative;
+  min-height: 720px;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.48) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(255, 255, 255, 0.48) 1px, transparent 1px),
+    radial-gradient(circle at 25% 24%, rgba(99, 235, 213, 0.34), transparent 24%),
+    radial-gradient(circle at 78% 72%, rgba(217, 45, 32, 0.15), transparent 24%),
+    linear-gradient(135deg, #d4e1e7 0%, #eef4f6 46%, #a5bdc8 100%);
+  background-size: 42px 42px, 42px 42px, auto, auto, auto;
+}
+
+.pickupRoute,
+.tripRoute {
+  position: absolute;
+  z-index: 1;
+  border-radius: 999px;
+}
+
+.pickupRoute {
+  left: 16%;
+  top: 20%;
+  width: 34%;
+  height: 24%;
+  border-right: 8px solid var(--gr-color-deep-teal);
+  border-bottom: 8px solid var(--gr-color-deep-teal);
+}
+
+.tripRoute {
+  left: 48%;
+  top: 44%;
+  width: 34%;
+  height: 30%;
+  border-left: 8px solid var(--gr-color-dark-navy);
+  border-bottom: 8px solid var(--gr-color-dark-navy);
+}
+
+.driverMarker,
+.pickupMarker,
+.dropoffMarker {
+  position: absolute;
+  z-index: 3;
+  display: inline-grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 3px solid var(--gr-color-card);
+  border-radius: var(--gr-radius-pill);
+  color: var(--gr-color-card);
+  font-size: 11px;
+  font-weight: var(--gr-font-weight-heavy);
+  box-shadow: var(--gr-shadow-card);
+}
+
+.driverMarker {
+  left: 15%;
+  top: 17%;
+  background: var(--gr-color-success);
+}
+
+.pickupMarker {
+  left: 47%;
+  top: 42%;
+  background: var(--gr-color-deep-teal);
+}
+
+.dropoffMarker {
+  right: 14%;
+  bottom: 20%;
+  background: var(--gr-color-danger);
+}
+
+.mapOverlay,
+.detourWarning {
+  position: absolute;
+  z-index: 4;
+  border: 1px solid var(--gr-color-border);
+  border-radius: var(--gr-radius-control);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: var(--gr-shadow-card);
+}
+
+.mapOverlay {
+  left: var(--gr-space-5);
+  bottom: var(--gr-space-5);
+  display: grid;
+  gap: var(--gr-space-3);
+  width: min(340px, calc(100% - 40px));
+  padding: var(--gr-space-4);
+}
+
+.mapOverlay strong {
+  color: var(--gr-color-ink);
+  font-size: 20px;
+}
+
+.mapOverlay p,
+.detourWarning p {
+  margin: 0;
+  color: var(--gr-color-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.detourWarning {
+  top: var(--gr-space-5);
+  right: var(--gr-space-5);
+  display: grid;
+  gap: var(--gr-space-2);
+  max-width: 290px;
+  padding: var(--gr-space-4);
+}
+
+.detourWarning strong {
+  color: var(--gr-color-danger);
+}
+
+.contentStack {
+  display: grid;
+  gap: var(--gr-space-4);
+}
+
+.panel {
+  display: grid;
+  gap: var(--gr-space-4);
+  padding: var(--gr-space-5);
+}
+
+.panelHeader,
+.rideTitle,
+.routeStep,
+.timelineItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gr-space-3);
+}
+
+.panelHeader h2,
+.rideTitle h2 {
+  margin-top: var(--gr-space-1);
+  font-size: 22px;
+  line-height: 1.15;
+}
+
+.rideCode {
+  flex: 0 0 auto;
+  padding: var(--gr-space-2) var(--gr-space-3);
+  border-radius: var(--gr-radius-pill);
+  background: var(--gr-color-soft-mint);
+  color: var(--gr-color-deep-teal);
+  font-size: 12px;
+  font-weight: var(--gr-font-weight-heavy);
+}
+
+.locationList {
+  display: grid;
+  gap: var(--gr-space-3);
+  padding: var(--gr-space-4);
+  border: 1px solid var(--gr-color-border);
+  border-radius: var(--gr-radius-control);
+  background: #f8fbfc;
+}
+
+.routeStep {
+  justify-content: flex-start;
+}
+
+.routeStep strong {
+  display: block;
+  margin-top: var(--gr-space-1);
+  color: var(--gr-color-ink);
+  font-size: 15px;
+}
+
+.marker {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--gr-radius-pill);
+  background: var(--gr-color-deep-teal);
+  color: var(--gr-color-card);
+  font-size: 11px;
+  font-weight: var(--gr-font-weight-heavy);
+}
+
+.routeStep[data-stop="dropoff"] .marker {
+  background: var(--gr-color-danger);
+}
+
+.statusGrid,
+.controlGrid,
+.routeGrid {
+  display: grid;
+  gap: var(--gr-space-3);
+}
+
+.statusGrid,
+.routeGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.controlGrid {
+  grid-template-columns: 1fr;
+}
+
+.statusCard,
+.controlCard,
+.timelineStatus {
+  min-width: 0;
+  padding: var(--gr-space-4);
+  border: 1px solid var(--gr-color-border);
+  border-radius: var(--gr-radius-control);
+  background: #f8fbfc;
+}
+
+.statusCard strong,
+.controlCard strong {
+  display: block;
+  margin-top: var(--gr-space-2);
+  font-size: 24px;
+  line-height: 1;
+}
+
+.statusCard small,
+.controlCard small,
+.timelineStatus small {
+  display: block;
+  margin-top: var(--gr-space-2);
+  color: var(--gr-color-muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.controlCard {
+  display: grid;
+  gap: var(--gr-space-3);
+}
+
+.controlCard[data-active="true"] {
+  border-color: rgba(9, 154, 130, 0.34);
+  background: var(--gr-color-soft-mint);
+}
+
+.routeScore {
+  display: grid;
+  gap: var(--gr-space-3);
+  padding: var(--gr-space-4);
+  border-radius: var(--gr-radius-control);
+  background: var(--gr-color-dark-navy);
+  color: var(--gr-color-card);
+}
+
+.routeScore span,
+.routeScore small {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.routeScore strong {
+  color: var(--gr-color-card);
+  font-size: 34px;
+}
+
+.timeline {
+  display: grid;
+  gap: var(--gr-space-3);
+}
+
+.timelineItem {
+  min-height: 42px;
+  padding: var(--gr-space-3);
+  border-radius: var(--gr-radius-control);
+  background: #f8fbfc;
+}
+
+.timelineItem strong {
+  color: var(--gr-color-dark-navy);
+}
+
+@media (max-width: 1040px) {
+  .hero,
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .mapCanvas {
+    min-height: 460px;
+  }
+}
+
+@media (max-width: 680px) {
+  .screen {
+    padding: var(--gr-space-3);
+  }
+
+  .hero h1 {
+    font-size: 28px;
+  }
+
+  .statusGrid,
+  .routeGrid {
+    grid-template-columns: 1fr;
+  }
+}

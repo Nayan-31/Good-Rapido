@@ -8,11 +8,12 @@ import { ProfileScreen } from "@/features/profile";
 import { RideRequestsScreen } from "@/features/ride-requests";
 import { SupportScreen } from "@/features/support";
 import { TrustScreen } from "@/features/trust";
-import type { DriverRoute } from "@/routes";
+import type { DriverRoute, DriverRouteId } from "@/routes";
 import type { DriverLoginForm, DriverRegisterForm } from "@/features/auth";
 
 export interface DriverRouteOutletProps {
   route: DriverRoute;
+  onNavigate?: (routeId: DriverRouteId) => void;
   auth: {
     isRestoring: boolean;
     onSignIn: (form: DriverLoginForm) => Promise<string>;
@@ -22,13 +23,13 @@ export interface DriverRouteOutletProps {
   };
 }
 
-export function DriverRouteOutlet({ route, auth }: DriverRouteOutletProps) {
+export function DriverRouteOutlet({ route, onNavigate, auth }: DriverRouteOutletProps) {
   if (route.id === "availability") {
     return <AvailabilityScreen />;
   }
 
   if (route.id === "requests") {
-    return <RideRequestsScreen />;
+    return <RideRequestsScreen onRideAccepted={() => onNavigate?.("activeRide")} />;
   }
 
   if (route.id === "activeRide") {

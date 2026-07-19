@@ -1,0 +1,450 @@
+.screen {
+  display: grid;
+  gap: var(--gr-space-4);
+  min-height: calc(100vh - 90px);
+  padding: var(--gr-space-4);
+  background: #f4f7fa;
+}
+
+.hero,
+.panel,
+.mapPanel,
+.emptyState {
+  min-width: 0;
+  border: 1px solid var(--gr-color-border);
+  border-radius: var(--gr-radius-card);
+  background: var(--gr-color-card);
+  box-shadow: var(--gr-shadow-card);
+}
+
+.hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--gr-space-4);
+  padding: var(--gr-space-5);
+}
+
+.hero h1,
+.panelHeader h2,
+.requestTitle h2,
+.fareTotal strong,
+.metricValue,
+.emptyState h2 {
+  margin: 0;
+  color: var(--gr-color-ink);
+  letter-spacing: 0;
+}
+
+.hero h1 {
+  margin-top: var(--gr-space-2);
+  font-size: 34px;
+  line-height: 1.05;
+}
+
+.hero p,
+.emptyState p {
+  max-width: 760px;
+  margin: var(--gr-space-2) 0 0;
+  color: var(--gr-color-muted);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.timerCard {
+  display: grid;
+  gap: var(--gr-space-1);
+  min-width: 148px;
+  padding: var(--gr-space-4);
+  border-radius: var(--gr-radius-control);
+  background: var(--gr-color-dark-navy);
+  color: var(--gr-color-card);
+  text-align: center;
+}
+
+.timerCard span,
+.eyebrow,
+.metricLabel,
+.fareRow span,
+.routeStep span,
+.noteList li,
+.trustCard span {
+  font-size: 11px;
+  font-weight: var(--gr-font-weight-heavy);
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.timerCard strong {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(340px, 0.78fr) minmax(480px, 1.22fr);
+  gap: var(--gr-space-4);
+  align-items: start;
+}
+
+.panel,
+.emptyState {
+  display: grid;
+  gap: var(--gr-space-4);
+  padding: var(--gr-space-5);
+}
+
+.requestStack {
+  display: grid;
+  gap: var(--gr-space-4);
+}
+
+.panelHeader,
+.requestTitle,
+.routeStep,
+.fareRow,
+.actionRow,
+.trustGrid {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gr-space-3);
+}
+
+.panelHeader h2,
+.requestTitle h2,
+.emptyState h2 {
+  margin-top: var(--gr-space-1);
+  font-size: 22px;
+  line-height: 1.15;
+}
+
+.eyebrow,
+.metricLabel,
+.routeStep span,
+.fareRow span,
+.trustCard span,
+.noteList li {
+  color: var(--gr-color-muted);
+}
+
+.requestCode {
+  flex: 0 0 auto;
+  padding: var(--gr-space-2) var(--gr-space-3);
+  border-radius: var(--gr-radius-pill);
+  background: var(--gr-color-soft-mint);
+  color: var(--gr-color-deep-teal);
+  font-size: 12px;
+  font-weight: var(--gr-font-weight-heavy);
+}
+
+.locationList {
+  display: grid;
+  gap: var(--gr-space-3);
+  padding: var(--gr-space-4);
+  border: 1px solid var(--gr-color-border);
+  border-radius: var(--gr-radius-control);
+  background: #f8fbfc;
+}
+
+.routeStep {
+  justify-content: flex-start;
+}
+
+.routeStep strong {
+  display: block;
+  margin-top: var(--gr-space-1);
+  color: var(--gr-color-ink);
+  font-size: 15px;
+}
+
+.marker {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--gr-radius-pill);
+  background: var(--gr-color-deep-teal);
+  color: var(--gr-color-card);
+  font-size: 11px;
+  font-weight: var(--gr-font-weight-heavy);
+}
+
+.routeStep[data-stop="dropoff"] .marker {
+  background: var(--gr-color-danger);
+}
+
+.metricGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--gr-space-3);
+}
+
+.metricCard,
+.trustCard {
+  min-width: 0;
+  padding: var(--gr-space-4);
+  border: 1px solid var(--gr-color-border);
+  border-radius: var(--gr-radius-control);
+  background: #f8fbfc;
+}
+
+.metricValue {
+  display: block;
+  margin-top: var(--gr-space-2);
+  font-size: 24px;
+  line-height: 1;
+}
+
+.metricHint {
+  display: block;
+  margin-top: var(--gr-space-2);
+  color: var(--gr-color-muted);
+  font-size: 12px;
+}
+
+.fareTotal {
+  display: grid;
+  gap: var(--gr-space-1);
+  padding: var(--gr-space-4);
+  border-radius: var(--gr-radius-control);
+  background: var(--gr-color-dark-navy);
+  color: var(--gr-color-card);
+}
+
+.fareTotal span {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+  font-weight: var(--gr-font-weight-heavy);
+  text-transform: uppercase;
+}
+
+.fareTotal strong {
+  color: var(--gr-color-card);
+  font-size: 38px;
+  line-height: 1;
+}
+
+.fareTotal small {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.fareList,
+.trustList,
+.noteList {
+  display: grid;
+  gap: var(--gr-space-3);
+}
+
+.fareRow {
+  min-height: 28px;
+}
+
+.fareRow strong {
+  color: var(--gr-color-dark-navy);
+}
+
+.fareRow[data-highlight="true"] strong {
+  color: var(--gr-color-success);
+}
+
+.trustGrid {
+  align-items: stretch;
+}
+
+.trustCard {
+  flex: 1;
+}
+
+.trustCard strong {
+  display: block;
+  margin-top: var(--gr-space-2);
+  color: var(--gr-color-dark-navy);
+  font-size: 22px;
+}
+
+.trustCard small {
+  color: var(--gr-color-muted);
+}
+
+.noteList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.noteList li {
+  min-height: 38px;
+  padding: var(--gr-space-3);
+  border-radius: var(--gr-radius-control);
+  background: var(--gr-color-soft-mint);
+  color: var(--gr-color-deep-teal);
+  text-transform: none;
+}
+
+.actionRow {
+  position: sticky;
+  bottom: var(--gr-space-3);
+  padding-top: var(--gr-space-2);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0), var(--gr-color-card) 38%);
+}
+
+.mapPanel {
+  position: sticky;
+  top: var(--gr-space-4);
+  overflow: hidden;
+}
+
+.mapCanvas {
+  position: relative;
+  min-height: 680px;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.48) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(255, 255, 255, 0.48) 1px, transparent 1px),
+    radial-gradient(circle at 18% 22%, rgba(99, 235, 213, 0.34), transparent 24%),
+    radial-gradient(circle at 78% 68%, rgba(9, 154, 130, 0.22), transparent 26%),
+    linear-gradient(135deg, #d7e5ea 0%, #eef4f6 45%, #a9c4cf 100%);
+  background-size: 44px 44px, 44px 44px, auto, auto, auto;
+}
+
+.pickupRoute,
+.tripRoute {
+  position: absolute;
+  z-index: 1;
+  border-radius: 999px;
+}
+
+.pickupRoute {
+  left: 14%;
+  top: 20%;
+  width: 28%;
+  height: 28%;
+  border-right: 7px solid var(--gr-color-deep-teal);
+  border-bottom: 7px solid var(--gr-color-deep-teal);
+}
+
+.tripRoute {
+  right: 18%;
+  bottom: 21%;
+  width: 44%;
+  height: 42%;
+  border-left: 8px solid var(--gr-color-dark-navy);
+  border-top: 8px solid var(--gr-color-dark-navy);
+}
+
+.mapMarker {
+  position: absolute;
+  z-index: 2;
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--gr-color-card);
+  border-radius: var(--gr-radius-pill);
+  background: var(--gr-color-success);
+  color: var(--gr-color-card);
+  font-size: 11px;
+  font-weight: var(--gr-font-weight-heavy);
+  box-shadow: var(--gr-shadow-card);
+}
+
+.mapMarker[data-kind="driver"] {
+  left: 13%;
+  top: 17%;
+}
+
+.mapMarker[data-kind="pickup"] {
+  left: 40%;
+  top: 47%;
+  background: var(--gr-color-deep-teal);
+}
+
+.mapMarker[data-kind="dropoff"] {
+  right: 16%;
+  bottom: 18%;
+  background: var(--gr-color-danger);
+}
+
+.mapBadge,
+.mapSummary {
+  position: absolute;
+  z-index: 3;
+  border: 1px solid var(--gr-color-border);
+  border-radius: var(--gr-radius-control);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: var(--gr-shadow-card);
+}
+
+.mapBadge {
+  top: var(--gr-space-4);
+  right: var(--gr-space-4);
+  padding: var(--gr-space-3);
+  color: var(--gr-color-dark-navy);
+  font-size: 13px;
+  font-weight: var(--gr-font-weight-heavy);
+}
+
+.mapSummary {
+  left: var(--gr-space-5);
+  bottom: var(--gr-space-5);
+  display: grid;
+  gap: var(--gr-space-3);
+  width: min(320px, calc(100% - 40px));
+  padding: var(--gr-space-4);
+}
+
+.mapSummary strong {
+  color: var(--gr-color-ink);
+  font-size: 20px;
+}
+
+.mapSummary p {
+  margin: 0;
+  color: var(--gr-color-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.emptyState {
+  min-height: 340px;
+  align-content: center;
+  justify-items: start;
+}
+
+@media (max-width: 980px) {
+  .hero,
+  .layout,
+  .trustGrid,
+  .actionRow {
+    grid-template-columns: 1fr;
+  }
+
+  .hero,
+  .trustGrid,
+  .actionRow {
+    display: grid;
+  }
+
+  .mapPanel {
+    position: static;
+  }
+
+  .mapCanvas {
+    min-height: 420px;
+  }
+}
+
+@media (max-width: 680px) {
+  .screen {
+    padding: var(--gr-space-3);
+  }
+
+  .hero h1 {
+    font-size: 28px;
+  }
+
+  .metricGrid {
+    grid-template-columns: 1fr;
+  }
+}
