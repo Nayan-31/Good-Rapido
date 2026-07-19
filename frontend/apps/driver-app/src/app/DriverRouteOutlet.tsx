@@ -14,6 +14,7 @@ import type { DriverLoginForm, DriverRegisterForm } from "@/features/auth";
 export interface DriverRouteOutletProps {
   route: DriverRoute;
   onNavigate?: (routeId: DriverRouteId) => void;
+  onSignOut?: () => void;
   auth: {
     isRestoring: boolean;
     onSignIn: (form: DriverLoginForm) => Promise<string>;
@@ -23,7 +24,7 @@ export interface DriverRouteOutletProps {
   };
 }
 
-export function DriverRouteOutlet({ route, onNavigate, auth }: DriverRouteOutletProps) {
+export function DriverRouteOutlet({ route, onNavigate, onSignOut, auth }: DriverRouteOutletProps) {
   if (route.id === "availability") {
     return <AvailabilityScreen />;
   }
@@ -49,7 +50,7 @@ export function DriverRouteOutlet({ route, onNavigate, auth }: DriverRouteOutlet
   }
 
   if (route.id === "profile") {
-    return <ProfileScreen />;
+    return <ProfileScreen onLogout={onSignOut} />;
   }
 
   if (route.id === "onboarding") {

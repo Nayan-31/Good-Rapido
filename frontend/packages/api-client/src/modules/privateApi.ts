@@ -20,7 +20,9 @@ export const createPrivateApi = (http: HttpClient) => ({
     updateOnboarding: (payload: ApiPayload) => http.patch("/api/v1/private/driver/onboarding", payload),
     submitOnboarding: () => http.post("/api/v1/private/driver/onboarding/submit"),
     getAccount: () => http.get("/api/v1/private/driver/account"),
-    updateAccountControls: (payload: ApiPayload) => http.patch("/api/v1/private/driver/account/controls", payload)
+    updateAccountControls: (payload: ApiPayload) => http.patch("/api/v1/private/driver/account/controls", payload),
+    requestDeactivation: (payload: ApiPayload) =>
+      http.post("/api/v1/private/driver/account/deactivation-request", payload)
   },
   driverDocuments: {
     getOptions: () => http.get("/api/v1/private/driver-documents/options"),
@@ -64,5 +66,65 @@ export const createPrivateApi = (http: HttpClient) => ({
       http.patch(pathWithParams("/api/v1/private/ride-ops/rides/:rideId/driver", { rideId }), payload),
     cancelRide: (rideId: string, payload: ApiPayload) =>
       http.post(pathWithParams("/api/v1/private/ride-ops/rides/:rideId/cancel", { rideId }), payload)
+  },
+  earnings: {
+    getOptions: () => http.get("/api/v1/private/earnings/options"),
+    getSummary: (query?: ApiQuery) => http.get("/api/v1/private/earnings/summary", { query }),
+    listRides: (query?: ApiQuery) => http.get("/api/v1/private/earnings/rides", { query }),
+    getRide: (rideId: string) => http.get(pathWithParams("/api/v1/private/earnings/rides/:rideId", { rideId })),
+    getStatements: (query?: ApiQuery) => http.get("/api/v1/private/earnings/statements", { query }),
+    simulate: (payload: ApiPayload) => http.post("/api/v1/private/earnings/simulate", payload)
+  },
+  trust: {
+    getOptions: () => http.get("/api/v1/private/trust/options"),
+    getDashboard: () => http.get("/api/v1/private/trust/dashboard"),
+    listProfiles: (query?: ApiQuery) => http.get("/api/v1/private/trust/profiles", { query }),
+    createProfile: (payload: ApiPayload) => http.post("/api/v1/private/trust/profiles", payload),
+    simulate: (payload: ApiPayload) => http.post("/api/v1/private/trust/simulate", payload),
+    getProfile: (profileId: string) =>
+      http.get(pathWithParams("/api/v1/private/trust/profiles/:profileId", { profileId })),
+    updateProfile: (profileId: string, payload: ApiPayload) =>
+      http.patch(pathWithParams("/api/v1/private/trust/profiles/:profileId", { profileId }), payload),
+    assignReviewer: (profileId: string, payload: ApiPayload) =>
+      http.post(pathWithParams("/api/v1/private/trust/profiles/:profileId/assign", { profileId }), payload),
+    addNote: (profileId: string, payload: ApiPayload) =>
+      http.post(pathWithParams("/api/v1/private/trust/profiles/:profileId/notes", { profileId }), payload),
+    resolveReview: (profileId: string, payload: ApiPayload) =>
+      http.post(pathWithParams("/api/v1/private/trust/profiles/:profileId/resolve", { profileId }), payload)
+  },
+  notifications: {
+    getOptions: () => http.get("/api/v1/private/notifications/options"),
+    getDashboard: () => http.get("/api/v1/private/notifications/dashboard"),
+    list: (query?: ApiQuery) => http.get("/api/v1/private/notifications/notifications", { query }),
+    create: (payload: ApiPayload) => http.post("/api/v1/private/notifications/notifications", payload),
+    getNotification: (notificationId: string) =>
+      http.get(pathWithParams("/api/v1/private/notifications/notifications/:notificationId", { notificationId })),
+    send: (notificationId: string) =>
+      http.post(pathWithParams("/api/v1/private/notifications/notifications/:notificationId/send", { notificationId })),
+    fail: (notificationId: string, payload: ApiPayload) =>
+      http.post(pathWithParams("/api/v1/private/notifications/notifications/:notificationId/fail", { notificationId }), payload),
+    retry: (notificationId: string) =>
+      http.post(pathWithParams("/api/v1/private/notifications/notifications/:notificationId/retry", { notificationId })),
+    cancel: (notificationId: string, payload?: ApiPayload) =>
+      http.post(pathWithParams("/api/v1/private/notifications/notifications/:notificationId/cancel", { notificationId }), payload)
+  },
+  disputes: {
+    getOptions: () => http.get("/api/v1/private/disputes/options"),
+    getDashboard: () => http.get("/api/v1/private/disputes/dashboard"),
+    getQueue: (query?: ApiQuery) => http.get("/api/v1/private/disputes/queue", { query }),
+    getDispute: (disputeId: string) =>
+      http.get(pathWithParams("/api/v1/private/disputes/:disputeId", { disputeId })),
+    updateState: (disputeId: string, payload: ApiPayload) =>
+      http.patch(pathWithParams("/api/v1/private/disputes/:disputeId", { disputeId }), payload),
+    assign: (disputeId: string, payload: ApiPayload) =>
+      http.post(pathWithParams("/api/v1/private/disputes/:disputeId/assign", { disputeId }), payload),
+    requestEvidence: (disputeId: string, payload: ApiPayload) =>
+      http.post(pathWithParams("/api/v1/private/disputes/:disputeId/request-evidence", { disputeId }), payload),
+    addNote: (disputeId: string, payload: ApiPayload) =>
+      http.post(pathWithParams("/api/v1/private/disputes/:disputeId/notes", { disputeId }), payload),
+    resolve: (disputeId: string, payload: ApiPayload) =>
+      http.post(pathWithParams("/api/v1/private/disputes/:disputeId/resolve", { disputeId }), payload),
+    reject: (disputeId: string, payload: ApiPayload) =>
+      http.post(pathWithParams("/api/v1/private/disputes/:disputeId/reject", { disputeId }), payload)
   }
 });
