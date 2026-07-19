@@ -1,0 +1,321 @@
+import { ApiClientError, type ApiPayload, type ApiResponse } from "@good-rapido/api-client";
+
+import { apiClient } from "@/services/apiClient";
+import { saveActiveDriverRide } from "./rideRequest.storage";
+import type {
+  DriverActiveRideSnapshot,
+  DriverRideLifecycleStatus,
+  DriverRideLocation,
+  DriverRideRequest,
+  DriverRideRiskLevel,
+  RideRequestActionResult,
+  RideRequestLoadResult
+} from "./rideRequest.types";
+
+type RideOpsQueueResponse = ApiResponse<{
+  rides?: RideOpsQueueItem[];
+  queue?: RideOpsQueueItem[];
+}>;
+
+interface RideOpsQueueItem {
+  id?: string | null;
+  bookingCode?: string | null;
+  bookingStatus?: string | null;
+  lifecycleStatus?: DriverRideLifecycleStatus | string | null;
+  pickup?: Partial<DriverRideLocation> | null;
+  dropoff?: Partial<DriverRideLocation> | null;
+  vehicleType?: string | null;
+  fare?: {
+    totalFare?: number;
+    distanceKm?: number;
+    durationMinutes?: number;
+    confidenceScore?: number;
+  } | null;
+  risk?: {
+    cancellationRiskScore?: number;
+    cancellationRiskLevel?: DriverRideRiskLevel | string | null;
+    routeAccuracyScore?: number;
+    fairPriceScore?: number;
+  } | null;
+  driver?: {
+    etaMinutes?: number;
+    distanceKm?: number;
+  } | null;
+  trustSignals?: {
+    fairPriceScore?: number;
+    routeFairnessScore?: number;
+    routeAccuracyScore?: number;
+    cancellationRiskScore?: number;
+    cancellationRiskLevel?: DriverRideRiskLevel | string | null;
+    detourPercentage?: number;
+  } | null;
+  createdAt?: string | null;
+}
+
+export const demoRideRequest: DriverRideRequest = {
+  id: "demo-ride-req-001",
+  bookingCode: "GRD-2948",
+  bookingStatus: "driver_selected",
+  lifecycleStatus: "pending_confirmation",
+  pickup: {
+    address: "Eco Space, New Town",
+    latitude: 22.5811,
+    longitude: 88.4526
+  },
+  dropoff: {
+    address: "Howrah Station Gate 2",
+    latitude: 22.5831,
+    longitude: 88.3429
+  },
+  vehicleType: "cab_economy",
+  requestedAt: "2026-07-19T08:35:00.000Z",
+  fare: {
+    currency: "INR",
+    totalFare: 342,
+    driverPayout: 284,
+    baseFare: 80,
+    distanceFare: 186,
+    timeFare: 48,
+    surgeBonus: 42,
+    platformFee: 14,
+    distanceKm: 14.8,
+    durationMinutes: 38,
+    confidenceScore: 96
+  },
+  route: {
+    pickupEtaMinutes: 5,
+    pickupDistanceKm: 2.1,
+    tripDistanceKm: 14.8,
+    tripDurationMinutes: 38,
+    routeFairnessScore: 98,
+    routeAccuracyScore: 97,
+    detourPercentage: 1.4,
+    trafficLevel: "moderate"
+  },
+  rider: {
+    riderName: "Amit Das",
+    rating: 4.8,
+    completedRides: 124,
+    verificationStatus: "Verified rider",
+    cancellationRiskLevel: "low",
+    cancellationRiskScore: 8,
+    fareConfidenceScore: 96,
+    fairPriceScore: 98
+  },
+  transparencyNotes: [
+    "Fare includes a visible peak bonus before acceptance.",
+    "Pickup route is 2.1 km and expected to take 5 minutes.",
+    "Rider has low cancellation risk and verified payment readiness."
+  ]
+};
+
+export const rideRequestService = {
+  async loadIncomingRequest(): Promise<RideRequestLoadResult> {
+    const notes: string[] = [];
+    let request = demoRideRequest;
+
+    try {
+      const response = await apiClient.private.rideOps.listRides({
+        status: "driver_selected",
+        lifecycleStatus: "pending_confirmation",
+        limit: 1
+      }) as RideOpsQueueResponse;
+      const backendRide = response.data?.rides?.[0] ?? response.data?.queue?.[0] ?? null;
+
+      if (backendRide) {
+        request = mapRideOpsQueueItem(backendRide);
+      }
+    } catch (error) {
+      notes.push(resolveBackendNote(error, "Ride ops queue is not available for this driver session yet."));
+    }
+
+    await Promise.allSettled([
+      apiClient.core.matchingEngine.match(buildMatchingPayload(request)),
+      apiClient.core.trustEngine.assess(buildRiderTrustPayload(request))
+    ]).then((results) => {
+      const blocked = results.some((result) => result.status === "rejected");
+
+      if (blocked) {
+        notes.push("Matching/trust engine calls are wired, but current backend guards may require ops/admin scope.");
+      }
+    });
+
+    return {
+      request,
+      backendNote: uniqueNotes(notes)
+    };
+  },
+
+  async acceptRide(request: DriverRideRequest): Promise<RideRequestActionResult> {
+    const activeRide: DriverActiveRideSnapshot = {
+      ...request,
+      bookingStatus: "confirmed",
+      lifecycleStatus: "driver_en_route",
+      acceptedAt: new Date().toISOString(),
+      timeline: {
+        confirmedAt: new Date().toISOString()
+      }
+    };
+    let backendNote: string | null = null;
+
+    try {
+      await apiClient.private.rideOps.confirmRide(request.id, {
+        note: "Driver accepted ride from driver app request screen"
+      });
+    } catch (error) {
+      backendNote = resolveBackendNote(error, "Ride was accepted locally because ride-ops confirm is not available.");
+    }
+
+    saveActiveDriverRide(activeRide);
+
+    return {
+      activeRide,
+      message: "Ride accepted. Active ride is ready.",
+      backendNote
+    };
+  },
+
+  async declineRide(request: DriverRideRequest): Promise<RideRequestActionResult> {
+    let backendNote: string | null = null;
+
+    try {
+      await apiClient.private.rideOps.cancelRide(request.id, {
+        reason: "other",
+        note: "Driver declined incoming request from driver app"
+      });
+    } catch (error) {
+      backendNote = resolveBackendNote(error, "Request was declined locally because ride-ops cancel is not available.");
+    }
+
+    return {
+      message: "Ride request declined.",
+      backendNote
+    };
+  }
+};
+
+const mapRideOpsQueueItem = (ride: RideOpsQueueItem): DriverRideRequest => {
+  const totalFare = safeNumber(ride.fare?.totalFare, demoRideRequest.fare.totalFare);
+  const distanceKm = safeNumber(ride.fare?.distanceKm, demoRideRequest.fare.distanceKm);
+  const durationMinutes = safeNumber(ride.fare?.durationMinutes, demoRideRequest.fare.durationMinutes);
+
+  return {
+    id: ride.id || demoRideRequest.id,
+    bookingCode: ride.bookingCode || demoRideRequest.bookingCode,
+    bookingStatus: ride.bookingStatus || demoRideRequest.bookingStatus,
+    lifecycleStatus: mapLifecycleStatus(ride.lifecycleStatus),
+    pickup: mapLocation(ride.pickup, demoRideRequest.pickup),
+    dropoff: mapLocation(ride.dropoff, demoRideRequest.dropoff),
+    vehicleType: ride.vehicleType || demoRideRequest.vehicleType,
+    requestedAt: ride.createdAt || demoRideRequest.requestedAt,
+    fare: {
+      currency: "INR",
+      totalFare,
+      driverPayout: Math.max(Math.round(totalFare * 0.82), 0),
+      baseFare: Math.max(Math.round(totalFare * 0.24), 0),
+      distanceFare: Math.max(Math.round(totalFare * 0.54), 0),
+      timeFare: Math.max(Math.round(totalFare * 0.14), 0),
+      surgeBonus: Math.max(Math.round(totalFare * 0.12), 0),
+      platformFee: Math.max(Math.round(totalFare * 0.04), 0),
+      distanceKm,
+      durationMinutes,
+      confidenceScore: safeNumber(ride.fare?.confidenceScore, ride.risk?.fairPriceScore, demoRideRequest.fare.confidenceScore)
+    },
+    route: {
+      pickupEtaMinutes: safeNumber(ride.driver?.etaMinutes, demoRideRequest.route.pickupEtaMinutes),
+      pickupDistanceKm: safeNumber(ride.driver?.distanceKm, demoRideRequest.route.pickupDistanceKm),
+      tripDistanceKm: distanceKm,
+      tripDurationMinutes: durationMinutes,
+      routeFairnessScore: safeNumber(ride.trustSignals?.routeFairnessScore, ride.risk?.routeAccuracyScore, demoRideRequest.route.routeFairnessScore),
+      routeAccuracyScore: safeNumber(ride.risk?.routeAccuracyScore, ride.trustSignals?.routeAccuracyScore, demoRideRequest.route.routeAccuracyScore),
+      detourPercentage: safeNumber(ride.trustSignals?.detourPercentage, demoRideRequest.route.detourPercentage),
+      trafficLevel: "moderate"
+    },
+    rider: {
+      ...demoRideRequest.rider,
+      cancellationRiskLevel: mapRiskLevel(ride.risk?.cancellationRiskLevel ?? ride.trustSignals?.cancellationRiskLevel),
+      cancellationRiskScore: safeNumber(
+        ride.risk?.cancellationRiskScore,
+        ride.trustSignals?.cancellationRiskScore,
+        demoRideRequest.rider.cancellationRiskScore
+      ),
+      fareConfidenceScore: safeNumber(ride.fare?.confidenceScore, demoRideRequest.rider.fareConfidenceScore),
+      fairPriceScore: safeNumber(ride.risk?.fairPriceScore, ride.trustSignals?.fairPriceScore, demoRideRequest.rider.fairPriceScore)
+    },
+    transparencyNotes: demoRideRequest.transparencyNotes
+  };
+};
+
+const buildMatchingPayload = (request: DriverRideRequest): ApiPayload => ({
+  pickup: request.pickup,
+  dropoff: request.dropoff,
+  vehicleType: request.vehicleType,
+  serviceZone: "kolkata",
+  limit: 3
+});
+
+const buildRiderTrustPayload = (request: DriverRideRequest): ApiPayload => ({
+  subjectType: "rider",
+  source: "metrics",
+  metrics: {
+    completedRides: request.rider.completedRides,
+    cancelledRides: request.rider.cancellationRiskScore,
+    ratingAverage: request.rider.rating
+  },
+  scores: {
+    overall: request.rider.fareConfidenceScore,
+    cancellation: 100 - request.rider.cancellationRiskScore,
+    payment: request.rider.fairPriceScore
+  }
+});
+
+const mapLocation = (location: Partial<DriverRideLocation> | null | undefined, fallback: DriverRideLocation) => ({
+  address: location?.address || fallback.address,
+  latitude: safeNumber(location?.latitude, fallback.latitude),
+  longitude: safeNumber(location?.longitude, fallback.longitude)
+});
+
+const mapLifecycleStatus = (status: string | null | undefined): DriverRideLifecycleStatus => {
+  if (
+    status === "pending_confirmation"
+    || status === "driver_en_route"
+    || status === "driver_arrived"
+    || status === "in_progress"
+    || status === "completed"
+    || status === "cancelled"
+  ) {
+    return status;
+  }
+
+  return "pending_confirmation";
+};
+
+const mapRiskLevel = (riskLevel: string | null | undefined): DriverRideRiskLevel => {
+  if (riskLevel === "medium" || riskLevel === "high") {
+    return riskLevel;
+  }
+
+  return "low";
+};
+
+const resolveBackendNote = (error: unknown, fallback: string) => {
+  if (error instanceof ApiClientError && (error.status === 401 || error.status === 403)) {
+    return `${fallback} Backend returned ${error.status}; driver-facing permission is pending.`;
+  }
+
+  if (error instanceof Error) {
+    return `${fallback} ${error.message}`;
+  }
+
+  return fallback;
+};
+
+const safeNumber = (...values: Array<number | null | undefined>) => {
+  const value = values.find((candidate) => typeof candidate === "number" && Number.isFinite(candidate));
+  return value ?? 0;
+};
+
+const uniqueNotes = (notes: string[]) => {
+  const joinedNotes = Array.from(new Set(notes.filter(Boolean))).join(" ");
+  return joinedNotes || null;
+};
