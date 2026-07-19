@@ -276,9 +276,80 @@
 .earningsList,
 .statusList,
 .notificationList,
-.trustMetrics {
+.trustMetrics,
+.formGrid,
+.warningList {
   display: grid;
   gap: var(--gr-space-3);
+}
+
+.formGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.field {
+  display: grid;
+  gap: var(--gr-space-2);
+  min-width: 0;
+}
+
+.field span {
+  color: var(--gr-color-muted);
+  font-size: 11px;
+  font-weight: var(--gr-font-weight-heavy);
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.field input {
+  width: 100%;
+  min-height: 48px;
+  min-width: 0;
+  padding: 0 var(--gr-space-4);
+  border: 1px solid transparent;
+  border-radius: var(--gr-radius-control);
+  background: var(--gr-color-soft-gray);
+  color: var(--gr-color-ink);
+  font: inherit;
+  font-weight: var(--gr-font-weight-semibold);
+}
+
+.field input:focus {
+  outline: none;
+  border-color: var(--gr-color-deep-teal);
+  box-shadow: var(--gr-shadow-focus-ring);
+}
+
+.locationState {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gr-space-3);
+  min-height: 42px;
+  padding: var(--gr-space-3);
+  border: 1px solid var(--gr-color-border);
+  border-radius: var(--gr-radius-control);
+  background: var(--gr-color-soft-mint);
+}
+
+.locationState span {
+  color: var(--gr-color-dark-navy);
+  font-size: 13px;
+  font-weight: var(--gr-font-weight-heavy);
+}
+
+.warningList {
+  padding: var(--gr-space-3);
+  border: 1px solid rgba(245, 158, 11, 0.28);
+  border-radius: var(--gr-radius-control);
+  background: #fffbeb;
+}
+
+.warningRow {
+  color: #92400e;
+  font-size: 12px;
+  font-weight: var(--gr-font-weight-bold);
+  line-height: 1.4;
 }
 
 .statRow,
@@ -422,6 +493,7 @@
 
   .summaryGrid,
   .mainGrid,
+  .formGrid,
   .rideDetails dl,
   .requestActions,
   .trustMetrics {
