@@ -36,6 +36,7 @@ export function App() {
       <DriverRouteOutlet
         route={activeRoute}
         onNavigate={navigate}
+        onSignOut={() => void handleSignOut()}
         auth={{
           isRestoring: auth.isRestoring,
           onSignIn: auth.signIn,
