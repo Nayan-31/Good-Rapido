@@ -1,0 +1,316 @@
+.screen {
+  display: grid;
+  gap: 20px;
+}
+
+.hero {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 24px;
+  border-radius: 8px;
+  background: #071f35;
+  color: #ffffff;
+}
+
+.hero h1 {
+  max-width: 860px;
+  margin: 6px 0 8px;
+  font-size: 34px;
+  line-height: 1.1;
+}
+
+.hero p {
+  max-width: 920px;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.74);
+  line-height: 1.55;
+}
+
+.heroActions,
+.panelHeader,
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.heroActions,
+.panelHeader {
+  justify-content: space-between;
+}
+
+.eyebrow {
+  color: #718096;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.hero .eyebrow {
+  color: #63e6d1;
+}
+
+.metrics,
+.filters,
+.chartGrid,
+.workspace,
+.forecastGrid,
+.form,
+.driverGrid,
+.exportGrid,
+.riskQueues {
+  display: grid;
+  gap: 14px;
+}
+
+.metrics {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.filters {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.chartGrid,
+.workspace,
+.forecastGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.form,
+.driverGrid,
+.exportGrid,
+.riskQueues {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.panel,
+.filterPanel {
+  min-width: 0;
+}
+
+.panelHeader {
+  margin-bottom: 18px;
+}
+
+.panelHeader h2 {
+  margin: 4px 0 0;
+  color: #071f35;
+  font-size: 22px;
+}
+
+.errorBanner,
+.successBanner,
+.warningBanner {
+  padding: 14px 16px;
+  border-radius: 8px;
+  font-weight: 800;
+}
+
+.errorBanner {
+  border: 1px solid #fecaca;
+  background: #fff1f1;
+  color: #c81e1e;
+}
+
+.successBanner {
+  border: 1px solid #a7f3d0;
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.warningBanner {
+  border: 1px solid #fed7aa;
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.field {
+  display: grid;
+  gap: 7px;
+}
+
+.field span,
+.driverGrid span,
+.exportGrid span,
+.forecastSummary span {
+  color: #718096;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.field input,
+.field select {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid #dfe6ee;
+  border-radius: 8px;
+  background: #f7f9fb;
+  color: #071f35;
+  font: inherit;
+  font-weight: 800;
+}
+
+.alertPanel {
+  display: grid;
+  gap: 8px;
+  border-color: #fed7aa;
+  background: #fff7ed;
+}
+
+.alertPanel strong {
+  color: #c2410c;
+}
+
+.alertPanel span {
+  color: #9a3412;
+  font-weight: 800;
+}
+
+.chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  min-height: 190px;
+  padding: 14px;
+  border: 1px solid #dfe6ee;
+  border-radius: 8px;
+  background: #f7f9fb;
+}
+
+.barWrap {
+  display: grid;
+  align-items: end;
+  justify-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 160px;
+}
+
+.bar {
+  width: min(42px, 100%);
+  min-height: 10px;
+  border-radius: 6px 6px 0 0;
+  background: #078574;
+}
+
+.barWrap span {
+  color: #718096;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.breakdown,
+.topDrivers,
+.forecastSummary {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.breakdown div,
+.topDrivers div,
+.driverGrid div,
+.exportGrid div,
+.riskQueues div {
+  display: grid;
+  gap: 5px;
+  padding: 14px;
+  border: 1px solid #dfe6ee;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.breakdown div,
+.topDrivers div {
+  grid-template-columns: 1fr auto;
+}
+
+.breakdown span,
+.topDrivers span,
+.riskQueues span,
+.muted {
+  margin: 0;
+  color: #718096;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.driverGrid strong,
+.exportGrid strong {
+  color: #071f35;
+  font-size: 24px;
+}
+
+.riskGrid {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.riskQueues {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.riskQueues div {
+  align-content: flex-start;
+}
+
+.forecastSummary {
+  padding-top: 14px;
+  border-top: 1px solid #dfe6ee;
+}
+
+@media (max-width: 1180px) {
+  .metrics,
+  .filters,
+  .chartGrid,
+  .workspace,
+  .forecastGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .form,
+  .driverGrid,
+  .exportGrid,
+  .riskQueues {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .hero,
+  .panelHeader {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .metrics,
+  .filters,
+  .chartGrid,
+  .workspace,
+  .forecastGrid,
+  .form,
+  .driverGrid,
+  .exportGrid,
+  .riskQueues {
+    grid-template-columns: 1fr;
+  }
+
+  .chart {
+    overflow-x: auto;
+  }
+
+  .barWrap {
+    min-width: 44px;
+  }
+
+  .hero h1 {
+    font-size: 28px;
+  }
+}
