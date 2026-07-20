@@ -1,0 +1,18 @@
+import React from "react";
+import { createRoot } from "react-dom/client";
+
+import "@good-rapido/ui/styles.css";
+import "./styles/app.css";
+import { App } from "./app";
+
+const rootElement = document.getElementById("root");
+
+if (!rootElement) {
+  throw new Error("Good Rapido ops dashboard root element was not found.");
+}
+
+createRoot(rootElement).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);

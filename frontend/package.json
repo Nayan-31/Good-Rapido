@@ -9,12 +9,15 @@
     "packages/api-client"
   ],
   "scripts": {
-    "dev:rider": "npm --workspace @good-rapido/rider-app run dev",
-    "dev:driver": "npm --workspace @good-rapido/driver-app run dev",
+    "dev:rider": "npm --workspace @good-rapido/rider-app run dev --",
+    "dev:driver": "npm --workspace @good-rapido/driver-app run dev --",
+    "dev:ops": "npm --workspace @good-rapido/ops-dashboard run dev --",
     "build:rider": "npm --workspace @good-rapido/rider-app run build",
     "build:driver": "npm --workspace @good-rapido/driver-app run build",
+    "build:ops": "npm --workspace @good-rapido/ops-dashboard run build",
     "typecheck:rider": "npm --workspace @good-rapido/rider-app run typecheck",
     "typecheck:driver": "npm --workspace @good-rapido/driver-app run typecheck",
+    "typecheck:ops": "npm --workspace @good-rapido/ops-dashboard run typecheck",
     "typecheck:api-client": "npm --workspace @good-rapido/api-client run typecheck"
   }
 }

@@ -8,7 +8,7 @@ Current status: in progress. The backend modular foundation is strong, the rider
 
 - Backend: Node.js, Express, MongoDB, Mongoose, JWT, Zod, Jest
 - Frontend: React, Vite, TypeScript, CSS Modules
-- Frontend workspace: rider app, driver app, shared UI package, shared API client
+- Frontend workspace: rider app, driver app, ops dashboard, shared UI package, shared API client
 - Architecture: modular monolith with public, private, and core module layers
 
 ## What The Project Solves
@@ -86,6 +86,7 @@ frontend/
 +-- apps/
 |   +-- rider-app/
 |   +-- driver-app/
+|   +-- ops-dashboard/
 +-- packages/
     +-- api-client/
     +-- ui/
@@ -108,6 +109,14 @@ Driver app current state:
 - Real private driver authentication: register, login, token storage, session restore, and logout.
 - Availability, ride request, active ride, earnings, trust, alerts, profile, onboarding, and support screens are currently UI-first with hardcoded values.
 
+Ops dashboard current state:
+
+- React Vite TypeScript setup.
+- Admin/ops private auth shell with token storage structure.
+- Backend-aligned app shell and routing.
+- Skeleton screens for overview, ride operations, pricing/surge, trust-safety, fraud-disputes, communications, admin users, and analytics.
+- API client methods for private admin, analytics, pricing, surge, fraud, admin auth, and ops auth.
+
 ## Real Data Status
 
 Real backend data is currently active for:
@@ -116,6 +125,7 @@ Real backend data is currently active for:
 - Driver register/login/session restore/logout.
 - MongoDB-backed driver auth users.
 - Backend API modules and tests.
+- Ops dashboard private auth endpoints are wired, but admin/ops users must exist in MongoDB before login can succeed.
 
 Partially integrated or UI-first areas:
 
@@ -163,12 +173,18 @@ Run driver app:
 npm run dev:driver
 ```
 
+Run ops dashboard:
+
+```bash
+npm run dev:ops
+```
+
 Useful environment variables:
 
 ```text
 PORT=3000
 MONGO_URL=mongodb://localhost:27017/rapido
-CORS_ORIGIN=http://localhost:5173,http://localhost:5174
+CORS_ORIGIN=http://localhost:5173,http://localhost:5174,http://localhost:5176
 ACCESS_SECRET_TOKEN=local-access-secret-change-me
 REFRESH_SECRET_TOKEN=local-refresh-secret-change-me
 VITE_API_BASE_URL=http://localhost:3000
@@ -187,9 +203,11 @@ Frontend checks:
 ```bash
 npm --prefix frontend run typecheck:rider
 npm --prefix frontend run typecheck:driver
+npm --prefix frontend run typecheck:ops
 npm --prefix frontend run typecheck:api-client
 npm --prefix frontend run build:rider
 npm --prefix frontend run build:driver
+npm --prefix frontend run build:ops
 ```
 
 ## Standard Backend Module Shape
@@ -219,6 +237,7 @@ route -> validator/middleware -> controller -> service -> dao -> model
 - Complete real backend binding for driver availability.
 - Connect driver ride request and active ride lifecycle flows.
 - Connect driver earnings, trust, notifications, and profile screens.
+- Complete ops dashboard real backend binding for admin, analytics, ride ops, pricing, surge, fraud, trust, disputes, and notifications.
 - Polish rider end-to-end booking flow with real persisted rides.
 - Add production-grade maps, live tracking, payment provider, and notification provider.
 - Improve README screenshots and deployment notes after the MVP is stable.
