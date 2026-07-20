@@ -66,7 +66,7 @@ frontend/apps/ops-dashboard
 Current coverage:
 
 - React Vite TypeScript setup.
-- Admin/ops auth shell and token storage structure.
+- Admin/ops auth shell, token storage, session restore, refresh, and logout structure.
 - App shell and backend-aligned route flow.
 - Skeleton screens for overview, ride operations, pricing/surge, trust-safety, fraud-disputes, communications, admin users, and analytics.
 - API client method coverage for private admin, analytics, pricing, surge, fraud, auth admins, and auth ops.
@@ -169,6 +169,12 @@ Run ops dashboard:
 npm run dev:ops
 ```
 
+Seed local admin and ops users from the repo root:
+
+```bash
+npm --prefix server run seed:private-auth
+```
+
 Typecheck:
 
 ```bash
@@ -205,6 +211,6 @@ When the backend runs on a different port during debugging, start the app with t
 ## Current Real Data Notes
 
 - Driver auth uses real backend APIs and MongoDB-backed users.
-- Ops dashboard auth is wired to private admin/ops auth routes, but admin/ops accounts must exist before login can succeed.
+- Ops dashboard auth is wired to private admin/ops auth routes. Local admin/ops accounts can be created with `npm --prefix server run seed:private-auth`.
 - Rider and driver screens beyond auth are still being connected flow by flow.
 - UI screens may show hardcoded operational metrics until their feature service is fully wired to backend data.

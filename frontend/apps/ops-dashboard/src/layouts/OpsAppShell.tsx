@@ -8,8 +8,10 @@ import styles from "./OpsAppShell.module.css";
 export interface OpsAppShellProps {
   activeRoute: OpsRoute;
   isAuthenticated: boolean;
+  isRestoring?: boolean;
   session?: OpsAuthSession | null;
   onNavigate: (routeId: OpsRouteId) => void;
+  onRefreshSession?: () => void;
   onSignOut?: () => void;
   children?: ReactNode;
 }
@@ -17,8 +19,10 @@ export interface OpsAppShellProps {
 export function OpsAppShell({
   activeRoute,
   isAuthenticated,
+  isRestoring = false,
   session,
   onNavigate,
+  onRefreshSession,
   onSignOut,
   children
 }: OpsAppShellProps) {
@@ -61,9 +65,16 @@ export function OpsAppShell({
           <div className={styles.headerActions}>
             <span className={styles.userPill}>{userLabel}</span>
             {isAuthenticated && onSignOut ? (
-              <Button type="button" size="sm" variant="secondary" onClick={onSignOut}>
-                Logout
-              </Button>
+              <>
+                {onRefreshSession ? (
+                  <Button type="button" size="sm" variant="secondary" isLoading={isRestoring} onClick={onRefreshSession}>
+                    Refresh Session
+                  </Button>
+                ) : null}
+                <Button type="button" size="sm" variant="secondary" onClick={onSignOut}>
+                  Logout
+                </Button>
+              </>
             ) : null}
           </div>
         </header>

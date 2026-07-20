@@ -99,6 +99,7 @@ export function useOpsAuthSession() {
     isAuthenticated: Boolean(session?.tokens.accessToken),
     isRestoring,
     signIn,
+    refreshSession: restoreSession,
     restoreSession,
     signOut
   };

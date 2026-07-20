@@ -125,7 +125,7 @@ Real backend data is currently active for:
 - Driver register/login/session restore/logout.
 - MongoDB-backed driver auth users.
 - Backend API modules and tests.
-- Ops dashboard private auth endpoints are wired, but admin/ops users must exist in MongoDB before login can succeed.
+- Ops dashboard private auth endpoints are wired, and local admin/ops users can be seeded with `npm --prefix server run seed:private-auth`.
 
 Partially integrated or UI-first areas:
 
@@ -152,6 +152,19 @@ Start backend:
 
 ```bash
 npm run dev
+```
+
+Seed local admin and ops users for the ops dashboard:
+
+```bash
+npm run seed:private-auth
+```
+
+Default local ops-dashboard credentials:
+
+```text
+Admin: admin@goodrapido.test / Password@123
+Ops: ops@goodrapido.test / Password@123
 ```
 
 Install frontend dependencies:
