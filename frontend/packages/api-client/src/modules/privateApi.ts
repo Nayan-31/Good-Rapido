@@ -61,15 +61,25 @@ export const createPrivateApi = (http: HttpClient) => ({
   driverDocuments: {
     getOptions: () => http.get("/api/v1/private/driver-documents/options"),
     getDocuments: () => http.get("/api/v1/private/driver-documents/documents"),
+    getReviewQueue: (query?: ApiQuery) => http.get("/api/v1/private/driver-documents/review-queue", { query }),
     upsertDocument: (documentType: string, payload: ApiPayload) =>
       http.put(pathWithParams("/api/v1/private/driver-documents/documents/:documentType", { documentType }), payload),
     deleteDocument: (documentType: string) =>
       http.delete(pathWithParams("/api/v1/private/driver-documents/documents/:documentType", { documentType })),
-    submitDocuments: () => http.post("/api/v1/private/driver-documents/submit")
+    submitDocuments: () => http.post("/api/v1/private/driver-documents/submit"),
+    reviewDocument: (driverId: string, documentType: string, payload: ApiPayload) =>
+      http.patch(
+        pathWithParams("/api/v1/private/driver-documents/drivers/:driverId/documents/:documentType/review", {
+          driverId,
+          documentType
+        }),
+        payload
+      )
   },
   vehicle: {
     getOptions: () => http.get("/api/v1/private/vehicle/options"),
     getVehicles: () => http.get("/api/v1/private/vehicle/vehicles"),
+    getReviewQueue: (query?: ApiQuery) => http.get("/api/v1/private/vehicle/review-queue", { query }),
     createVehicle: (payload: ApiPayload) => http.post("/api/v1/private/vehicle/vehicles", payload),
     updateVehicle: (vehicleId: string, payload: ApiPayload) =>
       http.patch(pathWithParams("/api/v1/private/vehicle/vehicles/:vehicleId", { vehicleId }), payload),
@@ -78,7 +88,9 @@ export const createPrivateApi = (http: HttpClient) => ({
     setPrimaryVehicle: (vehicleId: string) =>
       http.patch(pathWithParams("/api/v1/private/vehicle/vehicles/:vehicleId/primary", { vehicleId })),
     submitVehicle: (vehicleId: string) =>
-      http.post(pathWithParams("/api/v1/private/vehicle/vehicles/:vehicleId/submit", { vehicleId }))
+      http.post(pathWithParams("/api/v1/private/vehicle/vehicles/:vehicleId/submit", { vehicleId })),
+    reviewVehicle: (driverId: string, vehicleId: string, payload: ApiPayload) =>
+      http.patch(pathWithParams("/api/v1/private/vehicle/drivers/:driverId/vehicles/:vehicleId/review", { driverId, vehicleId }), payload)
   },
   availability: {
     getOptions: () => http.get("/api/v1/private/driver-availability/options"),
