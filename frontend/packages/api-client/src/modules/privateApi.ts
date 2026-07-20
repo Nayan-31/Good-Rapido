@@ -10,7 +10,41 @@ export const createPrivateApi = (http: HttpClient) => ({
       refreshDriver: (payload: ApiPayload) => http.post("/api/v1/private/auth/drivers/refresh", payload),
       logoutDriver: (payload: ApiPayload) => http.post("/api/v1/private/auth/drivers/logout", payload),
       getDriverSession: () => http.get("/api/v1/private/auth/drivers/me")
+    },
+    admins: {
+      login: (payload: ApiPayload) => http.post("/api/v1/private/auth/admins/login", payload),
+      refresh: (payload: ApiPayload) => http.post("/api/v1/private/auth/admins/refresh", payload),
+      logout: (payload: ApiPayload) => http.post("/api/v1/private/auth/admins/logout", payload),
+      me: () => http.get("/api/v1/private/auth/admins/me")
+    },
+    ops: {
+      login: (payload: ApiPayload) => http.post("/api/v1/private/auth/ops/login", payload),
+      refresh: (payload: ApiPayload) => http.post("/api/v1/private/auth/ops/refresh", payload),
+      logout: (payload: ApiPayload) => http.post("/api/v1/private/auth/ops/logout", payload),
+      me: () => http.get("/api/v1/private/auth/ops/me")
     }
+  },
+  admin: {
+    getOptions: () => http.get("/api/v1/private/admin/options"),
+    getDashboard: () => http.get("/api/v1/private/admin/dashboard"),
+    listUsers: (query?: ApiQuery) => http.get("/api/v1/private/admin/users", { query }),
+    createUser: (payload: ApiPayload) => http.post("/api/v1/private/admin/users", payload),
+    getUser: (userId: string) => http.get(pathWithParams("/api/v1/private/admin/users/:userId", { userId })),
+    updateUser: (userId: string, payload: ApiPayload) =>
+      http.patch(pathWithParams("/api/v1/private/admin/users/:userId", { userId }), payload),
+    updateUserStatus: (userId: string, payload: ApiPayload) =>
+      http.patch(pathWithParams("/api/v1/private/admin/users/:userId/status", { userId }), payload),
+    updateUserPermissions: (userId: string, payload: ApiPayload) =>
+      http.patch(pathWithParams("/api/v1/private/admin/users/:userId/permissions", { userId }), payload)
+  },
+  analytics: {
+    getOptions: () => http.get("/api/v1/private/analytics/options"),
+    getOverview: (query?: ApiQuery) => http.get("/api/v1/private/analytics/overview", { query }),
+    getRides: (query?: ApiQuery) => http.get("/api/v1/private/analytics/rides", { query }),
+    getRevenue: (query?: ApiQuery) => http.get("/api/v1/private/analytics/revenue", { query }),
+    getDrivers: (query?: ApiQuery) => http.get("/api/v1/private/analytics/drivers", { query }),
+    getTrustSafety: (query?: ApiQuery) => http.get("/api/v1/private/analytics/trust-safety", { query }),
+    forecast: (payload: ApiPayload) => http.post("/api/v1/private/analytics/forecast", payload)
   },
   driver: {
     getOptions: () => http.get("/api/v1/private/driver/options"),
@@ -75,6 +109,38 @@ export const createPrivateApi = (http: HttpClient) => ({
     getStatements: (query?: ApiQuery) => http.get("/api/v1/private/earnings/statements", { query }),
     simulate: (payload: ApiPayload) => http.post("/api/v1/private/earnings/simulate", payload)
   },
+  pricing: {
+    getOptions: () => http.get("/api/v1/private/pricing/options"),
+    getDashboard: () => http.get("/api/v1/private/pricing/dashboard"),
+    listRules: (query?: ApiQuery) => http.get("/api/v1/private/pricing/rules", { query }),
+    createRule: (payload: ApiPayload) => http.post("/api/v1/private/pricing/rules", payload),
+    simulate: (payload: ApiPayload) => http.post("/api/v1/private/pricing/simulate", payload),
+    getRule: (ruleId: string) => http.get(pathWithParams("/api/v1/private/pricing/rules/:ruleId", { ruleId })),
+    updateRule: (ruleId: string, payload: ApiPayload) =>
+      http.patch(pathWithParams("/api/v1/private/pricing/rules/:ruleId", { ruleId }), payload),
+    activateRule: (ruleId: string) =>
+      http.post(pathWithParams("/api/v1/private/pricing/rules/:ruleId/activate", { ruleId })),
+    archiveRule: (ruleId: string) =>
+      http.post(pathWithParams("/api/v1/private/pricing/rules/:ruleId/archive", { ruleId }))
+  },
+  surge: {
+    getOptions: () => http.get("/api/v1/private/surge/options"),
+    getDashboard: () => http.get("/api/v1/private/surge/dashboard"),
+    listRules: (query?: ApiQuery) => http.get("/api/v1/private/surge/rules", { query }),
+    createRule: (payload: ApiPayload) => http.post("/api/v1/private/surge/rules", payload),
+    simulate: (payload: ApiPayload) => http.post("/api/v1/private/surge/simulate", payload),
+    getRule: (ruleId: string) => http.get(pathWithParams("/api/v1/private/surge/rules/:ruleId", { ruleId })),
+    updateRule: (ruleId: string, payload: ApiPayload) =>
+      http.patch(pathWithParams("/api/v1/private/surge/rules/:ruleId", { ruleId }), payload),
+    activateRule: (ruleId: string) =>
+      http.post(pathWithParams("/api/v1/private/surge/rules/:ruleId/activate", { ruleId })),
+    pauseRule: (ruleId: string) =>
+      http.post(pathWithParams("/api/v1/private/surge/rules/:ruleId/pause", { ruleId })),
+    endRule: (ruleId: string) =>
+      http.post(pathWithParams("/api/v1/private/surge/rules/:ruleId/end", { ruleId })),
+    archiveRule: (ruleId: string) =>
+      http.post(pathWithParams("/api/v1/private/surge/rules/:ruleId/archive", { ruleId }))
+  },
   trust: {
     getOptions: () => http.get("/api/v1/private/trust/options"),
     getDashboard: () => http.get("/api/v1/private/trust/dashboard"),
@@ -91,6 +157,26 @@ export const createPrivateApi = (http: HttpClient) => ({
       http.post(pathWithParams("/api/v1/private/trust/profiles/:profileId/notes", { profileId }), payload),
     resolveReview: (profileId: string, payload: ApiPayload) =>
       http.post(pathWithParams("/api/v1/private/trust/profiles/:profileId/resolve", { profileId }), payload)
+  },
+  fraud: {
+    getOptions: () => http.get("/api/v1/private/fraud/options"),
+    getDashboard: () => http.get("/api/v1/private/fraud/dashboard"),
+    listCases: (query?: ApiQuery) => http.get("/api/v1/private/fraud/cases", { query }),
+    createCase: (payload: ApiPayload) => http.post("/api/v1/private/fraud/cases", payload),
+    simulate: (payload: ApiPayload) => http.post("/api/v1/private/fraud/simulate", payload),
+    getCase: (caseId: string) => http.get(pathWithParams("/api/v1/private/fraud/cases/:caseId", { caseId })),
+    updateCase: (caseId: string, payload: ApiPayload) =>
+      http.patch(pathWithParams("/api/v1/private/fraud/cases/:caseId", { caseId }), payload),
+    assignReviewer: (caseId: string, payload: ApiPayload) =>
+      http.post(pathWithParams("/api/v1/private/fraud/cases/:caseId/assign", { caseId }), payload),
+    addNote: (caseId: string, payload: ApiPayload) =>
+      http.post(pathWithParams("/api/v1/private/fraud/cases/:caseId/notes", { caseId }), payload),
+    confirmCase: (caseId: string, payload: ApiPayload) =>
+      http.post(pathWithParams("/api/v1/private/fraud/cases/:caseId/confirm", { caseId }), payload),
+    dismissCase: (caseId: string, payload: ApiPayload) =>
+      http.post(pathWithParams("/api/v1/private/fraud/cases/:caseId/dismiss", { caseId }), payload),
+    resolveCase: (caseId: string, payload: ApiPayload) =>
+      http.post(pathWithParams("/api/v1/private/fraud/cases/:caseId/resolve", { caseId }), payload)
   },
   notifications: {
     getOptions: () => http.get("/api/v1/private/notifications/options"),

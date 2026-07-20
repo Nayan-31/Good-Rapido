@@ -2,7 +2,7 @@
 
 This workspace contains the frontend apps and shared frontend packages for Good Rapido.
 
-Current status: in progress. Rider app has MVP screens and API-facing services. Driver app has real auth/session integration and UI-first screens for the remaining driver workflow.
+Current status: in progress. Rider app has MVP screens and API-facing services. Driver app has real auth/session integration and UI-first screens for the remaining driver workflow. Ops dashboard now has a backend-aligned skeleton for admin and operations workflows.
 
 ## Workspace Structure
 
@@ -11,6 +11,7 @@ frontend/
 +-- apps/
 |   +-- rider-app/
 |   +-- driver-app/
+|   +-- ops-dashboard/
 +-- packages/
     +-- api-client/
     +-- ui/
@@ -53,6 +54,22 @@ Current coverage:
 - Session restore.
 - Logout.
 - UI-first screens for onboarding, availability, ride requests, active ride, earnings, trust, alerts, profile, and support.
+
+### Ops Dashboard
+
+Location:
+
+```text
+frontend/apps/ops-dashboard
+```
+
+Current coverage:
+
+- React Vite TypeScript setup.
+- Admin/ops auth shell and token storage structure.
+- App shell and backend-aligned route flow.
+- Skeleton screens for overview, ride operations, pricing/surge, trust-safety, fraud-disputes, communications, admin users, and analytics.
+- API client method coverage for private admin, analytics, pricing, surge, fraud, auth admins, and auth ops.
 
 ## Shared Packages
 
@@ -146,11 +163,18 @@ Run driver app:
 npm run dev:driver
 ```
 
+Run ops dashboard:
+
+```bash
+npm run dev:ops
+```
+
 Typecheck:
 
 ```bash
 npm run typecheck:rider
 npm run typecheck:driver
+npm run typecheck:ops
 npm run typecheck:api-client
 ```
 
@@ -159,6 +183,7 @@ Build:
 ```bash
 npm run build:rider
 npm run build:driver
+npm run build:ops
 ```
 
 ## Backend Connection
@@ -180,5 +205,6 @@ When the backend runs on a different port during debugging, start the app with t
 ## Current Real Data Notes
 
 - Driver auth uses real backend APIs and MongoDB-backed users.
+- Ops dashboard auth is wired to private admin/ops auth routes, but admin/ops accounts must exist before login can succeed.
 - Rider and driver screens beyond auth are still being connected flow by flow.
 - UI screens may show hardcoded operational metrics until their feature service is fully wired to backend data.
