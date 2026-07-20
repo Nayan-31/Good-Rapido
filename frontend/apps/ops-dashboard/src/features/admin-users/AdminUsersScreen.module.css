@@ -1,0 +1,305 @@
+.screen {
+  display: grid;
+  gap: 20px;
+}
+
+.hero {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 24px;
+  border-radius: 8px;
+  background: #071f35;
+  color: #ffffff;
+}
+
+.hero h1 {
+  max-width: 820px;
+  margin: 6px 0 8px;
+  font-size: 34px;
+  line-height: 1.1;
+}
+
+.hero p {
+  max-width: 900px;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.74);
+  line-height: 1.55;
+}
+
+.heroActions,
+.panelHeader,
+.actions,
+.permissionSummary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.heroActions,
+.panelHeader,
+.permissionSummary {
+  justify-content: space-between;
+}
+
+.actions {
+  flex-wrap: wrap;
+}
+
+.eyebrow {
+  color: #718096;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.hero .eyebrow {
+  color: #63e6d1;
+}
+
+.metrics,
+.filters,
+.workspace,
+.form,
+.statusGrid,
+.permissionGrid,
+.moduleGrid {
+  display: grid;
+  gap: 14px;
+}
+
+.metrics {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.filters,
+.workspace {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.workspace {
+  grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.8fr);
+}
+
+.form,
+.statusGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.permissionGrid,
+.moduleGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.panel,
+.filterPanel,
+.permissionPanel {
+  min-width: 0;
+}
+
+.panelHeader {
+  margin-bottom: 18px;
+}
+
+.panelHeader h2 {
+  margin: 4px 0 0;
+  color: #071f35;
+  font-size: 22px;
+}
+
+.errorBanner,
+.successBanner {
+  padding: 14px 16px;
+  border-radius: 8px;
+  font-weight: 800;
+}
+
+.errorBanner {
+  border: 1px solid #fecaca;
+  background: #fff1f1;
+  color: #c81e1e;
+}
+
+.successBanner {
+  border: 1px solid #a7f3d0;
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.field {
+  display: grid;
+  gap: 7px;
+}
+
+.field span,
+.tableHead,
+.securityCard span,
+.moduleCard span {
+  color: #718096;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.field input,
+.field select {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid #dfe6ee;
+  border-radius: 8px;
+  background: #f7f9fb;
+  color: #071f35;
+  font: inherit;
+  font-weight: 800;
+}
+
+.table {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.tableHead,
+.tableRow {
+  display: grid;
+  grid-template-columns: minmax(240px, 1.4fr) 130px 150px 110px;
+  align-items: center;
+  gap: 12px;
+}
+
+.tableHead {
+  padding: 0 14px;
+}
+
+.tableRow {
+  padding: 14px;
+  border: 1px solid #dfe6ee;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #071f35;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tableRow:hover {
+  border-color: #65dfcf;
+  background: #eefbf8;
+}
+
+.tableRow span {
+  display: grid;
+  gap: 4px;
+}
+
+.tableRow small,
+.table p,
+.securityCard p,
+.moduleCard p {
+  margin: 0;
+  color: #718096;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.securityCard,
+.moduleCard {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid #bff3e9;
+  border-radius: 8px;
+  background: #eefbf8;
+}
+
+.permissionSummary {
+  margin-bottom: 16px;
+}
+
+.permissionSummary > div {
+  flex: 1;
+}
+
+.permissionGroup {
+  display: grid;
+  align-content: flex-start;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid #dfe6ee;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.permissionGroup strong {
+  color: #071f35;
+}
+
+.permissionItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: #44546a;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.permissionItem input {
+  margin-top: 2px;
+}
+
+.moduleCard {
+  margin-top: 0;
+  background: #ffffff;
+}
+
+@media (max-width: 1180px) {
+  .metrics,
+  .permissionGrid,
+  .moduleGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .workspace,
+  .filters {
+    grid-template-columns: 1fr;
+  }
+
+  .tableHead,
+  .tableRow {
+    grid-template-columns: minmax(220px, 1fr) repeat(3, auto);
+  }
+}
+
+@media (max-width: 760px) {
+  .hero,
+  .panelHeader,
+  .permissionSummary {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .metrics,
+  .form,
+  .statusGrid,
+  .permissionGrid,
+  .moduleGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .tableHead {
+    display: none;
+  }
+
+  .tableRow {
+    grid-template-columns: 1fr;
+  }
+
+  .hero h1 {
+    font-size: 28px;
+  }
+}
