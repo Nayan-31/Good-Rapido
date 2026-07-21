@@ -29,8 +29,10 @@ export function App() {
     <OpsAppShell
       activeRoute={activeRoute}
       isAuthenticated={auth.isAuthenticated}
+      isRestoring={auth.isRestoring}
       session={auth.session}
       onNavigate={navigate}
+      onRefreshSession={() => void auth.refreshSession()}
       onSignOut={() => void handleSignOut()}
     >
       <OpsRouteOutlet

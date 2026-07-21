@@ -81,6 +81,31 @@ Build:
 npm run build:ops
 ```
 
+Seed local admin and ops users from the repo root:
+
+```bash
+npm --prefix server run seed:private-auth
+```
+
+Default local credentials:
+
+```text
+Admin: admin@goodrapido.test / Password@123
+Ops: ops@goodrapido.test / Password@123
+```
+
+Override seed password:
+
+```bash
+PRIVATE_AUTH_SEED_PASSWORD="YourStrongPassword@123" npm --prefix server run seed:private-auth
+```
+
+Reset existing seeded passwords:
+
+```bash
+PRIVATE_AUTH_SEED_RESET_PASSWORDS=true npm --prefix server run seed:private-auth
+```
+
 ## Environment
 
 The ops dashboard reads the backend URL from:
@@ -104,4 +129,4 @@ http://127.0.0.1:5176
 
 ## Important Auth Note
 
-Driver registration is public inside private auth, but admin and ops registration is intentionally disabled in the backend route layer. Admin and ops accounts must be created through backend seed data, database setup, or the private admin users API after an admin session exists.
+Driver registration is public inside private auth, but admin and ops registration is intentionally disabled in the backend route layer. Admin and ops accounts must be created through the private auth seed script, database setup, or the private admin users API after an admin session exists.

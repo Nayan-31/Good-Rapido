@@ -62,6 +62,12 @@ export function AuthScreen({ isRestoring, onAuthenticated, onRestoreSession, onS
           Central command surface for admins and ops teams to monitor rides, pricing, fraud, trust, disputes,
           notifications, and operational analytics.
         </p>
+        <div className={styles.endpointGrid} aria-label="Private auth endpoints">
+          <span>POST /api/v1/private/auth/admins/login</span>
+          <span>POST /api/v1/private/auth/ops/login</span>
+          <span>POST /api/v1/private/auth/:role/refresh</span>
+          <span>GET /api/v1/private/auth/:role/me</span>
+        </div>
       </Card>
 
       <Card className={styles.formCard} padding="lg">
@@ -122,6 +128,9 @@ export function AuthScreen({ isRestoring, onAuthenticated, onRestoreSession, onS
               Restore Session
             </Button>
           </div>
+          <p className={styles.helperText}>
+            Admin and ops self-registration is disabled in the backend. Run the private auth seed command before first login.
+          </p>
         </form>
       </Card>
     </section>

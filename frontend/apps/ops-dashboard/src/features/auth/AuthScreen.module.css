@@ -29,6 +29,22 @@
   line-height: 1.55;
 }
 
+.endpointGrid {
+  display: grid;
+  gap: 8px;
+  margin-top: 28px;
+}
+
+.endpointGrid span {
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 13px;
+  font-weight: 800;
+}
+
 .formCard {
   align-self: center;
 }
@@ -90,6 +106,13 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
+}
+
+.helperText {
+  margin: 0;
+  color: #718096;
+  font-size: 13px;
+  line-height: 1.45;
 }
 
 @media (max-width: 900px) {
