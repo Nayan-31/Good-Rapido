@@ -2,7 +2,7 @@
 
 The ops dashboard is the internal web app for admin and operations teams. It is separate from the passenger-facing rider app and the driver app.
 
-Current status: ops foundation ready. The app has React, Vite, TypeScript, routing, protected admin/ops auth wiring, real overview data binding, real ride-ops queue binding, ride detail review, ops-state updates, ride confirmation, driver reassignment, cancellation actions, pricing rule controls, surge rule controls, fare impact simulation, and trust-safety review workflows. Fraud, communications, admin users, and analytics screens are still being completed module by module.
+Current status: ops foundation ready. The app has React, Vite, TypeScript, routing, protected admin/ops auth wiring, real overview data binding, real ride-ops queue binding, ride detail review, ops-state updates, ride confirmation, driver reassignment, cancellation actions, pricing rule controls, surge rule controls, fare impact simulation, trust-safety review workflows, and fraud-dispute operations. Communications, admin users, and analytics screens are still being completed module by module.
 
 ## What This App Does
 
@@ -76,6 +76,10 @@ ops-dashboard/
 - Driver document review queue with approve/reject actions.
 - Vehicle review queue with approve/reject actions.
 - Driver compliance cards for trust risk, restrictions, documents, and vehicles.
+- Fraud dashboard connected to `private/fraud`.
+- Fraud case queue with risk simulation, reviewer assignment, confirm, dismiss, and resolve actions.
+- Dispute dashboard connected to `private/disputes`.
+- Dispute queue with assign owner, request evidence, resolve, and reject actions.
 
 ## Run
 
