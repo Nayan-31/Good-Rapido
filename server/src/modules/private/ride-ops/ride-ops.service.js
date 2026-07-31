@@ -45,7 +45,7 @@ export default class RideOpsService {
     }
 
     async dashboard(authContext) {
-        await this.getPrivateUserContext(authContext, { write: false });
+        await this.getPrivateUserContext(authContext, { write: false, staffOnly: true });
         const since = addHours(this.now(), -RIDE_OPS_DEFAULT_DASHBOARD_HOURS);
         const bookings = await this.rideOpsDao.findDashboardRides({
             since,
@@ -64,16 +64,18 @@ export default class RideOpsService {
     }
 
     async listRides(authContext, query = {}) {
-        await this.getPrivateUserContext(authContext, { write: false });
+        const actor = await this.getPrivateUserContext(authContext, { write: false });
+        const scopedQuery = this.toScopedRideQuery(authContext, actor, query);
         const limit = query.limit || 25;
         const queueQuery = {
-            ...query,
-            ...resolveBookingStatusQuery(query),
-            lookupLimit: needsDerivedFiltering(query.status) ? Math.min(limit * 3, 100) : limit
+            ...scopedQuery,
+            ...resolveBookingStatusQuery(scopedQuery),
+            lookupLimit: needsDerivedFiltering(scopedQuery.status) ? Math.min(limit * 3, 100) : limit
         };
         const bookings = await this.rideOpsDao.findRides(queueQuery);
         const rides = this.toOpsRides(bookings)
-            .filter((ride) => matchesRideOpsFilter(ride, query.status || RIDE_OPS_FILTERS.ALL))
+            .filter((ride) => this.canAccessRide(authContext, actor, ride))
+            .filter((ride) => matchesRideOpsFilter(ride, scopedQuery.status || RIDE_OPS_FILTERS.ALL))
             .sort(sortRideOpsQueue)
             .slice(0, limit);
 
@@ -86,8 +88,9 @@ export default class RideOpsService {
     }
 
     async getRide(authContext, rideId) {
-        await this.getPrivateUserContext(authContext, { write: false });
+        const actor = await this.getPrivateUserContext(authContext, { write: false });
         const ride = await this.findRide(rideId);
+        this.assertCanAccessRide(authContext, actor, ride);
 
         return buildSuccessResponse({
             message: 'Ride ops detail fetched successfully',
@@ -98,7 +101,7 @@ export default class RideOpsService {
     }
 
     async updateOpsState(authContext, rideId, payload) {
-        const actor = await this.getPrivateUserContext(authContext, { write: true });
+        const actor = await this.getPrivateUserContext(authContext, { write: true, staffOnly: true });
         const ride = await this.findRide(rideId);
         const now = this.now();
         const action = resolveOpsStateAction(payload);
@@ -122,6 +125,7 @@ export default class RideOpsService {
     async confirmRide(authContext, rideId, payload = {}) {
         const actor = await this.getPrivateUserContext(authContext, { write: true });
         const ride = await this.findRide(rideId);
+        this.assertCanAccessRide(authContext, actor, ride);
 
         if (ride.bookingStatus !== RIDE_BOOKING_STATUSES.DRIVER_SELECTED) {
             throw AppError.badRequest('Only driver-selected rides can be confirmed');
@@ -150,7 +154,7 @@ export default class RideOpsService {
     }
 
     async reassignDriver(authContext, rideId, payload) {
-        const actor = await this.getPrivateUserContext(authContext, { write: true });
+        const actor = await this.getPrivateUserContext(authContext, { write: true, staffOnly: true });
         const ride = await this.findRide(rideId);
 
         assertRideIsMutable(ride, 'Driver cannot be reassigned for this ride');
@@ -183,6 +187,7 @@ export default class RideOpsService {
     async cancelRide(authContext, rideId, payload) {
         const actor = await this.getPrivateUserContext(authContext, { write: true });
         const ride = await this.findRide(rideId);
+        this.assertCanAccessRide(authContext, actor, ride);
 
         if (ride.bookingStatus === RIDE_BOOKING_STATUSES.CANCELLED) {
             throw AppError.badRequest('Ride is already cancelled');
@@ -238,12 +243,8 @@ export default class RideOpsService {
         return this.toOpsRide(updatedBooking);
     }
 
-    async getPrivateUserContext(authContext, { write = false } = {}) {
-        if (write) {
-            this.assertRideOpsWriteContext(authContext);
-        } else {
-            this.assertRideOpsReadContext(authContext);
-        }
+    async getPrivateUserContext(authContext, { write = false, staffOnly = false } = {}) {
+        this.assertRideOpsContext(authContext, { write, staffOnly });
 
         const privateUser = toPlainObject(await this.rideOpsDao.findPrivateUserById(authContext.userId));
 
@@ -258,7 +259,41 @@ export default class RideOpsService {
         return privateUser;
     }
 
+    assertRideOpsContext(authContext, { write = false, staffOnly = false } = {}) {
+        if (staffOnly) {
+            if (write) {
+                this.assertRideOpsStaffWriteContext(authContext);
+            } else {
+                this.assertRideOpsStaffReadContext(authContext);
+            }
+            return;
+        }
+
+        if (write) {
+            this.assertRideOpsWriteContext(authContext);
+        } else {
+            this.assertRideOpsReadContext(authContext);
+        }
+    }
+
     assertRideOpsReadContext(authContext) {
+        if (!authContext?.userId) {
+            throw AppError.unauthorized();
+        }
+
+        if (authContext.role === PRIVATE_AUTH_ROLES.DRIVER) {
+            if (!authContext.permissions?.includes(PRIVATE_AUTH_PERMISSIONS.DRIVER_RIDES_READ)) {
+                throw AppError.forbidden('Driver rides read permission is required');
+            }
+            return authContext;
+        }
+
+        this.assertRideOpsStaffReadContext(authContext);
+
+        return authContext;
+    }
+
+    assertRideOpsStaffReadContext(authContext) {
         if (!authContext?.userId || ![
             PRIVATE_AUTH_ROLES.ADMIN,
             PRIVATE_AUTH_ROLES.OPS
@@ -276,8 +311,48 @@ export default class RideOpsService {
     assertRideOpsWriteContext(authContext) {
         this.assertRideOpsReadContext(authContext);
 
+        if (authContext.role === PRIVATE_AUTH_ROLES.DRIVER) {
+            if (!authContext.permissions?.includes(PRIVATE_AUTH_PERMISSIONS.DRIVER_RIDES_WRITE)) {
+                throw AppError.forbidden('Driver rides write permission is required');
+            }
+            return;
+        }
+
         if (!authContext.permissions?.includes(PRIVATE_AUTH_PERMISSIONS.OPS_RIDES_WRITE)) {
             throw AppError.forbidden('Ride ops write permission is required');
+        }
+    }
+
+    assertRideOpsStaffWriteContext(authContext) {
+        this.assertRideOpsStaffReadContext(authContext);
+
+        if (!authContext.permissions?.includes(PRIVATE_AUTH_PERMISSIONS.OPS_RIDES_WRITE)) {
+            throw AppError.forbidden('Ride ops write permission is required');
+        }
+    }
+
+    toScopedRideQuery(authContext, actor, query = {}) {
+        if (authContext.role !== PRIVATE_AUTH_ROLES.DRIVER) {
+            return query;
+        }
+
+        return {
+            ...query,
+            driverId: getDriverPoolId(actor) || '__unassigned_driver__'
+        };
+    }
+
+    canAccessRide(authContext, actor, ride = {}) {
+        if (authContext.role !== PRIVATE_AUTH_ROLES.DRIVER) {
+            return true;
+        }
+
+        return ride.driver?.driverId === getDriverPoolId(actor);
+    }
+
+    assertCanAccessRide(authContext, actor, ride = {}) {
+        if (!this.canAccessRide(authContext, actor, ride)) {
+            throw AppError.forbidden('Ride is not assigned to this driver');
         }
     }
 
@@ -644,3 +719,12 @@ const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 const toPlainObject = (document) => document?.toObject ? document.toObject() : document;
 
 const getId = (document = {}) => document._id?.toString?.() || document.id || null;
+
+const getDriverPoolId = (privateUser = {}) => (
+    privateUser.employeeCode
+        ?.trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '_')
+        .replace(/^_+|_+$/g, '')
+        || null
+);

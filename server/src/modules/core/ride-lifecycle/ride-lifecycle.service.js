@@ -61,6 +61,8 @@ export default class RideLifecycleService {
             throw AppError.notFound('Ride not found');
         }
 
+        this.assertPrivateRideAccess(authContext, actor, ride);
+
         const currentLifecycle = buildRideLifecycle(ride, { now: this.now() });
 
         assertTransitionAllowed(currentLifecycle, payload.event);
@@ -105,12 +107,14 @@ export default class RideLifecycleService {
         this.assertAuthenticatedContext(authContext);
 
         if (authContext.scope === 'private') {
-            await this.getPrivateUserContext(authContext, { write: false });
+            const privateUser = await this.getPrivateUserContext(authContext, { write: false });
             const ride = toPlainObject(await this.rideLifecycleDao.findRideById(rideId));
 
             if (!ride) {
                 throw AppError.notFound('Ride not found');
             }
+
+            this.assertPrivateRideAccess(authContext, privateUser, ride);
 
             return ride;
         }
@@ -174,9 +178,17 @@ export default class RideLifecycleService {
 
         if (authContext.scope !== 'private' || ![
             PRIVATE_AUTH_ROLES.ADMIN,
-            PRIVATE_AUTH_ROLES.OPS
+            PRIVATE_AUTH_ROLES.OPS,
+            PRIVATE_AUTH_ROLES.DRIVER
         ].includes(authContext.role)) {
-            throw AppError.forbidden('Ride lifecycle review access is restricted to ops users');
+            throw AppError.forbidden('Ride lifecycle private access is required');
+        }
+
+        if (authContext.role === PRIVATE_AUTH_ROLES.DRIVER) {
+            if (!authContext.permissions?.includes(PRIVATE_AUTH_PERMISSIONS.DRIVER_RIDES_READ)) {
+                throw AppError.forbidden('Driver rides read permission is required');
+            }
+            return;
         }
 
         if (!authContext.permissions?.includes(PRIVATE_AUTH_PERMISSIONS.OPS_RIDES_READ)) {
@@ -187,8 +199,25 @@ export default class RideLifecycleService {
     assertRideLifecycleWriteContext(authContext) {
         this.assertRideLifecycleReadContext(authContext);
 
+        if (authContext.role === PRIVATE_AUTH_ROLES.DRIVER) {
+            if (!authContext.permissions?.includes(PRIVATE_AUTH_PERMISSIONS.DRIVER_RIDES_WRITE)) {
+                throw AppError.forbidden('Driver rides write permission is required');
+            }
+            return;
+        }
+
         if (!authContext.permissions?.includes(PRIVATE_AUTH_PERMISSIONS.OPS_RIDES_WRITE)) {
             throw AppError.forbidden('Ride ops write permission is required');
+        }
+    }
+
+    assertPrivateRideAccess(authContext, privateUser, ride = {}) {
+        if (authContext.role !== PRIVATE_AUTH_ROLES.DRIVER) {
+            return;
+        }
+
+        if (ride.selectedDriver?.driverId !== getDriverPoolId(privateUser)) {
+            throw AppError.forbidden('Ride is not assigned to this driver');
         }
     }
 }
@@ -265,3 +294,12 @@ const normalizeLifecycle = (lifecycle = {}) => ({
 const toPlainObject = (document) => document?.toObject ? document.toObject() : document;
 
 const getId = (document = {}) => document._id?.toString?.() || document.id || null;
+
+const getDriverPoolId = (privateUser = {}) => (
+    privateUser.employeeCode
+        ?.trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '_')
+        .replace(/^_+|_+$/g, '')
+        || null
+);

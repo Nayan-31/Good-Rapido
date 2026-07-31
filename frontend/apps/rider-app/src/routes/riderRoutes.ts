@@ -2,6 +2,7 @@ export type RiderRouteId =
   | "home"
   | "estimate"
   | "confirm"
+  | "ride"
   | "history"
   | "safety"
   | "notifications"
@@ -36,6 +37,13 @@ export const riderRoutes = [
     path: "/confirm",
     title: "Confirm Ride",
     navLabel: "Confirm",
+    showInBottomNav: false
+  },
+  {
+    id: "ride",
+    path: "/ride",
+    title: "Live Ride",
+    navLabel: "Ride",
     showInBottomNav: false
   },
   {

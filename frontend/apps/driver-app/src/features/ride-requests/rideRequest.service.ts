@@ -14,7 +14,9 @@ import type {
 
 type RideOpsQueueResponse = ApiResponse<{
   rides?: RideOpsQueueItem[];
-  queue?: RideOpsQueueItem[];
+  queue?: RideOpsQueueItem[] | {
+    rides?: RideOpsQueueItem[];
+  };
 }>;
 
 interface RideOpsQueueItem {
@@ -112,33 +114,42 @@ export const demoRideRequest: DriverRideRequest = {
 export const rideRequestService = {
   async loadIncomingRequest(): Promise<RideRequestLoadResult> {
     const notes: string[] = [];
-    let request = demoRideRequest;
+    let request: DriverRideRequest | null = null;
 
     try {
       const response = await apiClient.private.rideOps.listRides({
-        status: "driver_selected",
-        lifecycleStatus: "pending_confirmation",
+        status: "pending_confirmation",
+        bookingStatus: "driver_selected",
         limit: 1
       }) as RideOpsQueueResponse;
-      const backendRide = response.data?.rides?.[0] ?? response.data?.queue?.[0] ?? null;
+      const backendRide = pickFirstRide(response.data);
 
       if (backendRide) {
         request = mapRideOpsQueueItem(backendRide);
+      } else if (shouldUseDemoRequestFallback()) {
+        request = demoRideRequest;
+        notes.push("No assigned backend request was found, so demo ride request data is being shown.");
       }
     } catch (error) {
       notes.push(resolveBackendNote(error, "Ride ops queue is not available for this driver session yet."));
+
+      if (shouldUseDemoRequestFallback()) {
+        request = demoRideRequest;
+      }
     }
 
-    await Promise.allSettled([
-      apiClient.core.matchingEngine.match(buildMatchingPayload(request)),
-      apiClient.core.trustEngine.assess(buildRiderTrustPayload(request))
-    ]).then((results) => {
-      const blocked = results.some((result) => result.status === "rejected");
+    if (request) {
+      await Promise.allSettled([
+        apiClient.core.matchingEngine.match(buildMatchingPayload(request)),
+        apiClient.core.trustEngine.assess(buildRiderTrustPayload(request))
+      ]).then((results) => {
+        const blocked = results.some((result) => result.status === "rejected");
 
-      if (blocked) {
-        notes.push("Matching/trust engine calls are wired, but current backend guards may require ops/admin scope.");
-      }
-    });
+        if (blocked) {
+          notes.push("Matching/trust engine calls are wired, but current backend guards may require ops/admin scope.");
+        }
+      });
+    }
 
     return {
       request,
@@ -246,6 +257,22 @@ const mapRideOpsQueueItem = (ride: RideOpsQueueItem): DriverRideRequest => {
   };
 };
 
+const pickFirstRide = (data: RideOpsQueueResponse["data"]) => {
+  if (!data) {
+    return null;
+  }
+
+  if (data.rides?.[0]) {
+    return data.rides[0];
+  }
+
+  if (Array.isArray(data.queue)) {
+    return data.queue[0] ?? null;
+  }
+
+  return data.queue?.rides?.[0] ?? null;
+};
+
 const buildMatchingPayload = (request: DriverRideRequest): ApiPayload => ({
   pickup: request.pickup,
   dropoff: request.dropoff,
@@ -319,3 +346,5 @@ const uniqueNotes = (notes: string[]) => {
   const joinedNotes = Array.from(new Set(notes.filter(Boolean))).join(" ");
   return joinedNotes || null;
 };
+
+const shouldUseDemoRequestFallback = () => import.meta.env.VITE_USE_DEMO_RIDE_REQUESTS === "true";

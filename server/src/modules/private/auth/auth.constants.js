@@ -28,6 +28,7 @@ export const PRIVATE_AUTH_PERMISSIONS = Object.freeze({
     DRIVER_VEHICLES_WRITE: 'driver:vehicles:write',
     DRIVER_VEHICLES_REVIEW: 'driver:vehicles:review',
     DRIVER_RIDES_READ: 'driver:rides:read',
+    DRIVER_RIDES_WRITE: 'driver:rides:write',
     DRIVER_EARNINGS_READ: 'driver:earnings:read',
     ADMIN_USERS_READ: 'admin:users:read',
     ADMIN_USERS_WRITE: 'admin:users:write',
@@ -55,6 +56,7 @@ export const DEFAULT_PRIVATE_ROLE_PERMISSIONS = Object.freeze({
         PRIVATE_AUTH_PERMISSIONS.DRIVER_VEHICLES_READ,
         PRIVATE_AUTH_PERMISSIONS.DRIVER_VEHICLES_WRITE,
         PRIVATE_AUTH_PERMISSIONS.DRIVER_RIDES_READ,
+        PRIVATE_AUTH_PERMISSIONS.DRIVER_RIDES_WRITE,
         PRIVATE_AUTH_PERMISSIONS.DRIVER_EARNINGS_READ
     ]),
     [PRIVATE_AUTH_ROLES.ADMIN]: Object.freeze(Object.values(PRIVATE_AUTH_PERMISSIONS)),

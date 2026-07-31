@@ -53,6 +53,7 @@ const createPrivateUser = (role = PRIVATE_AUTH_ROLES.OPS, overrides = {}) => ({
     fullName: `${role} User`,
     email: `${role}@goodrapido.test`,
     phone: '+919222222222',
+    employeeCode: `${role.toUpperCase()}-001`,
     permissions: [...(DEFAULT_PRIVATE_ROLE_PERMISSIONS[role] || [])],
     accountStatus: PRIVATE_AUTH_ACCOUNT_STATUSES.ACTIVE,
     ...overrides
@@ -207,6 +208,24 @@ describe('core ride lifecycle routes', () => {
         expect(response.body.data.lifecycle.availableEvents).toContain(RIDE_LIFECYCLE_EVENTS.DRIVER_ARRIVED);
     });
 
+    test('driver user can fetch lifecycle for assigned ride', async () => {
+        const driverUser = createPrivateUser(PRIVATE_AUTH_ROLES.DRIVER, {
+            employeeCode: 'DRV-CAB-RAJESH'
+        });
+
+        dependencies.rideLifecycleDao.findPrivateUserById.mockResolvedValue(driverUser);
+        dependencies.rideLifecycleDao.findRideById.mockResolvedValue(createRideBooking());
+
+        const response = await injectRequest(app, {
+            method: 'GET',
+            path: `${BASE_PATH}/rides/ride-id`,
+            headers: privateAuthHeaderFor(dependencies, driverUser)
+        });
+
+        expect(response.statusCode).toBe(200);
+        expect(response.body.data.lifecycle.ride.driver.driverId).toBe('drv_cab_rajesh');
+    });
+
     test('ops user can mark driver arrival', async () => {
         const ride = createRideBooking();
 
@@ -237,6 +256,35 @@ describe('core ride lifecycle routes', () => {
                 lastTransition: RIDE_LIFECYCLE_EVENTS.DRIVER_ARRIVED
             })
         }));
+    });
+
+    test('driver user can mark arrival for assigned ride', async () => {
+        const driverUser = createPrivateUser(PRIVATE_AUTH_ROLES.DRIVER, {
+            employeeCode: 'DRV-CAB-RAJESH'
+        });
+        const ride = createRideBooking();
+
+        dependencies.rideLifecycleDao.findPrivateUserById.mockResolvedValue(driverUser);
+        dependencies.rideLifecycleDao.findRideById.mockResolvedValue(ride);
+        dependencies.rideLifecycleDao.updateRideById.mockImplementation(async (_rideId, payload) => ({
+            ...ride,
+            ...payload,
+            updatedAt: FIXED_NOW
+        }));
+
+        const response = await injectRequest(app, {
+            method: 'POST',
+            path: `${BASE_PATH}/rides/ride-id/events`,
+            headers: privateAuthHeaderFor(dependencies, driverUser),
+            body: {
+                event: RIDE_LIFECYCLE_EVENTS.DRIVER_ARRIVED,
+                note: 'Driver reached pickup gate'
+            }
+        });
+
+        expect(response.statusCode).toBe(200);
+        expect(response.body.data.lifecycle.lifecycleStatus).toBe(RIDE_LIFECYCLE_STATUSES.DRIVER_ARRIVED);
+        expect(response.body.data.lifecycle.transitionLog[0].actorRole).toBe(PRIVATE_AUTH_ROLES.DRIVER);
     });
 
     test('ops user can complete an in-progress ride', async () => {
@@ -305,6 +353,6 @@ describe('core ride lifecycle routes', () => {
         });
 
         expect(response.statusCode).toBe(403);
-        expect(response.body.message).toBe('Ride lifecycle review access is restricted to ops users');
+        expect(response.body.message).toBe('Ride lifecycle private access is required');
     });
 });

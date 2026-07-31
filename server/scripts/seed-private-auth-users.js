@@ -32,6 +32,60 @@ const seedUsers = [
         employeeCode: process.env.PRIVATE_OPS_EMPLOYEE_CODE || 'OPS-001',
         department: 'operations',
         serviceZone: process.env.PRIVATE_OPS_SERVICE_ZONE || 'kolkata'
+    },
+    {
+        role: PRIVATE_AUTH_ROLES.DRIVER,
+        fullName: 'Arjun Singh',
+        email: 'arjun.driver@goodrapido.test',
+        phone: '+919999200001',
+        employeeCode: 'DRV-BIKE-ARJUN',
+        department: 'driver_network',
+        serviceZone: 'kolkata'
+    },
+    {
+        role: PRIVATE_AUTH_ROLES.DRIVER,
+        fullName: 'Sahil Khan',
+        email: 'sahil.driver@goodrapido.test',
+        phone: '+919999200002',
+        employeeCode: 'DRV-BIKE-SAHIL',
+        department: 'driver_network',
+        serviceZone: 'kolkata'
+    },
+    {
+        role: PRIVATE_AUTH_ROLES.DRIVER,
+        fullName: 'Imran Ali',
+        email: 'imran.driver@goodrapido.test',
+        phone: '+919999200003',
+        employeeCode: 'DRV-AUTO-IMRAN',
+        department: 'driver_network',
+        serviceZone: 'kolkata'
+    },
+    {
+        role: PRIVATE_AUTH_ROLES.DRIVER,
+        fullName: 'Rajesh Kumar',
+        email: 'rajesh.driver@goodrapido.test',
+        phone: '+919999200004',
+        employeeCode: 'DRV-CAB-RAJESH',
+        department: 'driver_network',
+        serviceZone: 'kolkata'
+    },
+    {
+        role: PRIVATE_AUTH_ROLES.DRIVER,
+        fullName: 'Neha Das',
+        email: 'neha.driver@goodrapido.test',
+        phone: '+919999200005',
+        employeeCode: 'DRV-CAB-NEHA',
+        department: 'driver_network',
+        serviceZone: 'kolkata'
+    },
+    {
+        role: PRIVATE_AUTH_ROLES.DRIVER,
+        fullName: 'Amit Das',
+        email: 'amit.driver@goodrapido.test',
+        phone: '+919999200006',
+        employeeCode: 'DRV-PREMIUM-AMIT',
+        department: 'driver_network',
+        serviceZone: 'kolkata'
     }
 ];
 
