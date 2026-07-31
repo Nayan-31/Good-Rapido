@@ -71,19 +71,18 @@ export function useConfirmRide() {
         throw new Error("Ride booking was not created");
       }
 
-      const confirmResponse = await confirmRideService.confirmBooking(createdBooking.id);
-      const confirmedBooking = confirmResponse.data?.booking ?? createdBooking;
-      const lifecycleResponse = await confirmRideService.getLifecycle(confirmedBooking.id);
+      const lifecycleResponse = await confirmRideService.getLifecycle(createdBooking.id);
       const nextLifecycle = lifecycleResponse.data?.lifecycle ?? null;
 
-      setBooking(confirmedBooking);
+      setBooking(createdBooking);
       setLifecycle(nextLifecycle);
-      setMessage(confirmResponse.message);
+      setMessage(bookingResponse.message);
       rideFlowStorage.update({
         selectedDriver,
-        booking: confirmedBooking,
+        booking: createdBooking,
         lifecycle: nextLifecycle
       });
+      window.location.hash = "/ride";
     } catch (error) {
       setMessage(resolveErrorMessage(error));
     } finally {

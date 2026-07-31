@@ -41,7 +41,8 @@ export const createRideLifecycleRouter = (dependencies = createRideLifecycleDepe
         allowedRoles: [
             ...Object.values(AUTH_ROLES),
             PRIVATE_AUTH_ROLES.ADMIN,
-            PRIVATE_AUTH_ROLES.OPS
+            PRIVATE_AUTH_ROLES.OPS,
+            PRIVATE_AUTH_ROLES.DRIVER
         ]
     });
 

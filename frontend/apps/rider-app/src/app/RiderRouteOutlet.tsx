@@ -4,7 +4,7 @@ import { IdentityFlow } from "@/features/identity";
 import { NotificationScreen } from "@/features/notifications";
 import { ProfileScreen } from "@/features/profile";
 import { PricingEstimateScreen } from "@/features/pricing";
-import { ConfirmRideScreen } from "@/features/ride-lifecycle";
+import { ConfirmRideScreen, LiveRideScreen } from "@/features/ride-lifecycle";
 import { SafetyScreen } from "@/features/safety";
 import type { RiderRoute } from "@/routes";
 
@@ -27,6 +27,10 @@ export function RiderRouteOutlet({ route }: RiderRouteOutletProps) {
 
   if (route.id === "confirm") {
     return <ConfirmRideScreen />;
+  }
+
+  if (route.id === "ride") {
+    return <LiveRideScreen />;
   }
 
   if (route.id === "history") {

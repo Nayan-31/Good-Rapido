@@ -429,17 +429,66 @@ describe('private ride ops routes', () => {
         expect(dependencies.rideOpsDao.updateById).not.toHaveBeenCalled();
     });
 
-    test('driver private users cannot access ride ops routes', async () => {
-        const driverUser = createPrivateUser(PRIVATE_AUTH_ROLES.DRIVER);
+    test('driver private users can list assigned incoming requests only', async () => {
+        const driverUser = createPrivateUser(PRIVATE_AUTH_ROLES.DRIVER, {
+            employeeCode: 'DRV-CAB-RAJESH'
+        });
+
+        dependencies.rideOpsDao.findPrivateUserById.mockResolvedValue(driverUser);
+        dependencies.rideOpsDao.findRides.mockResolvedValue([
+            createPendingRideBooking(),
+            createPendingRideBooking({
+                id: 'other-driver-ride-id',
+                _id: 'other-driver-ride-id',
+                selectedDriver: {
+                    ...createPendingRideBooking().selectedDriver,
+                    driverId: 'drv_cab_neha',
+                    fullName: 'Neha Das'
+                }
+            })
+        ]);
 
         const response = await injectRequest(app, {
             method: 'GET',
-            path: `${BASE_PATH}/rides`,
+            path: `${BASE_PATH}/rides?status=${RIDE_OPS_FILTERS.PENDING_CONFIRMATION}&limit=5`,
             headers: authHeaderFor(dependencies, driverUser)
         });
 
-        expect(response.statusCode).toBe(403);
-        expect(response.body.message).toBe('You do not have access to this private route');
+        expect(response.statusCode).toBe(200);
+        expect(response.body.data.queue.rides).toHaveLength(1);
+        expect(response.body.data.queue.rides[0].driver.driverId).toBe('drv_cab_rajesh');
+        expect(dependencies.rideOpsDao.findRides).toHaveBeenCalledWith(expect.objectContaining({
+            driverId: 'drv_cab_rajesh',
+            bookingStatuses: [RIDE_BOOKING_STATUSES.DRIVER_SELECTED]
+        }));
+    });
+
+    test('driver private users can confirm their assigned request', async () => {
+        const driverUser = createPrivateUser(PRIVATE_AUTH_ROLES.DRIVER, {
+            employeeCode: 'DRV-CAB-RAJESH'
+        });
+        const ride = createPendingRideBooking();
+
+        dependencies.rideOpsDao.findPrivateUserById.mockResolvedValue(driverUser);
+        dependencies.rideOpsDao.findById.mockResolvedValue(ride);
+        dependencies.rideOpsDao.updateById.mockImplementation(async (_rideId, payload) => ({
+            ...ride,
+            ...payload,
+            updatedAt: FIXED_NOW
+        }));
+
+        const response = await injectRequest(app, {
+            method: 'POST',
+            path: `${BASE_PATH}/rides/pending-ride-id/confirm`,
+            headers: authHeaderFor(dependencies, driverUser),
+            body: {
+                note: 'Driver accepted ride request'
+            }
+        });
+
+        expect(response.statusCode).toBe(200);
+        expect(response.body.data.ride.bookingStatus).toBe(RIDE_BOOKING_STATUSES.CONFIRMED);
+        expect(response.body.data.ride.ops.actionLog[0].actorRole).toBe(PRIVATE_AUTH_ROLES.DRIVER);
     });
 
     test('write routes reject ops users without write permission', async () => {
@@ -458,7 +507,7 @@ describe('private ride ops routes', () => {
         });
 
         expect(response.statusCode).toBe(403);
-        expect(response.body.message).toBe('Required private permission is missing');
+        expect(response.body.message).toBe('Ride ops write permission is required');
     });
 
     test('reassign driver returns validation errors for invalid driver snapshots', async () => {

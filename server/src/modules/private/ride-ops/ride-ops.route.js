@@ -33,10 +33,13 @@ export const createRideOpsRouter = (dependencies = createRideOpsDependencies()) 
     const { rideOpsDao, tokenService, now } = dependencies;
     const rideOpsService = new RideOpsService({ rideOpsDao, now });
     const rideOpsController = new RideOpsController(rideOpsService);
-    const requireRideOpsRead = createPrivateAuthGuard({
+    const requireRideParticipant = createPrivateAuthGuard({
         tokenService,
-        allowedRoles: [PRIVATE_AUTH_ROLES.ADMIN, PRIVATE_AUTH_ROLES.OPS],
-        requiredPermissions: [PRIVATE_AUTH_PERMISSIONS.OPS_RIDES_READ]
+        allowedRoles: [
+            PRIVATE_AUTH_ROLES.ADMIN,
+            PRIVATE_AUTH_ROLES.OPS,
+            PRIVATE_AUTH_ROLES.DRIVER
+        ]
     });
     const requireRideOpsWrite = createPrivateAuthGuard({
         tokenService,
@@ -44,7 +47,7 @@ export const createRideOpsRouter = (dependencies = createRideOpsDependencies()) 
         requiredPermissions: [PRIVATE_AUTH_PERMISSIONS.OPS_RIDES_WRITE]
     });
 
-    router.use(requireRideOpsRead);
+    router.use(requireRideParticipant);
 
     router.get('/options', rideOpsController.options);
     router.get('/dashboard', rideOpsController.dashboard);
@@ -58,7 +61,6 @@ export const createRideOpsRouter = (dependencies = createRideOpsDependencies()) 
     );
     router.post(
         '/rides/:rideId/confirm',
-        requireRideOpsWrite,
         validate(confirmRideSchema),
         rideOpsController.confirmRide
     );
@@ -70,7 +72,6 @@ export const createRideOpsRouter = (dependencies = createRideOpsDependencies()) 
     );
     router.post(
         '/rides/:rideId/cancel',
-        requireRideOpsWrite,
         validate(cancelRideSchema),
         rideOpsController.cancelRide
     );

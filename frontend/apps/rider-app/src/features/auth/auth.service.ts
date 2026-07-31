@@ -1,9 +1,10 @@
 import type { ApiPayload, ApiResponse } from "@good-rapido/api-client";
 
 import { apiClient } from "@/services/apiClient";
-import type { AuthSession, LoginForm, RegisterForm } from "./auth.types";
+import type { AuthSession, AuthUser, LoginForm, RegisterForm } from "./auth.types";
 
 type AuthSessionResponse = ApiResponse<AuthSession>;
+type RiderProfileResponse = ApiResponse<{ user: AuthUser }>;
 
 export const authService = {
   loginRider(form: LoginForm) {
@@ -25,5 +26,17 @@ export const authService = {
     }
 
     return apiClient.public.auth.registerRider(payload) as Promise<AuthSessionResponse>;
+  },
+
+  refreshRider(refreshToken: string) {
+    return apiClient.public.auth.refreshRider({ refreshToken }) as Promise<AuthSessionResponse>;
+  },
+
+  logoutRider(refreshToken: string) {
+    return apiClient.public.auth.logoutRider({ refreshToken }) as Promise<ApiResponse>;
+  },
+
+  getRiderSession() {
+    return apiClient.public.auth.getRiderSession() as Promise<RiderProfileResponse>;
   }
 };

@@ -1,7 +1,7 @@
 import env from "../../config/env.js"
 
 const request = new Map()
-const MAX_REQUEST = env.RATELIMIT
+const MAX_REQUEST = env.NODE_ENV === 'production' ? env.RATELIMIT : Math.max(env.RATELIMIT, 1000)
 const WINDOW_MS = env.RATELIMIT_WINDOWS;
 
 const cleanupInterval = setInterval(() => {
@@ -16,6 +16,10 @@ const cleanupInterval = setInterval(() => {
 cleanupInterval.unref?.()
 
 export const rateLimiter = (req, res, next) => {
+    if (req.method === 'OPTIONS') {
+        return next();
+    }
+
     const ip = req.ip;
 
     if (!request.has(ip)) {
@@ -38,8 +42,10 @@ export const rateLimiter = (req, res, next) => {
 
     // If within the time window and over the limit
     if (userData.count >= MAX_REQUEST) {
+        res.set('Retry-After', String(Math.ceil((userData.startTime + WINDOW_MS - Date.now()) / 1000)));
+
         return res.status(429).json({
-            sucess: false,
+            success: false,
             message: "Too many requests. Please try again later"
         })
     }
