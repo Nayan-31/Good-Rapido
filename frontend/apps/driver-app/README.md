@@ -119,7 +119,8 @@ private/vehicle
 ### availability
 
 - Online/offline toggle.
-- Location sharing state.
+- GPS location sharing state.
+- Real map provider support with Google Maps when `VITE_GOOGLE_MAPS_API_KEY` is configured.
 - Active service zone.
 - Availability warnings.
 
@@ -152,6 +153,9 @@ core/trust-engine
 - Mark arrived.
 - Start ride.
 - Complete ride.
+- Live bike movement on a real map.
+- Google Maps route view when `VITE_GOOGLE_MAPS_API_KEY` is configured.
+- Leaflet/OpenStreetMap fallback when a Google Maps key is not available.
 - Route fairness and detour indicators.
 
 Backend modules to connect:
@@ -245,6 +249,14 @@ If the backend is running on a custom port, run this from `frontend/apps/driver-
 ```bash
 VITE_API_BASE_URL=http://localhost:3001 npm run dev -- --host 0.0.0.0 --port 5174
 ```
+
+To use Google Maps in the driver app, add this in `frontend/apps/driver-app/.env.local`:
+
+```bash
+VITE_GOOGLE_MAPS_API_KEY=your_google_maps_api_key
+```
+
+The key must have Google Maps JavaScript API enabled. Without this key, the app uses Leaflet/OpenStreetMap fallback.
 
 ## Verify
 

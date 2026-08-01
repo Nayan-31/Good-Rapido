@@ -338,6 +338,135 @@
   font-weight: var(--gr-font-weight-heavy);
 }
 
+.liveMapShell {
+  display: grid;
+  gap: var(--gr-space-3);
+  min-width: 0;
+}
+
+.liveMapHeader,
+.gpsPanel {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--gr-space-3);
+}
+
+.liveMapHeader strong,
+.gpsPanel strong,
+.gpsPanel small,
+.gpsPanel span {
+  display: block;
+}
+
+.liveMapHeader strong {
+  margin-top: var(--gr-space-1);
+  color: var(--gr-color-dark-navy);
+  font-size: 15px;
+}
+
+.liveMapHeader > span {
+  flex: 0 0 auto;
+  padding: var(--gr-space-1) var(--gr-space-3);
+  border-radius: var(--gr-radius-pill);
+  background: #fffbeb;
+  color: #92400e;
+  font-size: 12px;
+  font-weight: var(--gr-font-weight-heavy);
+}
+
+.liveMapHeader > span[data-fresh="true"] {
+  background: var(--gr-color-soft-mint);
+  color: var(--gr-color-deep-teal);
+}
+
+.liveMapCanvas,
+.liveMapEmpty {
+  min-height: 280px;
+  overflow: hidden;
+  border: 1px solid var(--gr-color-border);
+  border-radius: var(--gr-radius-control);
+  background: #dde7ea;
+}
+
+.liveMapCanvas {
+  position: relative;
+  isolation: isolate;
+}
+
+.liveMapCanvas :global(.leaflet-control-attribution) {
+  font-size: 10px;
+}
+
+.liveMapFallback,
+.liveMapEmpty {
+  display: grid;
+  place-items: center;
+  min-height: 280px;
+  padding: var(--gr-space-4);
+  color: var(--gr-color-muted);
+  font-size: 13px;
+  font-weight: var(--gr-font-weight-semibold);
+  line-height: 1.4;
+  text-align: center;
+}
+
+.liveMapFallback {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.52) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(255, 255, 255, 0.52) 1px, transparent 1px),
+    #eef4f6;
+  background-size: 36px 36px, 36px 36px, auto;
+}
+
+.coordinateGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--gr-space-2);
+}
+
+.coordinateGrid span {
+  min-width: 0;
+  padding: var(--gr-space-2);
+  border: 1px solid var(--gr-color-border);
+  border-radius: var(--gr-radius-control);
+  background: #f8fbfc;
+  color: var(--gr-color-muted);
+  font-size: 12px;
+  font-weight: var(--gr-font-weight-bold);
+}
+
+.gpsPanel {
+  padding: var(--gr-space-3);
+  border: 1px solid rgba(0, 133, 111, 0.18);
+  border-radius: var(--gr-radius-control);
+  background: var(--gr-color-soft-mint);
+}
+
+.gpsPanel span {
+  color: var(--gr-color-muted);
+  font-size: 11px;
+  font-weight: var(--gr-font-weight-heavy);
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.gpsPanel strong {
+  margin-top: var(--gr-space-1);
+  color: var(--gr-color-dark-navy);
+  font-size: 15px;
+}
+
+.gpsPanel small {
+  margin-top: var(--gr-space-1);
+  color: var(--gr-color-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
 .warningList {
   padding: var(--gr-space-3);
   border: 1px solid rgba(245, 158, 11, 0.28);
@@ -494,6 +623,7 @@
   .summaryGrid,
   .mainGrid,
   .formGrid,
+  .coordinateGrid,
   .rideDetails dl,
   .requestActions,
   .trustMetrics {

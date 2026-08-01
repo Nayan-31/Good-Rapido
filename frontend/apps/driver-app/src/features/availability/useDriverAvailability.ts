@@ -8,12 +8,16 @@ import type {
   DriverAvailabilityStatus,
   DriverLocationForm
 } from "./availability.types";
+import { useDriverGps } from "./useDriverGps";
+
+const GPS_HEARTBEAT_MS = 45_000;
 
 const defaultLocationForm: DriverLocationForm = {
   latitude: "22.5726",
   longitude: "88.3639",
   accuracyMeters: "24",
-  addressLabel: "Salt Lake Sector V, Kolkata"
+  addressLabel: "Salt Lake Sector V, Kolkata",
+  source: "manual"
 };
 
 const defaultAvailabilityForm: DriverAvailabilityForm = {
@@ -22,9 +26,12 @@ const defaultAvailabilityForm: DriverAvailabilityForm = {
 };
 
 export function useDriverAvailability() {
+  const driverGps = useDriverGps();
+  const getCurrentGpsLocation = driverGps.getCurrentLocation;
   const [availability, setAvailability] = useState<DriverAvailabilityState | null>(null);
   const [locationForm, setLocationForm] = useState(defaultLocationForm);
   const [availabilityForm, setAvailabilityForm] = useState(defaultAvailabilityForm);
+  const [gpsSharingEnabled, setGpsSharingEnabled] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -50,7 +57,17 @@ export function useDriverAvailability() {
         latitude: String(nextAvailability.currentLocation.latitude),
         longitude: String(nextAvailability.currentLocation.longitude),
         accuracyMeters: String(nextAvailability.currentLocation.accuracyMeters ?? 24),
-        addressLabel: nextAvailability.currentLocation.addressLabel ?? defaultLocationForm.addressLabel
+        addressLabel: nextAvailability.currentLocation.addressLabel ?? defaultLocationForm.addressLabel,
+        headingDegrees: nextAvailability.currentLocation.headingDegrees !== null
+          && nextAvailability.currentLocation.headingDegrees !== undefined
+          ? String(nextAvailability.currentLocation.headingDegrees)
+          : undefined,
+        speedKmph: nextAvailability.currentLocation.speedKmph !== null
+          && nextAvailability.currentLocation.speedKmph !== undefined
+          ? String(nextAvailability.currentLocation.speedKmph)
+          : undefined,
+        source: nextAvailability.currentLocation.source === "gps" ? "gps" : "manual",
+        capturedAt: nextAvailability.currentLocation.capturedAt ?? undefined
       });
     }
   }, []);
@@ -89,7 +106,19 @@ export function useDriverAvailability() {
   }, []);
 
   const updateStatus = (status: DriverAvailabilityStatus) => runAction(async () => {
-    const response = await driverAvailabilityService.updateStatus(status, locationForm, availabilityForm);
+    let nextLocationForm = locationForm;
+
+    if (status === "online") {
+      nextLocationForm = await getCurrentGpsLocation();
+      setGpsSharingEnabled(true);
+      setLocationForm(nextLocationForm);
+    }
+
+    if (status === "offline") {
+      setGpsSharingEnabled(false);
+    }
+
+    const response = await driverAvailabilityService.updateStatus(status, nextLocationForm, availabilityForm);
     applyAvailability(response.data?.availability ?? null);
     return response.message || "Driver availability updated";
   });
@@ -100,11 +129,44 @@ export function useDriverAvailability() {
     return response.message || "Driver location shared";
   });
 
+  const shareGpsLocation = () => runAction(async () => {
+    const gpsLocation = await getCurrentGpsLocation();
+    setGpsSharingEnabled(true);
+    setLocationForm(gpsLocation);
+    const response = await driverAvailabilityService.updateLocation(gpsLocation, availabilityForm);
+    applyAvailability(response.data?.availability ?? null);
+    return response.message || "GPS location shared";
+  });
+
   const saveZones = () => runAction(async () => {
     const response = await driverAvailabilityService.updateZones(availabilityForm);
     applyAvailability(response.data?.availability ?? null);
     return response.message || "Driver service zones updated";
   });
+
+  const syncGpsHeartbeat = useCallback(async () => {
+    try {
+      const gpsLocation = await getCurrentGpsLocation();
+      setLocationForm(gpsLocation);
+      const response = await driverAvailabilityService.updateLocation(gpsLocation, availabilityForm);
+      applyAvailability(response.data?.availability ?? null);
+    } catch (heartbeatError) {
+      setGpsSharingEnabled(false);
+      setError(resolveError(heartbeatError, "GPS location sharing stopped"));
+    }
+  }, [applyAvailability, availabilityForm, getCurrentGpsLocation]);
+
+  useEffect(() => {
+    if (!gpsSharingEnabled || !availability?.isOnline) {
+      return;
+    }
+
+    const heartbeatId = window.setInterval(() => {
+      void syncGpsHeartbeat();
+    }, GPS_HEARTBEAT_MS);
+
+    return () => window.clearInterval(heartbeatId);
+  }, [availability?.isOnline, gpsSharingEnabled, syncGpsHeartbeat]);
 
   return {
     availability,
@@ -119,7 +181,17 @@ export function useDriverAvailability() {
     reload: load,
     updateStatus,
     shareLocation,
-    saveZones
+    shareGpsLocation,
+    saveZones,
+    gps: {
+      isSupported: driverGps.isSupported,
+      permissionState: driverGps.permissionState,
+      isLocating: driverGps.isLocating,
+      error: driverGps.gpsError,
+      lastGpsAt: driverGps.lastGpsAt,
+      isSharing: gpsSharingEnabled,
+      stopSharing: () => setGpsSharingEnabled(false)
+    }
   };
 }
 

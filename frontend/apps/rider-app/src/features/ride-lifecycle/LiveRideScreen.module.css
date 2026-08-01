@@ -20,6 +20,23 @@
   gap: var(--gr-space-3);
 }
 
+.syncActions,
+.syncRow {
+  display: flex;
+  align-items: center;
+  gap: var(--gr-space-2);
+  flex-wrap: wrap;
+}
+
+.syncRow {
+  justify-content: space-between;
+  padding-top: var(--gr-space-2);
+  border-top: 1px solid var(--gr-color-border);
+  color: var(--gr-color-muted);
+  font-size: var(--gr-text-small);
+  line-height: var(--gr-line-height-body);
+}
+
 .heroHeader strong {
   display: block;
   margin-top: var(--gr-space-1);

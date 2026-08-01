@@ -1,4 +1,5 @@
 import { Alert, Badge, Button, ProgressBar, TextField } from "@good-rapido/ui";
+import { DriverLocationMap } from "./DriverLocationMap";
 import { useDriverAvailability } from "./useDriverAvailability";
 import styles from "./AvailabilityScreen.module.css";
 
@@ -27,6 +28,21 @@ export function AvailabilityScreen() {
   const isOnline = availability?.isOnline ?? false;
   const blockers = availability?.guidance.blockers ?? [];
   const locationFresh = availability?.guidance.locationFresh ?? false;
+  const hasSharedLocation = Boolean(availability?.currentLocation) || driverAvailability.locationForm.source === "gps";
+  const mapLatitude = hasSharedLocation
+    ? parseCoordinate(availability?.currentLocation?.latitude, driverAvailability.locationForm.latitude)
+    : null;
+  const mapLongitude = hasSharedLocation
+    ? parseCoordinate(availability?.currentLocation?.longitude, driverAvailability.locationForm.longitude)
+    : null;
+  const mapAccuracy = hasSharedLocation
+    ? parseCoordinate(availability?.currentLocation?.accuracyMeters, driverAvailability.locationForm.accuracyMeters)
+    : null;
+  const lastGpsLabel = driverAvailability.gps.lastGpsAt
+    ? formatTime(driverAvailability.gps.lastGpsAt)
+    : availability?.currentLocation?.capturedAt
+      ? formatTime(availability.currentLocation.capturedAt)
+      : "Not shared yet";
 
   return (
     <section className={styles.screen}>
@@ -42,11 +58,11 @@ export function AvailabilityScreen() {
             data-active={isOnline}
             type="button"
             aria-pressed={isOnline}
-            disabled={driverAvailability.isSaving}
+            disabled={driverAvailability.isSaving || driverAvailability.gps.isLocating}
             onClick={() => void driverAvailability.updateStatus(isOnline ? "offline" : "online")}
           >
             <span />
-            {isOnline ? "Go offline" : "Go online"}
+            {isOnline ? "Go offline" : "Go online with GPS"}
           </button>
         </div>
 
@@ -77,6 +93,11 @@ export function AvailabilityScreen() {
       {driverAvailability.message ? (
         <Alert tone="trust" title="Availability update">
           {driverAvailability.message}
+        </Alert>
+      ) : null}
+      {driverAvailability.gps.error ? (
+        <Alert tone="warning" title="GPS update">
+          {driverAvailability.gps.error}
         </Alert>
       ) : null}
 
@@ -142,13 +163,36 @@ export function AvailabilityScreen() {
               {availability?.guidance.canGoOnline ? "Ready" : "Blocked"}
             </Badge>
           </div>
+          <DriverLocationMap
+            latitude={mapLatitude}
+            longitude={mapLongitude}
+            accuracyMeters={mapAccuracy}
+            isFresh={locationFresh}
+            label={availability?.currentLocation?.addressLabel ?? driverAvailability.locationForm.addressLabel}
+          />
+          <div className={styles.gpsPanel}>
+            <div>
+              <span>Device GPS</span>
+              <strong>{driverAvailability.gps.isSharing ? "Sharing active" : "Ready to share"}</strong>
+              <small>
+                Permission {driverAvailability.gps.permissionState}. Last GPS sync {lastGpsLabel}.
+              </small>
+            </div>
+            <Badge tone={driverAvailability.gps.isSupported ? "success" : "danger"}>
+              {driverAvailability.gps.isSupported ? "Supported" : "Unsupported"}
+            </Badge>
+          </div>
           <div className={styles.formGrid}>
             <TextField
               label="Latitude"
               type="number"
               value={driverAvailability.locationForm.latitude}
               onChange={(event) =>
-                driverAvailability.setLocationForm((current) => ({ ...current, latitude: event.target.value }))
+                driverAvailability.setLocationForm((current) => ({
+                  ...current,
+                  latitude: event.target.value,
+                  source: "manual"
+                }))
               }
             />
             <TextField
@@ -156,7 +200,11 @@ export function AvailabilityScreen() {
               type="number"
               value={driverAvailability.locationForm.longitude}
               onChange={(event) =>
-                driverAvailability.setLocationForm((current) => ({ ...current, longitude: event.target.value }))
+                driverAvailability.setLocationForm((current) => ({
+                  ...current,
+                  longitude: event.target.value,
+                  source: "manual"
+                }))
               }
             />
             <TextField
@@ -164,14 +212,22 @@ export function AvailabilityScreen() {
               type="number"
               value={driverAvailability.locationForm.accuracyMeters}
               onChange={(event) =>
-                driverAvailability.setLocationForm((current) => ({ ...current, accuracyMeters: event.target.value }))
+                driverAvailability.setLocationForm((current) => ({
+                  ...current,
+                  accuracyMeters: event.target.value,
+                  source: "manual"
+                }))
               }
             />
             <TextField
               label="Address label"
               value={driverAvailability.locationForm.addressLabel}
               onChange={(event) =>
-                driverAvailability.setLocationForm((current) => ({ ...current, addressLabel: event.target.value }))
+                driverAvailability.setLocationForm((current) => ({
+                  ...current,
+                  addressLabel: event.target.value,
+                  source: "manual"
+                }))
               }
             />
           </div>
@@ -194,11 +250,37 @@ export function AvailabilityScreen() {
             </Badge>
           </div>
           <div className={styles.requestActions}>
-            <Button fullWidth type="button" variant="secondary" isLoading={driverAvailability.isSaving} onClick={() => void driverAvailability.shareLocation()}>
-              Share location
+            <Button
+              fullWidth
+              type="button"
+              variant="mint"
+              isLoading={driverAvailability.gps.isLocating || driverAvailability.isSaving}
+              onClick={() => void driverAvailability.shareGpsLocation()}
+            >
+              Use device GPS
             </Button>
+            <Button
+              fullWidth
+              type="button"
+              variant="secondary"
+              isLoading={driverAvailability.isSaving}
+              onClick={() => void driverAvailability.shareLocation()}
+            >
+              Share manual location
+            </Button>
+          </div>
+          <div className={styles.requestActions}>
             <Button fullWidth type="button" variant="secondary" isLoading={driverAvailability.isSaving} onClick={() => void driverAvailability.saveZones()}>
               Save zones
+            </Button>
+            <Button
+              fullWidth
+              type="button"
+              variant="ghost"
+              disabled={!driverAvailability.gps.isSharing}
+              onClick={driverAvailability.gps.stopSharing}
+            >
+              Stop GPS sharing
             </Button>
           </div>
           {blockers.length ? (
@@ -297,3 +379,19 @@ export function AvailabilityScreen() {
     </section>
   );
 }
+
+const parseCoordinate = (primaryValue: number | null | undefined, fallbackValue: string) => {
+  if (typeof primaryValue === "number" && Number.isFinite(primaryValue)) {
+    return primaryValue;
+  }
+
+  const parsedValue = Number(fallbackValue);
+
+  return Number.isFinite(parsedValue) ? parsedValue : null;
+};
+
+const formatTime = (value: string) =>
+  new Intl.DateTimeFormat("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit"
+  }).format(new Date(value));

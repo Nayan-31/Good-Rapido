@@ -1,14 +1,85 @@
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Alert, Badge, Button, Card, MetricCard, ProgressBar } from "@good-rapido/ui";
 
 import { rideFlowStorage } from "@/features/booking/rideFlowStorage";
+import type { RideFlowDraft } from "@/features/booking/rideFlowStorage";
 import { formatCurrency, formatVehicleType } from "@/features/pricing/pricing.utils";
+import { confirmRideService } from "./confirmRide.service";
 import type { RideBooking, RideLifecycleView } from "./confirmRide.types";
 import styles from "./LiveRideScreen.module.css";
 
+const LIVE_RIDE_POLL_MS = 5000;
+const TERMINAL_LIFECYCLE_STATUSES = new Set(["completed", "cancelled"]);
+
 export function LiveRideScreen() {
-  const draft = rideFlowStorage.read();
-  const booking = draft?.booking as RideBooking | undefined;
-  const lifecycle = draft?.lifecycle as RideLifecycleView | undefined;
+  const [draft, setDraft] = useState<RideFlowDraft | null>(() => rideFlowStorage.read());
+  const [booking, setBooking] = useState<RideBooking | null>(() => (rideFlowStorage.read()?.booking as RideBooking | undefined) ?? null);
+  const [lifecycle, setLifecycle] = useState<RideLifecycleView | null>(() => (rideFlowStorage.read()?.lifecycle as RideLifecycleView | undefined) ?? null);
+  const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
+  const [syncError, setSyncError] = useState<string | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const lifecycleStatus = lifecycle?.lifecycleStatus ?? "pending_confirmation";
+  const isTerminalRide = TERMINAL_LIFECYCLE_STATUSES.has(lifecycleStatus);
+
+  const syncLifecycle = useCallback(async (mode: "manual" | "silent" = "silent") => {
+    const bookingId = booking?.id;
+
+    if (!bookingId) {
+      return;
+    }
+
+    if (mode === "manual") {
+      setIsSyncing(true);
+    }
+
+    try {
+      const response = await confirmRideService.getLifecycle(bookingId);
+      const nextLifecycle = response.data?.lifecycle ?? null;
+
+      if (!nextLifecycle) {
+        return;
+      }
+
+      const currentDraft = rideFlowStorage.read();
+      const currentBooking = (currentDraft?.booking as RideBooking | undefined) ?? booking;
+      const nextBooking = currentBooking ? mergeBookingFromLifecycle(currentBooking, nextLifecycle) : booking;
+      const nextDraft = rideFlowStorage.update({
+        booking: nextBooking,
+        lifecycle: nextLifecycle
+      });
+
+      setBooking(nextBooking);
+      setLifecycle(nextLifecycle);
+      setDraft(nextDraft ?? currentDraft);
+      setLastSyncedAt(new Date().toISOString());
+      setSyncError(null);
+    } catch (error) {
+      setSyncError(error instanceof Error ? error.message : "Unable to sync live ride status");
+    } finally {
+      if (mode === "manual") {
+        setIsSyncing(false);
+      }
+    }
+  }, [booking?.id]);
+
+  useEffect(() => {
+    if (!booking?.id || isTerminalRide) {
+      return;
+    }
+
+    void syncLifecycle();
+    const intervalId = window.setInterval(() => {
+      void syncLifecycle();
+    }, LIVE_RIDE_POLL_MS);
+
+    return () => window.clearInterval(intervalId);
+  }, [booking?.id, isTerminalRide, syncLifecycle]);
+
+  const rideStateLabel = useMemo(
+    () => resolveRideStateLabel(booking?.status, lifecycleStatus),
+    [booking?.status, lifecycleStatus]
+  );
+  const syncLabel = lastSyncedAt ? `Last checked ${formatSyncTime(lastSyncedAt)}` : "Checking live status";
 
   if (!booking) {
     return (
@@ -28,8 +99,6 @@ export function LiveRideScreen() {
     );
   }
 
-  const lifecycleStatus = lifecycle?.lifecycleStatus ?? "confirmed";
-  const rideStateLabel = booking.status === "confirmed" ? "Booking Confirmed" : "Ride Requested";
   const progress = lifecycle?.progress?.percentage ?? 24;
   const currentStep = lifecycle?.progress?.currentStep ?? "Waiting for driver confirmation";
   const nextAction = lifecycle?.progress?.nextAction ?? "Your matched driver can accept this request from the driver app.";
@@ -69,11 +138,33 @@ export function LiveRideScreen() {
             <p className={styles.eyebrow}>Live Ride</p>
             <h3>{currentStep}</h3>
           </div>
-          <Badge tone="trust">{formatVehicleType(booking.vehicleType)}</Badge>
+          <div className={styles.syncActions}>
+            <Badge tone="trust">{formatVehicleType(booking.vehicleType)}</Badge>
+            <Button
+              size="sm"
+              variant="secondary"
+              isLoading={isSyncing}
+              onClick={() => void syncLifecycle("manual")}
+            >
+              Refresh
+            </Button>
+          </div>
         </div>
         <ProgressBar value={progress} label="Ride Progress" showValue />
         <p className={styles.copy}>{nextAction}</p>
+        <div className={styles.syncRow}>
+          <Badge tone={booking.status === "confirmed" ? "success" : "warning"}>
+            {booking.status === "confirmed" ? "Driver accepted" : "Waiting for driver"}
+          </Badge>
+          <span>{syncLabel}</span>
+        </div>
       </Card>
+
+      {syncError ? (
+        <Alert tone="warning" title="Live Status Update">
+          {syncError}
+        </Alert>
+      ) : null}
 
       <Card className={styles.section} variant="mint">
         <div className={styles.sectionHeader}>
@@ -112,3 +203,43 @@ export function LiveRideScreen() {
     </section>
   );
 }
+
+const mergeBookingFromLifecycle = (booking: RideBooking, lifecycle: RideLifecycleView): RideBooking => ({
+  ...booking,
+  status: lifecycle.ride.bookingStatus ?? booking.status,
+  vehicleType: lifecycle.ride.vehicleType ?? booking.vehicleType,
+  selectedDriver: lifecycle.ride.driver ?? booking.selectedDriver,
+  fareSnapshot: lifecycle.ride.fare ?? booking.fareSnapshot,
+  trustSignals: lifecycle.ride.trustSignals ?? booking.trustSignals
+});
+
+const resolveRideStateLabel = (bookingStatus: string | null | undefined, lifecycleStatus: string) => {
+  if (lifecycleStatus === "driver_en_route") {
+    return "Driver Accepted";
+  }
+
+  if (lifecycleStatus === "driver_arrived") {
+    return "Driver Arrived";
+  }
+
+  if (lifecycleStatus === "in_progress") {
+    return "Ride In Progress";
+  }
+
+  if (lifecycleStatus === "completed") {
+    return "Ride Completed";
+  }
+
+  if (bookingStatus === "confirmed") {
+    return "Booking Confirmed";
+  }
+
+  return "Ride Requested";
+};
+
+const formatSyncTime = (value: string) =>
+  new Intl.DateTimeFormat("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit"
+  }).format(new Date(value));
