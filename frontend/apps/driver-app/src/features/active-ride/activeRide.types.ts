@@ -2,6 +2,16 @@ import type { DriverActiveRideSnapshot, DriverRideLifecycleStatus } from "@/feat
 
 export type DriverLifecycleEvent = "driver_arrived" | "ride_started" | "ride_completed";
 
+export interface DriverLiveLocation {
+  latitude: number;
+  longitude: number;
+  accuracyMeters: number | null;
+  headingDegrees: number | null;
+  speedKmph: number | null;
+  capturedAt: string;
+  source: "gps";
+}
+
 export interface ActiveRideLoadResult {
   ride: DriverActiveRideSnapshot;
   backendNote: string | null;

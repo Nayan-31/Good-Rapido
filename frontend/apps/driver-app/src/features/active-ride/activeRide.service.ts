@@ -8,7 +8,7 @@ import type {
   DriverRideLifecycleStatus,
   DriverRideRiskLevel
 } from "@/features/ride-requests/rideRequest.types";
-import type { ActiveRideActionResult, ActiveRideLoadResult, DriverLifecycleEvent } from "./activeRide.types";
+import type { ActiveRideActionResult, ActiveRideLoadResult, DriverLifecycleEvent, DriverLiveLocation } from "./activeRide.types";
 
 type LifecycleResponse = ApiResponse<{
   lifecycle?: BackendLifecycleView;
@@ -109,6 +109,22 @@ export const activeRideService = {
       message: transitionMessage(ride.lifecycleStatus),
       backendNote
     };
+  },
+
+  syncDriverLocation(location: DriverLiveLocation) {
+    return apiClient.private.availability.updateLocation({
+      currentLocation: {
+        latitude: location.latitude,
+        longitude: location.longitude,
+        accuracyMeters: location.accuracyMeters ?? undefined,
+        headingDegrees: location.headingDegrees ?? undefined,
+        speedKmph: location.speedKmph ?? undefined,
+        addressLabel: "Live ride GPS location",
+        source: location.source,
+        capturedAt: location.capturedAt
+      },
+      activeServiceZones: ["kolkata"]
+    });
   }
 };
 

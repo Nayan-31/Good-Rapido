@@ -39,16 +39,33 @@ export const driverAvailabilityService = {
   }
 };
 
-const buildLocationPayload = (form: DriverLocationForm): ApiPayload => ({
-  latitude: Number(form.latitude),
-  longitude: Number(form.longitude),
-  accuracyMeters: Number(form.accuracyMeters),
-  addressLabel: form.addressLabel.trim(),
-  source: "manual",
-  capturedAt: new Date().toISOString()
-});
+const buildLocationPayload = (form: DriverLocationForm): ApiPayload => {
+  const headingDegrees = parseOptionalNumber(form.headingDegrees);
+  const speedKmph = parseOptionalNumber(form.speedKmph);
+
+  return {
+    latitude: Number(form.latitude),
+    longitude: Number(form.longitude),
+    accuracyMeters: Number(form.accuracyMeters),
+    ...(headingDegrees !== null ? { headingDegrees } : {}),
+    ...(speedKmph !== null ? { speedKmph } : {}),
+    addressLabel: form.addressLabel.trim(),
+    source: form.source ?? "manual",
+    capturedAt: form.capturedAt ?? new Date().toISOString()
+  };
+};
 
 const parseZones = (value: string) => value
   .split(",")
   .map((zone) => zone.trim())
   .filter(Boolean);
+
+const parseOptionalNumber = (value?: string) => {
+  if (value === undefined || value.trim() === "") {
+    return null;
+  }
+
+  const parsedValue = Number(value);
+
+  return Number.isFinite(parsedValue) ? parsedValue : null;
+};

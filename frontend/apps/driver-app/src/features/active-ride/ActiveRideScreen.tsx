@@ -1,5 +1,6 @@
 import { Alert, Badge, Button, ProgressBar } from "@good-rapido/ui";
 
+import { ActiveRideLiveMap } from "./ActiveRideLiveMap";
 import { useActiveRide } from "./useActiveRide";
 import type { DriverRideLifecycleStatus } from "@/features/ride-requests/rideRequest.types";
 import styles from "./ActiveRideScreen.module.css";
@@ -39,34 +40,30 @@ export function ActiveRideScreen() {
           {activeRide.backendNote}
         </Alert>
       ) : null}
+      {activeRide.locationError ? (
+        <Alert
+          tone="warning"
+          title="Live GPS"
+          action={
+            <Button type="button" size="sm" variant="secondary" onClick={activeRide.startLocationTracking}>
+              Retry
+            </Button>
+          }
+        >
+          {activeRide.locationError}
+        </Alert>
+      ) : null}
 
       {ride ? (
         <section className={styles.layout}>
           <article className={styles.mapPanel} aria-label="Live route fairness preview">
-            <div className={styles.mapCanvas}>
-              <div className={styles.pickupRoute} />
-              <div className={styles.tripRoute} />
-              <span className={styles.driverMarker}>DR</span>
-              <span className={styles.pickupMarker}>P</span>
-              <span className={styles.dropoffMarker}>D</span>
-              <div className={styles.detourWarning}>
-                <strong>{ride.route.detourPercentage > 3 ? "Detour warning" : "Route clean"}</strong>
-                <p>
-                  {ride.route.detourPercentage > 3
-                    ? `Detected ${ride.route.detourPercentage}% detour. Keep rider informed before route change.`
-                    : `${ride.route.detourPercentage}% detour and ${ride.route.routeAccuracyScore}% route accuracy.`}
-                </p>
-              </div>
-              <div className={styles.mapOverlay}>
-                <strong>{routeTitle(ride.lifecycleStatus)}</strong>
-                <p>
-                  {ride.lifecycleStatus === "driver_en_route"
-                    ? `Navigate ${ride.route.pickupDistanceKm} km to pickup in about ${ride.route.pickupEtaMinutes} minutes.`
-                    : `Follow the ${ride.route.tripDistanceKm} km trip route with ${ride.route.trafficLevel} traffic.`}
-                </p>
-                <ProgressBar value={ride.route.routeFairnessScore} label="Route fairness" showValue tone="trust" />
-              </div>
-            </div>
+            <ActiveRideLiveMap
+              ride={ride}
+              driverLocation={activeRide.driverLocation}
+              isLocationTracking={activeRide.isLocationTracking}
+              onStartTracking={activeRide.startLocationTracking}
+              onStopTracking={activeRide.stopLocationTracking}
+            />
           </article>
 
           <div className={styles.contentStack}>
@@ -257,26 +254,6 @@ const statusLabel = (status: DriverRideLifecycleStatus) => {
   };
 
   return labels[status];
-};
-
-const routeTitle = (status: DriverRideLifecycleStatus) => {
-  if (status === "driver_en_route") {
-    return "Navigate to pickup";
-  }
-
-  if (status === "driver_arrived") {
-    return "Ready to start";
-  }
-
-  if (status === "in_progress") {
-    return "Navigate to dropoff";
-  }
-
-  if (status === "completed") {
-    return "Ride completed";
-  }
-
-  return "Lifecycle ready";
 };
 
 const statusOrder: Record<DriverRideLifecycleStatus, number> = {

@@ -97,76 +97,60 @@
   overflow: hidden;
 }
 
-.mapCanvas {
+.liveRouteMap {
   position: relative;
   min-height: 720px;
-  background:
-    linear-gradient(90deg, rgba(255, 255, 255, 0.48) 1px, transparent 1px),
-    linear-gradient(0deg, rgba(255, 255, 255, 0.48) 1px, transparent 1px),
-    radial-gradient(circle at 25% 24%, rgba(99, 235, 213, 0.34), transparent 24%),
-    radial-gradient(circle at 78% 72%, rgba(217, 45, 32, 0.15), transparent 24%),
-    linear-gradient(135deg, #d4e1e7 0%, #eef4f6 46%, #a5bdc8 100%);
-  background-size: 42px 42px, 42px 42px, auto, auto, auto;
+  overflow: hidden;
+  background: #dbe7ec;
 }
 
-.pickupRoute,
-.tripRoute {
+.liveMapCanvas {
   position: absolute;
+  inset: 0;
+  min-height: 720px;
   z-index: 1;
-  border-radius: 999px;
 }
 
-.pickupRoute {
-  left: 16%;
-  top: 20%;
-  width: 34%;
-  height: 24%;
-  border-right: 8px solid var(--gr-color-deep-teal);
-  border-bottom: 8px solid var(--gr-color-deep-teal);
-}
-
-.tripRoute {
-  left: 48%;
-  top: 44%;
-  width: 34%;
-  height: 30%;
-  border-left: 8px solid var(--gr-color-dark-navy);
-  border-bottom: 8px solid var(--gr-color-dark-navy);
-}
-
-.driverMarker,
-.pickupMarker,
-.dropoffMarker {
+.liveMapFallback {
   position: absolute;
-  z-index: 3;
-  display: inline-grid;
+  inset: 0;
+  z-index: 5;
+  display: grid;
   place-items: center;
-  width: 38px;
-  height: 38px;
-  border: 3px solid var(--gr-color-card);
-  border-radius: var(--gr-radius-pill);
-  color: var(--gr-color-card);
-  font-size: 11px;
-  font-weight: var(--gr-font-weight-heavy);
+  padding: var(--gr-space-5);
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.52) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(255, 255, 255, 0.52) 1px, transparent 1px),
+    #eef4f6;
+  background-size: 40px 40px;
+  color: var(--gr-color-muted);
+  font-size: 14px;
+  font-weight: var(--gr-font-weight-semibold);
+  line-height: 1.5;
+  text-align: center;
+}
+
+.liveMapToolbar {
+  position: absolute;
+  top: var(--gr-space-5);
+  left: var(--gr-space-5);
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: var(--gr-space-3);
+  max-width: calc(100% - 40px);
+  padding: var(--gr-space-3);
+  border: 1px solid var(--gr-color-border);
+  border-radius: var(--gr-radius-control);
+  background: rgba(255, 255, 255, 0.94);
   box-shadow: var(--gr-shadow-card);
 }
 
-.driverMarker {
-  left: 15%;
-  top: 17%;
-  background: var(--gr-color-success);
-}
-
-.pickupMarker {
-  left: 47%;
-  top: 42%;
-  background: var(--gr-color-deep-teal);
-}
-
-.dropoffMarker {
-  right: 14%;
-  bottom: 20%;
-  background: var(--gr-color-danger);
+.liveMapToolbar strong {
+  display: block;
+  margin-top: var(--gr-space-1);
+  color: var(--gr-color-dark-navy);
+  font-size: 14px;
 }
 
 .mapOverlay,
@@ -212,6 +196,60 @@
 
 .detourWarning strong {
   color: var(--gr-color-danger);
+}
+
+.liveMapCanvas :global(.leaflet-control-attribution) {
+  font-size: 10px;
+}
+
+.liveMapCanvas :global(.activeRideBikeIcon) {
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+}
+
+.liveMapCanvas :global(.activeRideBikeIcon span) {
+  display: inline-grid;
+  place-items: center;
+  min-width: 58px;
+  min-height: 34px;
+  padding: 0 var(--gr-space-3);
+  border: 3px solid var(--gr-color-card);
+  border-radius: var(--gr-radius-pill);
+  background: var(--gr-color-deep-teal);
+  color: var(--gr-color-card);
+  font-size: 11px;
+  font-weight: var(--gr-font-weight-heavy);
+  box-shadow: 0 14px 24px rgba(0, 0, 0, 0.2);
+}
+
+.liveMapCanvas :global(.activeRideStopIcon) {
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+}
+
+.liveMapCanvas :global(.activeRideStopIcon span) {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 3px solid var(--gr-color-card);
+  border-radius: var(--gr-radius-pill);
+  color: var(--gr-color-card);
+  font-size: 11px;
+  font-weight: var(--gr-font-weight-heavy);
+  box-shadow: var(--gr-shadow-card);
+}
+
+.liveMapCanvas :global(.activeRidePickupIcon span) {
+  background: var(--gr-color-deep-teal);
+}
+
+.liveMapCanvas :global(.activeRideDropoffIcon span) {
+  background: var(--gr-color-danger);
 }
 
 .contentStack {
@@ -385,7 +423,8 @@
     grid-template-columns: 1fr;
   }
 
-  .mapCanvas {
+  .liveRouteMap,
+  .liveMapCanvas {
     min-height: 460px;
   }
 }
@@ -402,5 +441,10 @@
   .statusGrid,
   .routeGrid {
     grid-template-columns: 1fr;
+  }
+
+  .liveMapToolbar {
+    align-items: stretch;
+    flex-direction: column;
   }
 }

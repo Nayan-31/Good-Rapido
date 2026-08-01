@@ -16,7 +16,7 @@ const cleanupInterval = setInterval(() => {
 cleanupInterval.unref?.()
 
 export const rateLimiter = (req, res, next) => {
-    if (req.method === 'OPTIONS') {
+    if (req.method === 'OPTIONS' || shouldSkipRateLimit(req)) {
         return next();
     }
 
@@ -55,3 +55,20 @@ export const rateLimiter = (req, res, next) => {
     request.set(ip, userData);
     next()
 }
+
+const shouldSkipRateLimit = (req) => {
+    if (env.NODE_ENV === 'production') {
+        return false;
+    }
+
+    return isLocalAddress(req.ip)
+        || isLocalAddress(req.hostname)
+        || isLocalAddress(req.headers.host?.split(':')[0]);
+};
+
+const isLocalAddress = (value = '') => [
+    'localhost',
+    '127.0.0.1',
+    '::1',
+    '::ffff:127.0.0.1'
+].includes(value);

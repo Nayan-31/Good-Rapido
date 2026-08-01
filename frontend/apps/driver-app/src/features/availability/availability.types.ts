@@ -5,6 +5,10 @@ export interface DriverLocationForm {
   longitude: string;
   accuracyMeters: string;
   addressLabel: string;
+  headingDegrees?: string;
+  speedKmph?: string;
+  source?: "gps" | "network" | "manual";
+  capturedAt?: string;
 }
 
 export interface DriverAvailabilityForm {
@@ -21,6 +25,8 @@ export interface DriverAvailabilityState {
     latitude: number;
     longitude: number;
     accuracyMeters: number | null;
+    headingDegrees: number | null;
+    speedKmph: number | null;
     addressLabel: string | null;
     source: string;
     capturedAt: string | null;

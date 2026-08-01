@@ -56,4 +56,5 @@ export default createAuthRouter();
 
 /**
  * auth.route.js  = URL setup + dependency wiring
+ * route -> controller -> service -> dao -> model -> MongoDB
  */
