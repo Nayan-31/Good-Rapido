@@ -48,7 +48,7 @@ export default class PrivateDisputesDao {
         return this.disputeModel.findByIdAndUpdate(
             disputeId,
             { $set: payload },
-            { new: true, runValidators: true }
+            { returnDocument: 'after', runValidators: true }
         );
     }
 }

@@ -54,7 +54,7 @@ export default class PrivateNotificationsDao {
         return this.notificationModel.findByIdAndUpdate(
             notificationId,
             { $set: payload },
-            { new: true, runValidators: true }
+            { returnDocument: 'after', runValidators: true }
         );
     }
 }

@@ -60,7 +60,7 @@ export default class DriverDocumentsDao {
         return this.profileModel.findOneAndUpdate(
             { authUserId },
             { $set: payload },
-            { new: true, runValidators: true }
+            { returnDocument: 'after', runValidators: true }
         );
     }
 
@@ -72,7 +72,7 @@ export default class DriverDocumentsDao {
         return this.profileModel.findByIdAndUpdate(
             profileId,
             { $set: payload },
-            { new: true, runValidators: true }
+            { returnDocument: 'after', runValidators: true }
         );
     }
 }

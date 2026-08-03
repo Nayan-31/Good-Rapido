@@ -51,7 +51,7 @@ export default class RideOpsDao {
         return this.rideModel.findByIdAndUpdate(
             rideId,
             { $set: payload },
-            { new: true, runValidators: true }
+            { returnDocument: 'after', runValidators: true }
         );
     }
 }

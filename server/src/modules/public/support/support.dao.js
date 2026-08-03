@@ -58,7 +58,7 @@ export default class SupportDao {
                     'timeline.lastUserMessageAt': latestActivityAt
                 }
             },
-            { new: true, runValidators: true }
+            { returnDocument: 'after', runValidators: true }
         );
     }
 
@@ -70,7 +70,7 @@ export default class SupportDao {
         return this.model.findOneAndUpdate(
             { _id: ticketId, authUserId, role },
             { $set: payload },
-            { new: true, runValidators: true }
+            { returnDocument: 'after', runValidators: true }
         );
     }
 

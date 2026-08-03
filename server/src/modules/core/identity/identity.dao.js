@@ -42,7 +42,7 @@ export default class IdentityDao {
         return this.identityModel.findOneAndUpdate(
             { subjectScope, subjectRole, subjectId },
             { $set: payload },
-            { new: true, runValidators: true }
+            { returnDocument: 'after', runValidators: true }
         );
     }
 
@@ -79,7 +79,7 @@ export default class IdentityDao {
         return this.identityModel.findByIdAndUpdate(
             identityId,
             { $set: payload },
-            { new: true, runValidators: true }
+            { returnDocument: 'after', runValidators: true }
         );
     }
 }

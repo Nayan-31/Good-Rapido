@@ -100,7 +100,7 @@ export default class AdminDao {
         return this.model.findOneAndUpdate(
             { _id: userId },
             { $set: payload },
-            { new: true, runValidators: true }
+            { returnDocument: 'after', runValidators: true }
         );
     }
 

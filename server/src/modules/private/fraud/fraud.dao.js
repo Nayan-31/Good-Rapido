@@ -52,7 +52,7 @@ export default class FraudDao {
         return this.fraudCaseModel.findByIdAndUpdate(
             caseId,
             { $set: payload },
-            { new: true, runValidators: true }
+            { returnDocument: 'after', runValidators: true }
         );
     }
 }

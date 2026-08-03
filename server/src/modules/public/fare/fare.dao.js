@@ -33,7 +33,7 @@ export default class FareDao {
                     }
                 }
             },
-            { new: true, runValidators: true }
+            { returnDocument: 'after', runValidators: true }
         );
     }
 

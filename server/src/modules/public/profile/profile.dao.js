@@ -17,7 +17,7 @@ export default class ProfileDao {
         return this.model.findOneAndUpdate(
             { authUserId, role },
             { $set: payload },
-            { new: true, runValidators: true }
+            { returnDocument: 'after', runValidators: true }
         );
     }
 
@@ -25,7 +25,7 @@ export default class ProfileDao {
         return this.model.findOneAndUpdate(
             { authUserId, role },
             { $set: toDotSet('preferences', preferences) },
-            { new: true, runValidators: true }
+            { returnDocument: 'after', runValidators: true }
         );
     }
 
@@ -33,7 +33,7 @@ export default class ProfileDao {
         return this.model.findOneAndUpdate(
             { authUserId, role },
             { $push: { savedAddresses: address } },
-            { new: true, runValidators: true }
+            { returnDocument: 'after', runValidators: true }
         );
     }
 
@@ -41,7 +41,7 @@ export default class ProfileDao {
         return this.model.findOneAndUpdate(
             { authUserId, role, 'savedAddresses._id': addressId },
             { $set: toDotSet('savedAddresses.$', address) },
-            { new: true, runValidators: true }
+            { returnDocument: 'after', runValidators: true }
         );
     }
 
@@ -49,7 +49,7 @@ export default class ProfileDao {
         return this.model.findOneAndUpdate(
             { authUserId, role, 'savedAddresses._id': addressId },
             { $pull: { savedAddresses: { _id: addressId } } },
-            { new: true, runValidators: true }
+            { returnDocument: 'after', runValidators: true }
         );
     }
 
@@ -57,7 +57,7 @@ export default class ProfileDao {
         return this.model.findOneAndUpdate(
             { authUserId, role },
             { $push: { emergencyContacts: contact } },
-            { new: true, runValidators: true }
+            { returnDocument: 'after', runValidators: true }
         );
     }
 
@@ -65,7 +65,7 @@ export default class ProfileDao {
         return this.model.findOneAndUpdate(
             { authUserId, role, 'emergencyContacts._id': contactId },
             { $set: toDotSet('emergencyContacts.$', contact) },
-            { new: true, runValidators: true }
+            { returnDocument: 'after', runValidators: true }
         );
     }
 
@@ -73,7 +73,7 @@ export default class ProfileDao {
         return this.model.findOneAndUpdate(
             { authUserId, role, 'emergencyContacts._id': contactId },
             { $pull: { emergencyContacts: { _id: contactId } } },
-            { new: true, runValidators: true }
+            { returnDocument: 'after', runValidators: true }
         );
     }
 }

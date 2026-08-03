@@ -33,7 +33,7 @@ export default class RideBookingDao {
                     status: RIDE_BOOKING_STATUSES.DRIVER_SELECTED
                 }
             },
-            { new: true, runValidators: true }
+            { returnDocument: 'after', runValidators: true }
         );
     }
 
@@ -50,7 +50,7 @@ export default class RideBookingDao {
                     confirmedAt
                 }
             },
-            { new: true, runValidators: true }
+            { returnDocument: 'after', runValidators: true }
         );
     }
 
@@ -67,7 +67,7 @@ export default class RideBookingDao {
                     cancellation
                 }
             },
-            { new: true, runValidators: true }
+            { returnDocument: 'after', runValidators: true }
         );
     }
 }
