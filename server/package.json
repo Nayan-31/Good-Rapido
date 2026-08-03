@@ -8,7 +8,8 @@
     "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
     "start": "node server.js",
     "dev": "npx nodemon server.js",
-    "seed:private-auth": "node scripts/seed-private-auth-users.js"
+    "seed:private-auth": "node scripts/seed-private-auth-users.js",
+    "seed:demo": "node scripts/seed-demo-data.js"
   },
   "keywords": [],
   "author": "",

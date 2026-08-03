@@ -153,6 +153,38 @@ Health check:
 curl http://localhost:3000/health
 ```
 
+Seed local demo accounts and approved online drivers:
+
+```bash
+npm run seed:demo
+```
+
+Default demo password:
+
+```text
+Password@123
+```
+
+Seeded accounts:
+
+```text
+Rider: rider@goodrapido.test
+Admin: admin@goodrapido.test
+Ops: ops@goodrapido.test
+Driver: arjun.singh.driver@goodrapido.test
+Driver: sahil.khan.driver@goodrapido.test
+Driver: imran.ali.driver@goodrapido.test
+Driver: rajesh.kumar.driver@goodrapido.test
+Driver: neha.das.driver@goodrapido.test
+Driver: amit.das.driver@goodrapido.test
+```
+
+Existing seeded users are reset to the default password by default so local demo credentials stay predictable. To keep existing passwords unchanged, run:
+
+```bash
+GOOD_RAPIDO_DEMO_RESET_PASSWORDS=false npm run seed:demo
+```
+
 ## Tests
 
 Run all backend tests:
