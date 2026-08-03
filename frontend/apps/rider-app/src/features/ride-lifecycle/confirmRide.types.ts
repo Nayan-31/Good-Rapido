@@ -9,6 +9,16 @@ export interface RideBooking {
   status: string;
   fareEstimateId: string;
   vehicleType: VehicleType;
+  pickup: {
+    address: string | null;
+    latitude: number;
+    longitude: number;
+  };
+  dropoff: {
+    address: string | null;
+    latitude: number;
+    longitude: number;
+  };
   selectedDriver: {
     driverId: string;
     fullName: string | null;
@@ -49,6 +59,8 @@ export interface RideLifecycleView {
     bookingCode: string | null;
     bookingStatus: string | null;
     vehicleType: VehicleType | null;
+    pickup: RideBooking["pickup"];
+    dropoff: RideBooking["dropoff"];
     driver: RideBooking["selectedDriver"];
     fare: RideBooking["fareSnapshot"];
     trustSignals: RideBooking["trustSignals"];

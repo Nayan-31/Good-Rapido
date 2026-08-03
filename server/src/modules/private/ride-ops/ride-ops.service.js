@@ -338,7 +338,8 @@ export default class RideOpsService {
 
         return {
             ...query,
-            driverId: getDriverPoolId(actor) || '__unassigned_driver__'
+            driverIdentifiers: getDriverIdentityCandidates(actor),
+            driverName: actor.fullName || null
         };
     }
 
@@ -347,7 +348,7 @@ export default class RideOpsService {
             return true;
         }
 
-        return ride.driver?.driverId === getDriverPoolId(actor);
+        return isRideAssignedToDriver(actor, ride.driver);
     }
 
     assertCanAccessRide(authContext, actor, ride = {}) {
@@ -720,11 +721,36 @@ const toPlainObject = (document) => document?.toObject ? document.toObject() : d
 
 const getId = (document = {}) => document._id?.toString?.() || document.id || null;
 
-const getDriverPoolId = (privateUser = {}) => (
-    privateUser.employeeCode
+const getDriverIdentityCandidates = (privateUser = {}) => {
+    const employeeCode = normalizeIdentity(privateUser.employeeCode);
+    const emailLocalPart = normalizeIdentity(privateUser.email?.split('@')[0]);
+    const fullName = normalizeIdentity(privateUser.fullName);
+    const candidates = [
+        employeeCode,
+        emailLocalPart,
+        fullName
+    ].filter(Boolean);
+
+    return [...new Set(candidates)];
+};
+
+const isRideAssignedToDriver = (privateUser = {}, selectedDriver = {}) => {
+    const driverId = normalizeIdentity(selectedDriver?.driverId);
+
+    if (driverId && getDriverIdentityCandidates(privateUser).includes(driverId)) {
+        return true;
+    }
+
+    return normalizeName(selectedDriver?.fullName) === normalizeName(privateUser.fullName);
+};
+
+const normalizeIdentity = (value) => (
+    value
         ?.trim()
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '_')
         .replace(/^_+|_+$/g, '')
         || null
 );
+
+const normalizeName = (value) => normalizeIdentity(value);

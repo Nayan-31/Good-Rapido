@@ -19,6 +19,10 @@ type RideOpsQueueResponse = ApiResponse<{
   };
 }>;
 
+type RideOpsRideResponse = ApiResponse<{
+  ride?: RideOpsQueueItem;
+}>;
+
 interface RideOpsQueueItem {
   id?: string | null;
   bookingCode?: string | null;
@@ -158,21 +162,18 @@ export const rideRequestService = {
   },
 
   async acceptRide(request: DriverRideRequest): Promise<RideRequestActionResult> {
-    const activeRide: DriverActiveRideSnapshot = {
-      ...request,
-      bookingStatus: "confirmed",
-      lifecycleStatus: "driver_en_route",
-      acceptedAt: new Date().toISOString(),
-      timeline: {
-        confirmedAt: new Date().toISOString()
-      }
-    };
+    let activeRide = toActiveRideSnapshot(request);
     let backendNote: string | null = null;
 
     try {
-      await apiClient.private.rideOps.confirmRide(request.id, {
+      const response = await apiClient.private.rideOps.confirmRide(request.id, {
         note: "Driver accepted ride from driver app request screen"
-      });
+      }) as RideOpsRideResponse;
+      const backendRide = response.data?.ride;
+
+      if (backendRide) {
+        activeRide = toActiveRideSnapshot(mapRideOpsQueueItem(backendRide));
+      }
     } catch (error) {
       backendNote = resolveBackendNote(error, "Ride was accepted locally because ride-ops confirm is not available.");
     }
@@ -256,6 +257,16 @@ const mapRideOpsQueueItem = (ride: RideOpsQueueItem): DriverRideRequest => {
     transparencyNotes: demoRideRequest.transparencyNotes
   };
 };
+
+const toActiveRideSnapshot = (request: DriverRideRequest): DriverActiveRideSnapshot => ({
+  ...request,
+  bookingStatus: "confirmed",
+  lifecycleStatus: request.lifecycleStatus === "pending_confirmation" ? "driver_en_route" : request.lifecycleStatus,
+  acceptedAt: new Date().toISOString(),
+  timeline: {
+    confirmedAt: new Date().toISOString()
+  }
+});
 
 const pickFirstRide = (data: RideOpsQueueResponse["data"]) => {
   if (!data) {

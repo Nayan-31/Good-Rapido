@@ -58,6 +58,7 @@ export default class RideOpsDao {
 
 const buildRideFilter = (query = {}) => {
     const filter = {};
+    const andFilters = [];
 
     if (query.bookingStatuses?.length) {
         filter.status = { $in: query.bookingStatuses };
@@ -73,6 +74,26 @@ const buildRideFilter = (query = {}) => {
         filter['selectedDriver.driverId'] = query.driverId;
     }
 
+    if (query.driverIdentifiers?.length || query.driverName) {
+        const driverFilters = [];
+
+        if (query.driverIdentifiers?.length) {
+            driverFilters.push({
+                'selectedDriver.driverId': { $in: query.driverIdentifiers }
+            });
+        }
+
+        if (query.driverName) {
+            driverFilters.push({
+                'selectedDriver.fullName': new RegExp(`^${escapeRegExp(query.driverName)}$`, 'i')
+            });
+        }
+
+        if (driverFilters.length) {
+            andFilters.push({ $or: driverFilters });
+        }
+    }
+
     if (query.priority) {
         filter['ops.priority'] = query.priority;
     }
@@ -84,13 +105,17 @@ const buildRideFilter = (query = {}) => {
     if (query.q) {
         const expression = new RegExp(escapeRegExp(query.q), 'i');
 
-        filter.$or = [
+        andFilters.push({ $or: [
             { bookingCode: expression },
             { 'pickup.address': expression },
             { 'dropoff.address': expression },
             { 'selectedDriver.fullName': expression },
             { 'selectedDriver.vehicleNumber': expression }
-        ];
+        ] });
+    }
+
+    if (andFilters.length) {
+        filter.$and = andFilters;
     }
 
     return filter;

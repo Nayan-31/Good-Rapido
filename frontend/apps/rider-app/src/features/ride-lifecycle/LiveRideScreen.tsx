@@ -102,6 +102,14 @@ export function LiveRideScreen() {
   const progress = lifecycle?.progress?.percentage ?? 24;
   const currentStep = lifecycle?.progress?.currentStep ?? "Waiting for driver confirmation";
   const nextAction = lifecycle?.progress?.nextAction ?? "Your matched driver can accept this request from the driver app.";
+  const pickupAddress = lifecycle?.ride.pickup.address
+    ?? booking.pickup.address
+    ?? draft?.form.pickup.address
+    ?? "Pickup selected";
+  const dropoffAddress = lifecycle?.ride.dropoff.address
+    ?? booking.dropoff.address
+    ?? draft?.form.dropoff.address
+    ?? "Dropoff selected";
 
   return (
     <section className={styles.root}>
@@ -119,14 +127,14 @@ export function LiveRideScreen() {
             <span className={styles.dot} />
             <p>
               <small>Pickup</small>
-              <b>{draft?.form.pickup.address ?? "Pickup selected"}</b>
+              <b>{pickupAddress}</b>
             </p>
           </div>
           <div>
             <span className={`${styles.dot} ${styles.dropDot}`} />
             <p>
               <small>Dropoff</small>
-              <b>{draft?.form.dropoff.address ?? "Dropoff selected"}</b>
+              <b>{dropoffAddress}</b>
             </p>
           </div>
         </div>
@@ -208,6 +216,8 @@ const mergeBookingFromLifecycle = (booking: RideBooking, lifecycle: RideLifecycl
   ...booking,
   status: lifecycle.ride.bookingStatus ?? booking.status,
   vehicleType: lifecycle.ride.vehicleType ?? booking.vehicleType,
+  pickup: lifecycle.ride.pickup ?? booking.pickup,
+  dropoff: lifecycle.ride.dropoff ?? booking.dropoff,
   selectedDriver: lifecycle.ride.driver ?? booking.selectedDriver,
   fareSnapshot: lifecycle.ride.fare ?? booking.fareSnapshot,
   trustSignals: lifecycle.ride.trustSignals ?? booking.trustSignals

@@ -219,7 +219,7 @@ Current stable status:
 - Backend tests are passing.
 - Rider app has MVP booking, fare, ride, safety, history, and profile flows.
 - Driver app has real authentication and complete UI-first workflow coverage.
-- Ops dashboard has auth, overview, ride operations, pricing/surge, trust-safety, fraud-disputes, and communications connected.
+- Ops dashboard has auth, overview, ride operations, pricing/surge, trust-safety, fraud-disputes, communications, admin users, and analytics connected.
 - Shared API client and UI package are available.
 
 Still pending for production readiness:
@@ -284,6 +284,12 @@ Frontend app `.env.local` files should include:
 VITE_API_BASE_URL=http://localhost:3000
 ```
 
+For driver request testing, keep demo ride fallback off unless you intentionally want fake sample requests:
+
+```text
+VITE_USE_DEMO_RIDE_REQUESTS=false
+```
+
 ### 4. Start Backend
 
 From `server/`:
@@ -319,6 +325,15 @@ imran.driver@goodrapido.test / Password@123
 rajesh.driver@goodrapido.test / Password@123
 neha.driver@goodrapido.test / Password@123
 amit.driver@goodrapido.test / Password@123
+```
+
+Seeded driver mapping:
+
+```text
+Bike: Arjun Singh, Sahil Khan
+Auto: Imran Ali
+Economy Cab: Rajesh Kumar, Neha Das
+Premium Cab: Amit Das
 ```
 
 ### 6. Start Frontend Apps
@@ -382,7 +397,32 @@ Expected result:
 - Auth/session should work where backend integration is complete.
 - Fare, safety, history, and profile screens should show the expected flow.
 
-### 8. Manual Driver App Test
+### 8. Manual Rider To Driver Handoff Test
+
+Use this flow to verify that a real rider booking appears in the correct driver app account.
+
+1. Open rider app at `http://localhost:5173`.
+2. Register or log in as a rider.
+3. Create a fare estimate.
+4. Continue to confirm ride.
+5. Note the matched driver name shown on the rider confirm screen.
+6. Confirm the ride request from rider app.
+7. Open driver app at `http://localhost:5174`.
+8. Log in with the matching seeded driver account.
+9. Open `Ride Requests`.
+10. Confirm that the pickup, dropoff, fare, and rider transparency data match the rider booking.
+11. Click `Accept Ride`.
+12. Go back to rider app live ride screen.
+13. Wait up to 5 seconds or click refresh.
+
+Expected result:
+
+- The driver request should show the rider booking's real pickup and dropoff.
+- The driver request should not show demo fallback locations when backend data exists.
+- After driver accepts, rider live ride should move from waiting/pending to driver accepted or `driver_en_route`.
+- The same ride should also be visible in ops ride queue.
+
+### 9. Manual Driver App Test
 
 Open the driver app and test:
 
@@ -399,7 +439,7 @@ Expected result:
 - Token storage and session restore should work.
 - Workflow screens should load and show the planned driver flow.
 
-### 9. Manual Ops Dashboard Test
+### 10. Manual Ops Dashboard Test
 
 Open the ops dashboard and test:
 
@@ -417,7 +457,7 @@ Expected result:
 - Protected routes should redirect to login when logged out.
 - Connected ops modules should load backend data or show clear loading/error states.
 
-### 10. Automated Backend Test
+### 11. Automated Backend Test
 
 From the repo root:
 
@@ -431,7 +471,7 @@ Expected result:
 All backend Jest tests should pass.
 ```
 
-### 11. Automated Frontend Typecheck
+### 12. Automated Frontend Typecheck
 
 From the repo root:
 
@@ -448,7 +488,7 @@ Expected result:
 All TypeScript checks should pass.
 ```
 
-### 12. Automated Frontend Build
+### 13. Automated Frontend Build
 
 From the repo root:
 
@@ -464,7 +504,7 @@ Expected result:
 All frontend apps should create production builds successfully.
 ```
 
-### 13. Final Smoke Checklist
+### 14. Final Smoke Checklist
 
 Before sharing the project, confirm:
 
