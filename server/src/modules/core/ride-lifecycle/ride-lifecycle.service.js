@@ -216,7 +216,7 @@ export default class RideLifecycleService {
             return;
         }
 
-        if (ride.selectedDriver?.driverId !== getDriverPoolId(privateUser)) {
+        if (!isRideAssignedToDriver(privateUser, ride.selectedDriver)) {
             throw AppError.forbidden('Ride is not assigned to this driver');
         }
     }
@@ -295,8 +295,30 @@ const toPlainObject = (document) => document?.toObject ? document.toObject() : d
 
 const getId = (document = {}) => document._id?.toString?.() || document.id || null;
 
-const getDriverPoolId = (privateUser = {}) => (
-    privateUser.employeeCode
+const getDriverIdentityCandidates = (privateUser = {}) => {
+    const employeeCode = normalizeIdentity(privateUser.employeeCode);
+    const emailLocalPart = normalizeIdentity(privateUser.email?.split('@')[0]);
+    const fullName = normalizeIdentity(privateUser.fullName);
+
+    return [...new Set([
+        employeeCode,
+        emailLocalPart,
+        fullName
+    ].filter(Boolean))];
+};
+
+const isRideAssignedToDriver = (privateUser = {}, selectedDriver = {}) => {
+    const driverId = normalizeIdentity(selectedDriver?.driverId);
+
+    if (driverId && getDriverIdentityCandidates(privateUser).includes(driverId)) {
+        return true;
+    }
+
+    return normalizeIdentity(selectedDriver?.fullName) === normalizeIdentity(privateUser.fullName);
+};
+
+const normalizeIdentity = (value) => (
+    value
         ?.trim()
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '_')

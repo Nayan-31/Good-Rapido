@@ -29,7 +29,10 @@ export function useConfirmRide() {
     setIsMatching(true);
 
     try {
-      const response = await matchingService.match(currentDraft.form);
+      const fareEstimateId = currentDraft.fareEstimate?.id;
+      const response = fareEstimateId
+        ? await matchingService.searchRideBookingDrivers(fareEstimateId)
+        : await matchingService.match(currentDraft.form);
       const nextDrivers = response.data?.matching.matches ?? [];
 
       setDrivers(nextDrivers);

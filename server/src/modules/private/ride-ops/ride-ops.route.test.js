@@ -458,7 +458,45 @@ describe('private ride ops routes', () => {
         expect(response.body.data.queue.rides).toHaveLength(1);
         expect(response.body.data.queue.rides[0].driver.driverId).toBe('drv_cab_rajesh');
         expect(dependencies.rideOpsDao.findRides).toHaveBeenCalledWith(expect.objectContaining({
-            driverId: 'drv_cab_rajesh',
+            driverIdentifiers: expect.arrayContaining(['drv_cab_rajesh']),
+            driverName: driverUser.fullName,
+            bookingStatuses: [RIDE_BOOKING_STATUSES.DRIVER_SELECTED]
+        }));
+    });
+
+    test('driver private users can list assigned requests when driver code differs but matched name is same', async () => {
+        const driverUser = createPrivateUser(PRIVATE_AUTH_ROLES.DRIVER, {
+            fullName: 'Rajesh Kumar',
+            email: 'rajesh.driver@goodrapido.test',
+            employeeCode: 'DRV-002'
+        });
+
+        dependencies.rideOpsDao.findPrivateUserById.mockResolvedValue(driverUser);
+        dependencies.rideOpsDao.findRides.mockResolvedValue([
+            createPendingRideBooking(),
+            createPendingRideBooking({
+                id: 'other-driver-ride-id',
+                _id: 'other-driver-ride-id',
+                selectedDriver: {
+                    ...createPendingRideBooking().selectedDriver,
+                    driverId: 'drv_cab_neha',
+                    fullName: 'Neha Das'
+                }
+            })
+        ]);
+
+        const response = await injectRequest(app, {
+            method: 'GET',
+            path: `${BASE_PATH}/rides?status=${RIDE_OPS_FILTERS.PENDING_CONFIRMATION}&limit=5`,
+            headers: authHeaderFor(dependencies, driverUser)
+        });
+
+        expect(response.statusCode).toBe(200);
+        expect(response.body.data.queue.rides).toHaveLength(1);
+        expect(response.body.data.queue.rides[0].driver.fullName).toBe('Rajesh Kumar');
+        expect(dependencies.rideOpsDao.findRides).toHaveBeenCalledWith(expect.objectContaining({
+            driverIdentifiers: expect.arrayContaining(['drv_002']),
+            driverName: 'Rajesh Kumar',
             bookingStatuses: [RIDE_BOOKING_STATUSES.DRIVER_SELECTED]
         }));
     });
