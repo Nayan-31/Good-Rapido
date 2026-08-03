@@ -9,7 +9,8 @@
     "start": "node server.js",
     "dev": "npx nodemon server.js",
     "seed:private-auth": "node scripts/seed-private-auth-users.js",
-    "seed:demo": "node scripts/seed-demo-data.js"
+    "seed:demo": "node scripts/seed-demo-data.js",
+    "smoke:demo": "node scripts/smoke-demo-flow.js"
   },
   "keywords": [],
   "author": "",

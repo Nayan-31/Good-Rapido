@@ -59,7 +59,7 @@ export default class TrustDao {
         return this.trustProfileModel.findByIdAndUpdate(
             profileId,
             { $set: payload },
-            { new: true, runValidators: true }
+            { returnDocument: 'after', runValidators: true }
         );
     }
 }

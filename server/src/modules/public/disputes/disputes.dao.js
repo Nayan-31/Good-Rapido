@@ -69,7 +69,7 @@ export default class DisputesDao {
         return this.model.findOneAndUpdate(
             { _id: disputeId, authUserId, role },
             { $set: payload },
-            { new: true, runValidators: true }
+            { returnDocument: 'after', runValidators: true }
         );
     }
 

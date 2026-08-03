@@ -72,7 +72,7 @@ export default class PricingDao {
         return this.pricingRuleModel.findByIdAndUpdate(
             ruleId,
             { $set: payload },
-            { new: true, runValidators: true }
+            { returnDocument: 'after', runValidators: true }
         );
     }
 

@@ -40,7 +40,7 @@ export default class DriverDao {
         return this.profileModel.findOneAndUpdate(
             { authUserId },
             { $set: payload },
-            { new: true, runValidators: true }
+            { returnDocument: 'after', runValidators: true }
         );
     }
 }

@@ -36,7 +36,7 @@ export default class DriverAvailabilityDao {
         return this.profileModel.findOneAndUpdate(
             { authUserId },
             { $set: { availability } },
-            { new: true, runValidators: true }
+            { returnDocument: 'after', runValidators: true }
         );
     }
 }

@@ -68,7 +68,7 @@ export default class SurgeDao {
         return this.surgeRuleModel.findByIdAndUpdate(
             ruleId,
             { $set: payload },
-            { new: true, runValidators: true }
+            { returnDocument: 'after', runValidators: true }
         );
     }
 }

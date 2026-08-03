@@ -55,7 +55,7 @@ export default class PaymentsDao {
                     refund
                 }
             },
-            { new: true, runValidators: true }
+            { returnDocument: 'after', runValidators: true }
         );
     }
 }

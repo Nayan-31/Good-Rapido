@@ -62,7 +62,7 @@ export default class NotificationsDao {
                     'delivery.readAt': readAt
                 }
             },
-            { new: true, runValidators: true }
+            { returnDocument: 'after', runValidators: true }
         );
     }
 
@@ -79,7 +79,7 @@ export default class NotificationsDao {
                     'delivery.archivedAt': archivedAt
                 }
             },
-            { new: true, runValidators: true }
+            { returnDocument: 'after', runValidators: true }
         );
     }
 
@@ -126,7 +126,7 @@ export default class NotificationsDao {
             },
             {
                 upsert: true,
-                new: true,
+                returnDocument: 'after',
                 setDefaultsOnInsert: true,
                 runValidators: true
             }

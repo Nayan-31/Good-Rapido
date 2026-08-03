@@ -49,7 +49,7 @@ export default class RatingsDao {
         return this.model.findOneAndUpdate(
             { _id: ratingId, authUserId, role },
             { $set: payload },
-            { new: true, runValidators: true }
+            { returnDocument: 'after', runValidators: true }
         );
     }
 
