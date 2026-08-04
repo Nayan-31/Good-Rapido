@@ -238,6 +238,11 @@ describe('private earnings routes', () => {
         expect(response.body.data.earnings.summary.availableForPayout).toBe(157);
         expect(dependencies.earningsDao.findEarningRides).toHaveBeenCalledWith({
             driverId: 'drv_cab_rajesh',
+            driverIdentifiers: [
+                'drv_cab_rajesh',
+                'driver_user'
+            ],
+            driverName: 'driver User',
             from: WEEK_START,
             to: FIXED_NOW,
             limit: 100
@@ -275,10 +280,52 @@ describe('private earnings routes', () => {
         expect(response.body.data.earnings.rides[0].netEarning).toBe(93);
         expect(dependencies.earningsDao.findEarningRides).toHaveBeenCalledWith({
             driverId: 'drv_cab_rajesh',
+            driverIdentifiers: [
+                'drv_cab_rajesh',
+                'driver_user'
+            ],
+            driverName: 'driver User',
             from: WEEK_START,
             to: FIXED_NOW,
             limit: 5
         });
+    });
+
+    test('rides uses actual lifecycle completion before estimated dropoff', async () => {
+        mockDriverContext();
+        dependencies.earningsDao.findEarningRides.mockResolvedValue([
+            createRide({
+                id: 'completed-early-ride-id',
+                _id: 'completed-early-ride-id',
+                bookingCode: 'BOOK-EARLY',
+                confirmedAt: new Date('2026-01-08T08:00:00.000Z'),
+                fareSnapshot: {
+                    ...createRide().fareSnapshot,
+                    durationMinutes: 60
+                },
+                lifecycle: {
+                    driverArrivedAt: new Date('2026-01-08T08:03:00.000Z'),
+                    rideStartedAt: new Date('2026-01-08T08:04:00.000Z'),
+                    completedAt: FIXED_NOW
+                }
+            })
+        ]);
+        dependencies.earningsDao.findPaymentsForRideIds.mockResolvedValue([]);
+
+        const response = await injectRequest(app, {
+            method: 'GET',
+            path: `${BASE_PATH}/rides?limit=5`,
+            headers: authHeaderFor(dependencies, driverUser)
+        });
+
+        expect(response.statusCode).toBe(200);
+        expect(response.body.data.earnings.rides[0]).toEqual(expect.objectContaining({
+            bookingCode: 'BOOK-EARLY',
+            status: EARNINGS_STATUSES.PENDING,
+            completedAt: FIXED_NOW.toISOString(),
+            grossFare: 100,
+            netEarning: 83
+        }));
     });
 
     test('ride detail returns route, payment, and earning components', async () => {

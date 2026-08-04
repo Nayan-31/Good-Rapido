@@ -1,6 +1,7 @@
 const apiBaseUrl = process.env.GOOD_RAPIDO_API_BASE_URL || 'http://127.0.0.1:3000';
 const demoPassword = process.env.GOOD_RAPIDO_DEMO_PASSWORD || 'Password@123';
 const riderEmail = process.env.GOOD_RAPIDO_DEMO_RIDER_EMAIL || 'rider@goodrapido.test';
+const opsEmail = process.env.GOOD_RAPIDO_DEMO_OPS_EMAIL || 'ops@goodrapido.test';
 
 const demoRide = {
     pickup: {
@@ -170,9 +171,127 @@ async function runDemoSmokeFlow() {
         assert(ride.lifecycleStatus === 'driver_en_route', `Expected current ride driver_en_route, got ${ride.lifecycleStatus}`);
     });
 
+    await transitionRide(summary, {
+        rideId: booking.id,
+        token: driverToken,
+        event: 'driver_arrived',
+        expectedStatus: 'driver_arrived',
+        label: 'Driver marks arrived'
+    });
+
+    await transitionRide(summary, {
+        rideId: booking.id,
+        token: driverToken,
+        event: 'ride_started',
+        expectedStatus: 'in_progress',
+        label: 'Driver starts ride'
+    });
+
+    await transitionRide(summary, {
+        rideId: booking.id,
+        token: driverToken,
+        event: 'ride_completed',
+        expectedStatus: 'completed',
+        label: 'Driver completes ride'
+    });
+
+    await step(summary, 'Rider current ride closes after completion', async () => {
+        const response = await request('/api/v1/public/rides/current', {
+            token: riderToken
+        });
+
+        assert(response.data?.ride === null, 'Current ride should be null after completion');
+    });
+
+    await step(summary, 'Rider history shows completed ride', async () => {
+        const response = await request('/api/v1/public/rides/history?status=completed&limit=10', {
+            token: riderToken
+        });
+        const history = response.data?.history || [];
+        const completedRide = history.find((ride) => ride.id === booking.id);
+
+        assert(completedRide, 'Rider history did not include completed booking');
+        assert(completedRide.lifecycleStatus === 'completed', `Expected completed history ride, got ${completedRide.lifecycleStatus}`);
+    });
+
+    await step(summary, 'Driver earnings include completed ride', async () => {
+        const response = await request('/api/v1/private/earnings/rides?period=today&limit=10', {
+            token: driverToken
+        });
+        const rides = response.data?.earnings?.rides || [];
+        const earningRide = rides.find((ride) => ride.rideId === booking.id);
+
+        assert(earningRide, 'Driver earnings did not include completed booking');
+        assert(earningRide.completedAt, 'Completed earning ride did not include completedAt');
+        assert(earningRide.grossFare > 0, 'Completed earning gross fare should be greater than zero');
+        assert(earningRide.netEarning > 0, 'Completed earning net amount should be greater than zero');
+    });
+
+    const opsSession = await step(summary, 'Ops login', async () => {
+        const response = await request('/api/v1/private/auth/ops/login', {
+            method: 'POST',
+            body: {
+                identifier: opsEmail,
+                password: demoPassword
+            }
+        });
+        const accessToken = response.data?.tokens?.accessToken;
+
+        assert(accessToken, 'Ops access token was not returned');
+
+        return response.data;
+    });
+
+    const opsToken = opsSession.tokens.accessToken;
+
+    await step(summary, 'Ops queue shows completed ride', async () => {
+        const response = await request('/api/v1/private/ride-ops/rides?status=completed&bookingStatus=confirmed&limit=10', {
+            token: opsToken
+        });
+        const rides = response.data?.queue?.rides || response.data?.rides || [];
+        const completedRide = rides.find((ride) => ride.id === booking.id);
+
+        assert(completedRide, 'Ops completed queue did not include completed booking');
+        assert(completedRide.lifecycleStatus === 'completed', `Expected completed ops ride, got ${completedRide.lifecycleStatus}`);
+    });
+
+    await step(summary, 'Ops dashboard reflects completed ride', async () => {
+        const response = await request('/api/v1/private/ride-ops/dashboard', {
+            token: opsToken
+        });
+        const summaryData = response.data?.dashboard?.summary;
+
+        assert(summaryData?.completedRides >= 1, 'Ops dashboard completed ride count did not update');
+    });
+
     printSummary(summary, {
         bookingCode: booking.bookingCode,
         driverName: driverOption.fullName
+    });
+}
+
+async function transitionRide(summary, {
+    rideId,
+    token,
+    event,
+    expectedStatus,
+    label
+}) {
+    return step(summary, label, async () => {
+        const response = await request(`/api/v1/core/ride-lifecycle/rides/${rideId}/events`, {
+            method: 'POST',
+            token,
+            body: {
+                event,
+                occurredAt: new Date().toISOString(),
+                note: `Demo smoke test transition: ${event}`
+            }
+        });
+        const lifecycle = response.data?.lifecycle;
+
+        assert(lifecycle?.lifecycleStatus === expectedStatus, `Expected ${expectedStatus}, got ${lifecycle?.lifecycleStatus}`);
+
+        return lifecycle;
     });
 }
 

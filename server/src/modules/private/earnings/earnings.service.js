@@ -50,7 +50,7 @@ export default class EarningsService {
     async summary(authContext, query = {}) {
         const { driver } = await this.getDriverContext(authContext);
         const window = resolvePeriodWindow(query, this.now());
-        const items = await this.findEarningItems(driver.driverId, {
+        const items = await this.findEarningItems(driver, {
             ...query,
             ...window,
             limit: EARNINGS_MAX_LIST_LIMIT
@@ -71,7 +71,7 @@ export default class EarningsService {
     async rides(authContext, query = {}) {
         const { driver } = await this.getDriverContext(authContext);
         const window = resolvePeriodWindow(query, this.now());
-        const items = await this.findEarningItems(driver.driverId, {
+        const items = await this.findEarningItems(driver, {
             ...query,
             ...window,
             limit: query.limit || EARNINGS_DEFAULT_LIST_LIMIT
@@ -92,7 +92,10 @@ export default class EarningsService {
 
     async ride(authContext, rideId) {
         const { driver } = await this.getDriverContext(authContext);
-        const ride = toPlainObject(await this.earningsDao.findRideByIdForDriver(rideId, driver.driverId));
+        const ride = toPlainObject(await this.earningsDao.findRideByIdForDriver(
+            rideId,
+            buildDriverRideQuery(driver)
+        ));
 
         if (!ride) {
             throw AppError.notFound('Earning ride not found');
@@ -114,7 +117,7 @@ export default class EarningsService {
     async statements(authContext, query = {}) {
         const { driver } = await this.getDriverContext(authContext);
         const window = resolvePeriodWindow(query, this.now());
-        const items = await this.findEarningItems(driver.driverId, {
+        const items = await this.findEarningItems(driver, {
             ...query,
             ...window,
             limit: query.limit || EARNINGS_DEFAULT_LIST_LIMIT
@@ -160,9 +163,9 @@ export default class EarningsService {
         });
     }
 
-    async findEarningItems(driverId, query = {}) {
+    async findEarningItems(driver, query = {}) {
         const rides = toPlainArray(await this.earningsDao.findEarningRides({
-            driverId,
+            ...buildDriverRideQuery(driver),
             from: query.from,
             to: query.to,
             limit: query.limit || EARNINGS_DEFAULT_LIST_LIMIT
@@ -262,8 +265,11 @@ const buildEarningItem = (ride = {}, payment = {}, { now }) => {
         timeline: {
             bookedAt: ride.createdAt || null,
             confirmedAt: timeline.confirmedAt,
-            completedAt: lifecycleStatus === 'completed' ? timeline.estimatedDropoffAt : null,
-            cancelledAt: ride.cancellation?.cancelledAt || null
+            driverArrivedAt: timeline.driverArrivedAt,
+            rideStartedAt: timeline.rideStartedAt,
+            estimatedDropoffAt: timeline.estimatedDropoffAt,
+            completedAt: lifecycleStatus === 'completed' ? timeline.completedAt || timeline.estimatedDropoffAt : null,
+            cancelledAt: timeline.cancelledAt
         },
         trustSummary: {
             driverTrustScore: ride.trustSignals?.driverTrustScore || null,
@@ -339,21 +345,29 @@ const resolvePeriodWindow = (query = {}, now = new Date()) => {
 };
 
 const buildRideTimeline = (ride = {}) => {
-    const confirmedAt = ride.confirmedAt || (ride.status === RIDE_BOOKING_STATUSES.CONFIRMED ? ride.createdAt : null);
+    const lifecycle = ride.lifecycle || {};
+    const confirmedAt = lifecycle.confirmedAt || ride.confirmedAt || (ride.status === RIDE_BOOKING_STATUSES.CONFIRMED ? ride.createdAt : null);
     const driverEtaMinutes = ride.selectedDriver?.etaMinutes || 0;
     const rideDurationMinutes = ride.fareSnapshot?.durationMinutes || 0;
     const driverArrivalEtaAt = confirmedAt ? addMinutes(new Date(confirmedAt), driverEtaMinutes) : null;
-    const estimatedDropoffAt = driverArrivalEtaAt ? addMinutes(driverArrivalEtaAt, rideDurationMinutes) : null;
+    const driverArrivedAt = lifecycle.driverArrivedAt || null;
+    const rideStartedAt = lifecycle.rideStartedAt || null;
+    const estimatedDropoffBase = rideStartedAt || driverArrivedAt || driverArrivalEtaAt;
+    const estimatedDropoffAt = estimatedDropoffBase ? addMinutes(new Date(estimatedDropoffBase), rideDurationMinutes) : null;
 
     return {
         confirmedAt,
         driverArrivalEtaAt,
-        estimatedDropoffAt
+        driverArrivedAt,
+        rideStartedAt,
+        estimatedDropoffAt,
+        completedAt: lifecycle.completedAt || null,
+        cancelledAt: lifecycle.cancelledAt || ride.cancellation?.cancelledAt || null
     };
 };
 
 const resolveLifecycleStatus = (ride = {}, timeline = {}, now = new Date()) => {
-    if (ride.status === RIDE_BOOKING_STATUSES.CANCELLED) {
+    if (ride.status === RIDE_BOOKING_STATUSES.CANCELLED || timeline.cancelledAt) {
         return 'cancelled';
     }
 
@@ -361,7 +375,7 @@ const resolveLifecycleStatus = (ride = {}, timeline = {}, now = new Date()) => {
         return 'pending';
     }
 
-    if (timeline.estimatedDropoffAt && now >= new Date(timeline.estimatedDropoffAt)) {
+    if (timeline.completedAt || (timeline.estimatedDropoffAt && now >= new Date(timeline.estimatedDropoffAt))) {
         return 'completed';
     }
 
@@ -458,6 +472,33 @@ const normalizeDriver = (authUser = {}, driverProfile = {}) => ({
     displayName: driverProfile.profile?.displayName || authUser.fullName || null,
     serviceZone: driverProfile.service?.serviceZone || authUser.serviceZone || null
 });
+
+const buildDriverRideQuery = (driver = {}) => ({
+    driverId: driver.driverId,
+    driverIdentifiers: getDriverIdentityCandidates(driver),
+    driverName: driver.fullName || driver.displayName || null
+});
+
+const getDriverIdentityCandidates = (driver = {}) => {
+    const candidates = [
+        driver.driverId,
+        driver.driverCode,
+        normalizeIdentity(driver.driverId),
+        normalizeIdentity(driver.driverCode),
+        normalizeIdentity(driver.fullName)
+    ].filter(Boolean);
+
+    return [...new Set(candidates)];
+};
+
+const normalizeIdentity = (value) => (
+    value
+        ?.trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '_')
+        .replace(/^_+|_+$/g, '')
+        || null
+);
 
 const filterByStatus = (items = [], status) => status
     ? items.filter((item) => item.status === status)

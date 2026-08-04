@@ -38,9 +38,8 @@ export default class EarningsDao {
         return this.driverProfileModel.findOne({ authUserId });
     }
 
-    findEarningRides({ driverId, from, to, limit = 20 } = {}) {
+    findEarningRides({ driverId, driverIdentifiers = [], driverName, from, to, limit = 20 } = {}) {
         const filter = {
-            'selectedDriver.driverId': driverId,
             status: {
                 $in: [
                     RIDE_BOOKING_STATUSES.CONFIRMED,
@@ -48,6 +47,11 @@ export default class EarningsDao {
                 ]
             }
         };
+        const driverFilter = buildDriverFilter({ driverId, driverIdentifiers, driverName });
+
+        if (driverFilter) {
+            Object.assign(filter, driverFilter);
+        }
 
         if (from || to) {
             filter.createdAt = {
@@ -62,14 +66,15 @@ export default class EarningsDao {
             .limit(limit);
     }
 
-    findRideByIdForDriver(rideId, driverId) {
+    findRideByIdForDriver(rideId, { driverId, driverIdentifiers = [], driverName } = {}) {
         if (!mongoose.isValidObjectId(rideId)) {
             return null;
         }
+        const driverFilter = buildDriverFilter({ driverId, driverIdentifiers, driverName });
 
         return this.rideBookingModel.findOne({
             _id: rideId,
-            'selectedDriver.driverId': driverId
+            ...(driverFilter || {})
         });
     }
 
@@ -87,3 +92,28 @@ export default class EarningsDao {
         });
     }
 }
+
+const buildDriverFilter = ({ driverId, driverIdentifiers = [], driverName } = {}) => {
+    const driverFilters = [];
+    const identifiers = driverIdentifiers.length ? driverIdentifiers : [driverId].filter(Boolean);
+
+    if (identifiers.length) {
+        driverFilters.push({
+            'selectedDriver.driverId': { $in: identifiers }
+        });
+    }
+
+    if (driverName) {
+        driverFilters.push({
+            'selectedDriver.fullName': new RegExp(`^${escapeRegExp(driverName)}$`, 'i')
+        });
+    }
+
+    if (!driverFilters.length) {
+        return null;
+    }
+
+    return { $or: driverFilters };
+};
+
+const escapeRegExp = (value = '') => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
