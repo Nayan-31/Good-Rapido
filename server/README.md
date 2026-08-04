@@ -191,7 +191,7 @@ With the API server running, verify the complete demo handoff:
 npm run smoke:demo
 ```
 
-The smoke command checks health, rider login, fare estimate, driver search, booking creation, driver request visibility, driver acceptance, rider live lifecycle status, and rider current ride status.
+The smoke command checks health, rider login, fare estimate, driver search, booking creation, driver request visibility, driver acceptance, rider live lifecycle status, driver arrived/start/complete transitions, rider history, driver earnings, and ops completed ride visibility.
 
 ## Tests
 
