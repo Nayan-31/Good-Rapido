@@ -2,7 +2,7 @@
 
 This workspace contains the frontend apps and shared frontend packages for Good Rapido.
 
-Current status: in progress. Rider app has MVP screens and API-facing services. Driver app has real auth/session integration and UI-first screens for the remaining driver workflow. Ops dashboard now has a backend-aligned skeleton for admin and operations workflows.
+Current status: demo-ready frontend MVP. Rider, driver, and ops apps are wired around the main booking lifecycle. The verified demo flow covers rider booking, driver request handling, ride completion, driver earnings, and ops visibility. Some secondary cards still use planned/sample fallback values when no live records exist.
 
 ## Workspace Structure
 
@@ -50,10 +50,12 @@ Current coverage:
 
 - App shell and route flow.
 - Driver login/register.
-- Token storage.
+- Session-storage based auth session.
 - Session restore.
 - Logout.
-- UI-first screens for onboarding, availability, ride requests, active ride, earnings, trust, alerts, profile, and support.
+- Onboarding, availability, ride requests, active ride, earnings, trust, alerts, profile, and support flows.
+- Real rider-to-driver booking handoff in the seeded demo flow.
+- Active ride lifecycle actions for accept, arrived, start, and complete.
 
 ### Ops Dashboard
 
@@ -66,9 +68,9 @@ frontend/apps/ops-dashboard
 Current coverage:
 
 - React Vite TypeScript setup.
-- Admin/ops auth shell, token storage, session restore, refresh, and logout structure.
+- Admin/ops auth, session storage, session restore, refresh, and logout.
 - App shell and backend-aligned route flow.
-- Skeleton screens for overview, ride operations, pricing/surge, trust-safety, fraud-disputes, communications, admin users, and analytics.
+- Overview, ride operations, pricing/surge, trust-safety, fraud-disputes, communications, admin users, and analytics flows.
 - API client method coverage for private admin, analytics, pricing, surge, fraud, auth admins, and auth ops.
 
 ## Shared Packages
@@ -169,10 +171,10 @@ Run ops dashboard:
 npm run dev:ops
 ```
 
-Seed local admin and ops users from the repo root:
+Seed local demo users from the repo root:
 
 ```bash
-npm --prefix server run seed:private-auth
+npm --prefix server run seed:demo
 ```
 
 Typecheck:
@@ -210,7 +212,7 @@ When the backend runs on a different port during debugging, start the app with t
 
 ## Current Real Data Notes
 
-- Driver auth uses real backend APIs and MongoDB-backed users.
-- Ops dashboard auth is wired to private admin/ops auth routes. Local admin/ops accounts can be created with `npm --prefix server run seed:private-auth`.
-- Rider and driver screens beyond auth are still being connected flow by flow.
-- UI screens may show hardcoded operational metrics until their feature service is fully wired to backend data.
+- Rider, driver, admin, and ops auth use real backend APIs and MongoDB-backed users.
+- Frontend auth sessions use `sessionStorage`, and old localStorage token keys are cleaned during migration/logout.
+- The seeded demo flow verifies rider booking, driver accept/complete actions, rider history, driver earnings, and ops dashboard visibility.
+- UI screens may show planned/sample fallback values when no live records exist yet.

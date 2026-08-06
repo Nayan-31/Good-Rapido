@@ -57,8 +57,8 @@ ops-dashboard/
 
 ## Completed Integration
 
-- Admin/ops login, token storage, session restore, refresh, and logout.
-- Private auth seed command for local admin and ops users.
+- Admin/ops login, session-storage auth, session restore, refresh, and logout.
+- Demo seed command for rider, driver, admin, and ops users.
 - Overview dashboard connected to private admin, private analytics, and private ride-ops.
 - Overview health cards, alerts summary, partial error handling, and loading states.
 - Ride operations dashboard connected to `private/ride-ops`.
@@ -115,18 +115,21 @@ Build:
 npm run build:ops
 ```
 
-Seed local admin and ops users from the repo root:
+Seed local demo users from the repo root:
 
 ```bash
-npm --prefix server run seed:private-auth
+npm --prefix server run seed:demo
 ```
 
 Default local credentials:
 
 ```text
+Rider: rider@goodrapido.test / Password@123
 Admin: admin@goodrapido.test / Password@123
 Ops: ops@goodrapido.test / Password@123
 ```
+
+Driver demo accounts are also created by `seed:demo`, which helps ops verify real ride queue activity after rider booking and driver completion.
 
 Override seed password:
 
@@ -139,6 +142,8 @@ Reset existing seeded passwords:
 ```bash
 PRIVATE_AUTH_SEED_RESET_PASSWORDS=true npm --prefix server run seed:private-auth
 ```
+
+Use the private auth seed only when you specifically need to recreate admin/ops/driver auth users without resetting the wider demo ride data.
 
 ## Environment
 

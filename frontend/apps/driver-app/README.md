@@ -2,22 +2,37 @@
 
 The driver app is the operational app for drivers. It focuses on authentication, onboarding, availability, ride execution, earnings clarity, trust improvement, and support.
 
-Current status: in progress. The app shell, routing, feature structure, and real auth flow are implemented. The rest of the screens are UI-first and use hardcoded values until their backend services are connected.
+Current status: demo-ready driver MVP. The app shell, routing, auth flow, onboarding, availability, ride request, active ride, earnings, trust, profile, notifications, and support flows are implemented. The seeded demo flow verifies real rider-to-driver request handoff and ride lifecycle actions.
 
 ## What Is Real Now
 
 - Driver registration.
 - Driver login.
-- JWT access and refresh token storage.
+- JWT access and refresh token flow.
+- Session-storage based frontend auth session.
+- Legacy localStorage token cleanup during migration/logout.
 - Session restore.
 - Logout.
 - Route protection based on auth state.
 - Header initials from the authenticated driver name.
+- Real seeded ride request visibility for the matched driver.
+- Accept, arrived, start, and complete ride actions through backend lifecycle APIs.
+- Earnings update after completed demo rides.
 
-Backend module used now:
+Primary backend modules used now:
 
 ```text
 server/src/modules/private/auth
+server/src/modules/private/driver
+server/src/modules/private/driver-availability
+server/src/modules/private/driver-documents
+server/src/modules/private/vehicle
+server/src/modules/private/ride-ops
+server/src/modules/private/earnings
+server/src/modules/private/trust
+server/src/modules/private/notifications
+server/src/modules/public/support
+server/src/modules/core/ride-lifecycle
 ```
 
 MongoDB collection used now:
@@ -26,19 +41,13 @@ MongoDB collection used now:
 private_auth_users
 ```
 
-## What Is UI-First Now
+## What Still Uses Fallbacks When No Live Records Exist
 
-- Onboarding.
-- Availability dashboard.
-- Ride requests.
-- Active ride.
-- Earnings.
-- Trust dashboard.
-- Notifications.
-- Profile.
-- Support.
+- Some secondary dashboard metrics.
+- Some empty-state helper cards.
+- Some notification/support preview text.
 
-These screens are present for flow and design direction, but their data is not fully backend-bound yet.
+These fallbacks keep the demo readable when the local database has no matching records yet. The main auth, booking handoff, active ride lifecycle, and earnings smoke flow are backend-verified.
 
 ## Structure
 

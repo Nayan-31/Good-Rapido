@@ -2,9 +2,8 @@ import { createGoodRapidoApiClient } from "@good-rapido/api-client";
 
 import {
   clearAuthSession,
-  RIDER_ACCESS_TOKEN_KEY,
-  RIDER_REFRESH_TOKEN_KEY,
-  RIDER_USER_KEY
+  readAuthSession,
+  saveAuthSession
 } from "@/features/auth/authStorage";
 import type { AuthSession } from "@/features/auth/auth.types";
 
@@ -17,10 +16,7 @@ export const apiClient = createGoodRapidoApiClient({
 });
 
 const getValidRiderAccessToken = async () => {
-  const accessToken =
-    localStorage.getItem(RIDER_ACCESS_TOKEN_KEY) ??
-    localStorage.getItem("goodRapido.accessToken") ??
-    localStorage.getItem("accessToken");
+  const accessToken = readAuthSession()?.tokens.accessToken;
 
   if (accessToken && !isJwtExpired(accessToken)) {
     return accessToken;
@@ -42,7 +38,7 @@ const refreshRiderAccessToken = () => {
 };
 
 const requestRiderTokenRefresh = async () => {
-  const refreshToken = localStorage.getItem(RIDER_REFRESH_TOKEN_KEY);
+  const refreshToken = readAuthSession()?.tokens.refreshToken;
 
   if (!refreshToken) {
     return null;
@@ -64,13 +60,7 @@ const requestRiderTokenRefresh = async () => {
       throw new Error("Rider session refresh failed");
     }
 
-    localStorage.setItem(RIDER_ACCESS_TOKEN_KEY, payload.data.tokens.accessToken);
-    localStorage.setItem(RIDER_REFRESH_TOKEN_KEY, payload.data.tokens.refreshToken);
-
-    if (payload.data.user) {
-      localStorage.setItem(RIDER_USER_KEY, JSON.stringify(payload.data.user));
-    }
-
+    saveAuthSession(payload.data);
     return payload.data.tokens.accessToken;
   } catch {
     clearAuthSession();
