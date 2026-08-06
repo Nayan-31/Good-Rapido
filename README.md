@@ -244,6 +244,7 @@ npm --prefix frontend run build:ops
 
 - `FINAL_PROJECT_OVERVIEW.md` explains the project, architecture, flows, and why each major part exists.
 - `DEMO_SCRIPT.md` gives a step-by-step demo and interview explanation script.
+- `DEPLOYMENT_GUIDE.md` explains env setup, build outputs, Docker backend, and deploy order.
 
 ## Standard Backend Module Shape
 

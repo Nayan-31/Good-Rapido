@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   api:
     build:
@@ -12,12 +10,18 @@ services:
       - PORT=3000
       - MONGO_URL=mongodb://mongodb:27017/rapido
       - NODE_ENV=development
+      - LOGGER_LEVEL=info
+      - CORS_ORIGIN=http://localhost:5173,http://localhost:5174,http://localhost:5176
+      - ACCESS_SECRET_TOKEN=local-access-secret-change-me
+      - REFRESH_SECRET_TOKEN=local-refresh-secret-change-me
+      - ACCESS_TOKEN_EXPIRES_IN=15m
+      - REFRESH_TOKEN_EXPIRES_IN=7d
     volumes:
       - .:/app
       - /app/node_modules # Prevents local node_modules from overriding container's
     depends_on:
       - mongodb
-    command: npm run dev
+    command: npm start
 
   mongodb:
     image: mongo:latest

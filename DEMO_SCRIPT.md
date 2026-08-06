@@ -40,6 +40,8 @@ I will show the complete flow from rider booking to driver completion, and then 
 
 Open terminal at project root.
 
+For a fresh machine, check `DEPLOYMENT_GUIDE.md` and copy the relevant `.env.example` files before starting the apps.
+
 ### Install backend dependencies
 
 ```bash

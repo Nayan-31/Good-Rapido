@@ -211,6 +211,20 @@ VITE_API_BASE_URL=http://localhost:3000
 
 When the backend runs on a different port during debugging, start the app with the matching value.
 
+Environment examples are available in each app:
+
+```text
+frontend/apps/rider-app/.env.example
+frontend/apps/driver-app/.env.example
+frontend/apps/ops-dashboard/.env.example
+```
+
+Deployment notes are in:
+
+```text
+../DEPLOYMENT_GUIDE.md
+```
+
 ## Current Real Data Notes
 
 - Rider, driver, admin, and ops auth use real backend APIs and MongoDB-backed users.
