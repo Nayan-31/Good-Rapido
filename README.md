@@ -2,7 +2,7 @@
 
 Good Rapido is a full-stack capstone project for a transparent ride-booking platform. The product idea is simple: riders should understand why a fare changed, why a route was selected, why a driver was matched, and how trust or safety decisions are made.
 
-Current status: in progress. The backend modular foundation is strong, the rider frontend has MVP flows and screen-level services, and the driver frontend has a real authentication flow connected to MongoDB. Some frontend screens still use hardcoded UI values while their backend integration is being completed.
+Current status: demo-ready full-stack MVP. The backend modular foundation is strong, the rider, driver, and ops frontend apps are wired around the main booking lifecycle, and the core demo flow is verified from rider booking to driver completion. Production integrations such as real map provider, payment gateway, WebSocket tracking, and SMS/push/email providers are still pending.
 
 ## Tech Stack
 
@@ -106,32 +106,33 @@ Driver app current state:
 
 - React Vite TypeScript setup.
 - App shell, routing, and feature folder structure.
-- Real private driver authentication: register, login, token storage, session restore, and logout.
-- Availability, ride request, active ride, earnings, trust, alerts, profile, onboarding, and support screens are currently UI-first with hardcoded values.
+- Real private driver authentication: register, login, session restore, and logout.
+- Driver onboarding, availability, ride requests, active ride lifecycle, earnings, trust, alerts, profile, and support flows.
+- Seeded driver accounts can receive real rider bookings in the request queue and complete the ride lifecycle.
 
 Ops dashboard current state:
 
 - React Vite TypeScript setup.
-- Admin/ops private auth shell with token storage structure.
+- Admin/ops private auth flow with protected routes and session restore.
 - Backend-aligned app shell and routing.
-- Skeleton screens for overview, ride operations, pricing/surge, trust-safety, fraud-disputes, communications, admin users, and analytics.
-- API client methods for private admin, analytics, pricing, surge, fraud, admin auth, and ops auth.
+- Overview, ride operations, pricing/surge, trust-safety, fraud-disputes, communications, admin users, and analytics flows.
+- API client methods for private admin, analytics, pricing, surge, fraud, admin auth, ops auth, and ride operations.
 
 ## Real Data Status
 
 Real backend data is currently active for:
 
 - Public and private auth APIs.
-- Driver register/login/session restore/logout.
-- MongoDB-backed driver auth users.
-- Backend API modules and tests.
-- Ops dashboard private auth endpoints are wired, and local admin/ops users can be seeded with `npm --prefix server run seed:private-auth`.
+- MongoDB-backed rider, driver, admin, and ops users.
+- Rider fare estimate, driver search, booking creation, current ride status, and ride history in the verified demo flow.
+- Driver login, request visibility, accept ride, arrived, start ride, complete ride, and earnings update in the verified demo flow.
+- Ops private auth, ride queue visibility, dashboard data, pricing/surge, trust-safety, fraud-dispute, communications, admin users, and analytics module structure.
+- Backend API modules, Jest tests, and full smoke demo.
 
 Partially integrated or UI-first areas:
 
-- Rider screens have services and API clients, but some dashboard values still need final backend binding and end-to-end data polishing.
-- Driver availability, ride requests, active ride, earnings, trust, profile, notifications, and support still need full real backend wiring.
-- Payment gateway, live maps, WebSocket tracking, push notifications, and production deployment are pending.
+- Some secondary dashboard cards still use planned/sample fallback values when no live records exist.
+- Payment gateway, real map provider, WebSocket tracking, SMS/push/email delivery, and production deployment are pending.
 
 ## Local Setup
 
@@ -154,17 +155,26 @@ Start backend:
 npm run dev
 ```
 
-Seed local admin and ops users for the ops dashboard:
+Seed local demo data:
 
 ```bash
-npm run seed:private-auth
+npm run seed:demo
 ```
 
-Default local ops-dashboard credentials:
+Default local credentials:
 
 ```text
+Rider: rider@goodrapido.test / Password@123
 Admin: admin@goodrapido.test / Password@123
 Ops: ops@goodrapido.test / Password@123
+
+Drivers:
+arjun.singh.driver@goodrapido.test / Password@123
+sahil.khan.driver@goodrapido.test / Password@123
+imran.ali.driver@goodrapido.test / Password@123
+rajesh.kumar.driver@goodrapido.test / Password@123
+neha.das.driver@goodrapido.test / Password@123
+amit.das.driver@goodrapido.test / Password@123
 ```
 
 Install frontend dependencies:
@@ -211,6 +221,12 @@ Backend tests:
 npm --prefix server test
 ```
 
+Full demo smoke flow:
+
+```bash
+npm --prefix server run smoke:demo
+```
+
 Frontend checks:
 
 ```bash
@@ -222,6 +238,11 @@ npm --prefix frontend run build:rider
 npm --prefix frontend run build:driver
 npm --prefix frontend run build:ops
 ```
+
+## Wrap-Up Docs
+
+- `FINAL_PROJECT_OVERVIEW.md` explains the project, architecture, flows, and why each major part exists.
+- `DEMO_SCRIPT.md` gives a step-by-step demo and interview explanation script.
 
 ## Standard Backend Module Shape
 

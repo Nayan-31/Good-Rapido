@@ -1,11 +1,13 @@
 import { createGoodRapidoApiClient } from "@good-rapido/api-client";
 
+import { readOpsAuthSession } from "@/features/auth/authStorage";
+
 const readAccessToken = () => {
   if (typeof window === "undefined") {
     return null;
   }
 
-  return localStorage.getItem("goodRapido.opsAccessToken");
+  return readOpsAuthSession()?.tokens.accessToken ?? null;
 };
 
 export const apiClient = createGoodRapidoApiClient({

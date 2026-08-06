@@ -2,7 +2,7 @@
 
 The rider app is the customer-facing ride booking experience. It focuses on transparent pricing, booking confidence, driver trust, route fairness, safety, history, and profile transparency.
 
-Current status: in progress. The main rider screens and services are implemented for MVP flow. Some values still need final backend binding and end-to-end persistence polishing.
+Current status: demo-ready rider MVP. The main rider screens and services are implemented for booking, fare transparency, confirm ride, live ride status, safety, notifications, history, and profile. The seeded demo flow verifies booking through completed ride history.
 
 ## Current Screens And Flows
 
@@ -45,7 +45,8 @@ rider-app/
 ### auth
 
 - Rider login/session structure.
-- Token/session storage.
+- Session-storage based auth session.
+- Legacy localStorage token cleanup during migration/logout.
 - Auth gate.
 
 Backend modules:

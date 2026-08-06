@@ -55,7 +55,7 @@ The driver app is for drivers who accept and complete rides.
 Drivers can:
 
 - Register and log in with private driver authentication.
-- Store access and refresh tokens locally.
+- Store the active auth session in browser session storage.
 - Restore session after page refresh.
 - Log out safely.
 - Complete onboarding flow structure.
@@ -136,6 +136,7 @@ It supports:
 - Core business engines.
 - MongoDB-backed authentication.
 - JWT access and refresh token flow.
+- Session-storage based frontend auth storage with legacy localStorage cleanup.
 - Zod request validation.
 - Controller, service, DAO, DTO, validator, route, and test structure.
 - Route-level Jest tests.
@@ -218,7 +219,7 @@ Current stable status:
 - Backend module coverage is strong.
 - Backend tests are passing.
 - Rider app has MVP booking, fare, ride, safety, history, and profile flows.
-- Driver app has real authentication and complete UI-first workflow coverage.
+- Driver app has real authentication, real booking handoff, active ride lifecycle actions, and complete workflow screens.
 - Ops dashboard has auth, overview, ride operations, pricing/surge, trust-safety, fraud-disputes, communications, admin users, and analytics connected.
 - Shared API client and UI package are available.
 
@@ -304,12 +305,12 @@ Check backend health:
 curl http://localhost:3000/health
 ```
 
-### 5. Seed Private Users
+### 5. Seed Demo Users And Ride Data
 
 From the repo root:
 
 ```bash
-npm --prefix server run seed:private-auth
+npm --prefix server run seed:demo
 ```
 
 Default local credentials:
@@ -319,12 +320,12 @@ Admin: admin@goodrapido.test / Password@123
 Ops: ops@goodrapido.test / Password@123
 
 Driver test accounts:
-arjun.driver@goodrapido.test / Password@123
-sahil.driver@goodrapido.test / Password@123
-imran.driver@goodrapido.test / Password@123
-rajesh.driver@goodrapido.test / Password@123
-neha.driver@goodrapido.test / Password@123
-amit.driver@goodrapido.test / Password@123
+arjun.singh.driver@goodrapido.test / Password@123
+sahil.khan.driver@goodrapido.test / Password@123
+imran.ali.driver@goodrapido.test / Password@123
+rajesh.kumar.driver@goodrapido.test / Password@123
+neha.das.driver@goodrapido.test / Password@123
+amit.das.driver@goodrapido.test / Password@123
 ```
 
 Seeded driver mapping:
@@ -539,5 +540,5 @@ Backend test coverage currently passes with:
 
 ```text
 36 test suites
-356 tests
+358 tests
 ```

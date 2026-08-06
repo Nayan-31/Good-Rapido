@@ -10,8 +10,8 @@ export const readOpsAuthSession = (): OpsAuthSession | null => {
     return null;
   }
 
-  const accessToken = localStorage.getItem(ACCESS_TOKEN_KEY);
-  const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
+  const accessToken = readSessionValue(ACCESS_TOKEN_KEY);
+  const refreshToken = readSessionValue(REFRESH_TOKEN_KEY);
   const role = readStoredRole();
 
   if (!accessToken || !refreshToken || !role) {
@@ -29,16 +29,24 @@ export const readOpsAuthSession = (): OpsAuthSession | null => {
 };
 
 export const saveOpsAuthSession = (session: OpsAuthSession) => {
-  localStorage.setItem(ACCESS_TOKEN_KEY, session.tokens.accessToken);
-  localStorage.setItem(REFRESH_TOKEN_KEY, session.tokens.refreshToken);
-  localStorage.setItem(ROLE_KEY, session.role);
+  sessionStorage.setItem(ACCESS_TOKEN_KEY, session.tokens.accessToken);
+  sessionStorage.setItem(REFRESH_TOKEN_KEY, session.tokens.refreshToken);
+  sessionStorage.setItem(ROLE_KEY, session.role);
+  localStorage.removeItem(ACCESS_TOKEN_KEY);
+  localStorage.removeItem(REFRESH_TOKEN_KEY);
+  localStorage.removeItem(ROLE_KEY);
 
   if (session.user) {
-    localStorage.setItem(USER_KEY, JSON.stringify(session.user));
+    sessionStorage.setItem(USER_KEY, JSON.stringify(session.user));
+    localStorage.removeItem(USER_KEY);
   }
 };
 
 export const clearOpsAuthSession = () => {
+  sessionStorage.removeItem(ACCESS_TOKEN_KEY);
+  sessionStorage.removeItem(REFRESH_TOKEN_KEY);
+  sessionStorage.removeItem(USER_KEY);
+  sessionStorage.removeItem(ROLE_KEY);
   localStorage.removeItem(ACCESS_TOKEN_KEY);
   localStorage.removeItem(REFRESH_TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
@@ -46,7 +54,7 @@ export const clearOpsAuthSession = () => {
 };
 
 const readStoredRole = (): OpsAuthRole | null => {
-  const role = localStorage.getItem(ROLE_KEY);
+  const role = readSessionValue(ROLE_KEY);
 
   if (role === "admin" || role === "ops") {
     return role;
@@ -56,7 +64,7 @@ const readStoredRole = (): OpsAuthRole | null => {
 };
 
 const readStoredUser = (): OpsAuthUser | null => {
-  const rawUser = localStorage.getItem(USER_KEY);
+  const rawUser = readSessionValue(USER_KEY);
 
   if (!rawUser) {
     return null;
@@ -65,7 +73,25 @@ const readStoredUser = (): OpsAuthUser | null => {
   try {
     return JSON.parse(rawUser) as OpsAuthUser;
   } catch {
+    sessionStorage.removeItem(USER_KEY);
     localStorage.removeItem(USER_KEY);
     return null;
   }
+};
+
+const readSessionValue = (key: string) => {
+  const sessionValue = sessionStorage.getItem(key);
+
+  if (sessionValue) {
+    return sessionValue;
+  }
+
+  const legacyValue = localStorage.getItem(key);
+
+  if (legacyValue) {
+    sessionStorage.setItem(key, legacyValue);
+    localStorage.removeItem(key);
+  }
+
+  return legacyValue;
 };
