@@ -286,6 +286,16 @@ Frontend app `.env.local` files should include:
 VITE_API_BASE_URL=http://localhost:3000
 ```
 
+Use these templates when setting up a fresh machine or deployment:
+
+```text
+.env.example
+server/.env.example
+frontend/apps/rider-app/.env.example
+frontend/apps/driver-app/.env.example
+frontend/apps/ops-dashboard/.env.example
+```
+
 For driver request testing, keep demo ride fallback off unless you intentionally want fake sample requests:
 
 ```text

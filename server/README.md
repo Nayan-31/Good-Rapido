@@ -118,12 +118,14 @@ PORT=3000
 MONGO_URL=mongodb://localhost:27017/rapido
 NODE_ENV=development
 LOGGER_LEVEL=info
-CORS_ORIGIN=http://localhost:5173,http://localhost:5174
+CORS_ORIGIN=http://localhost:5173,http://localhost:5174,http://localhost:5176
 ACCESS_SECRET_TOKEN=local-access-secret-change-me
 REFRESH_SECRET_TOKEN=local-refresh-secret-change-me
 ACCESS_TOKEN_EXPIRES_IN=15m
 REFRESH_TOKEN_EXPIRES_IN=7d
 ```
+
+Copy `server/.env.example` when preparing a new local or deployment environment.
 
 Do not commit real secrets.
 
@@ -145,6 +147,12 @@ Start API:
 
 ```bash
 npm run dev
+```
+
+If `nodemon` is unavailable, use:
+
+```bash
+npm start
 ```
 
 Health check:
@@ -205,6 +213,22 @@ Run a focused module test:
 
 ```bash
 npm test -- private/auth
+```
+
+## Docker And Deployment
+
+Run local API + MongoDB through Docker Compose:
+
+```bash
+docker compose up --build
+```
+
+The API container uses `npm start` so it does not require `nodemon`.
+
+Full deployment notes are in:
+
+```text
+../DEPLOYMENT_GUIDE.md
 ```
 
 ## Current Real Data Notes

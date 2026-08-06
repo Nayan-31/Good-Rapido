@@ -1225,7 +1225,7 @@ Pending production work:
 - Real payment gateway.
 - Real SMS, push, and email providers.
 - Secure httpOnly cookie auth for production.
-- Production deployment.
+- Production deployment to cloud hosting.
 - More real data binding for some UI-first screens.
 - More browser end-to-end tests.
 - Monitoring and logs for production.
@@ -1244,6 +1244,15 @@ For a capstone MVP, it is okay to say:
 
 ```text
 The architecture supports these integrations, but final provider integration is pending.
+
+Deployment preparation already exists in:
+
+```text
+DEPLOYMENT_GUIDE.md
+.env.example
+server/.env.example
+frontend app .env.example files
+```
 ```
 
 ## 24. How To Explain This Project In Interview
