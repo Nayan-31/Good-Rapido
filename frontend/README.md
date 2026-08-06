@@ -33,6 +33,7 @@ Current coverage:
 - Booking home.
 - Fare estimate with breakdown, confidence, and surge transparency.
 - Confirm ride flow.
+- Live ride status stream with periodic refresh fallback.
 - Safety center.
 - Notifications.
 - Ride history.

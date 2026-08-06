@@ -83,6 +83,11 @@ export type RideLifecycleResponse = ApiResponse<{
   lifecycle: RideLifecycleView;
 }>;
 
+export interface RideLifecycleStreamPayload {
+  lifecycle: RideLifecycleView;
+  streamedAt: string;
+}
+
 export interface ConfirmRideDraft {
   fareEstimate: FareEstimate;
   pricingQuote?: PricingQuote | null;

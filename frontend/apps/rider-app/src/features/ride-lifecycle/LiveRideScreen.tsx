@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Alert, Badge, Button, Card, MetricCard, ProgressBar } from "@good-rapido/ui";
 
 import { rideFlowStorage } from "@/features/booking/rideFlowStorage";
@@ -10,16 +10,40 @@ import styles from "./LiveRideScreen.module.css";
 
 const LIVE_RIDE_POLL_MS = 5000;
 const TERMINAL_LIFECYCLE_STATUSES = new Set(["completed", "cancelled"]);
+type LiveConnectionState = "connecting" | "live" | "fallback";
 
 export function LiveRideScreen() {
   const [draft, setDraft] = useState<RideFlowDraft | null>(() => rideFlowStorage.read());
   const [booking, setBooking] = useState<RideBooking | null>(() => (rideFlowStorage.read()?.booking as RideBooking | undefined) ?? null);
+  const bookingRef = useRef<RideBooking | null>(booking);
   const [lifecycle, setLifecycle] = useState<RideLifecycleView | null>(() => (rideFlowStorage.read()?.lifecycle as RideLifecycleView | undefined) ?? null);
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
   const [syncError, setSyncError] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [connectionState, setConnectionState] = useState<LiveConnectionState>("connecting");
   const lifecycleStatus = lifecycle?.lifecycleStatus ?? "pending_confirmation";
   const isTerminalRide = TERMINAL_LIFECYCLE_STATUSES.has(lifecycleStatus);
+
+  useEffect(() => {
+    bookingRef.current = booking;
+  }, [booking]);
+
+  const applyLifecycleUpdate = useCallback((nextLifecycle: RideLifecycleView) => {
+    const currentDraft = rideFlowStorage.read();
+    const currentBooking = (currentDraft?.booking as RideBooking | undefined) ?? bookingRef.current;
+    const nextBooking = currentBooking ? mergeBookingFromLifecycle(currentBooking, nextLifecycle) : bookingRef.current;
+    const nextDraft = rideFlowStorage.update({
+      booking: nextBooking,
+      lifecycle: nextLifecycle
+    });
+
+    bookingRef.current = nextBooking;
+    setBooking(nextBooking);
+    setLifecycle(nextLifecycle);
+    setDraft(nextDraft ?? currentDraft);
+    setLastSyncedAt(new Date().toISOString());
+    setSyncError(null);
+  }, []);
 
   const syncLifecycle = useCallback(async (mode: "manual" | "silent" = "silent") => {
     const bookingId = booking?.id;
@@ -40,19 +64,7 @@ export function LiveRideScreen() {
         return;
       }
 
-      const currentDraft = rideFlowStorage.read();
-      const currentBooking = (currentDraft?.booking as RideBooking | undefined) ?? booking;
-      const nextBooking = currentBooking ? mergeBookingFromLifecycle(currentBooking, nextLifecycle) : booking;
-      const nextDraft = rideFlowStorage.update({
-        booking: nextBooking,
-        lifecycle: nextLifecycle
-      });
-
-      setBooking(nextBooking);
-      setLifecycle(nextLifecycle);
-      setDraft(nextDraft ?? currentDraft);
-      setLastSyncedAt(new Date().toISOString());
-      setSyncError(null);
+      applyLifecycleUpdate(nextLifecycle);
     } catch (error) {
       setSyncError(error instanceof Error ? error.message : "Unable to sync live ride status");
     } finally {
@@ -60,10 +72,38 @@ export function LiveRideScreen() {
         setIsSyncing(false);
       }
     }
-  }, [booking?.id]);
+  }, [applyLifecycleUpdate, booking?.id]);
 
   useEffect(() => {
     if (!booking?.id || isTerminalRide) {
+      return;
+    }
+
+    const controller = new AbortController();
+
+    setConnectionState("connecting");
+    void confirmRideService.streamLifecycle(booking.id, {
+      signal: controller.signal,
+      onOpen: () => setConnectionState("live"),
+      onLifecycle: applyLifecycleUpdate,
+      onError: (message) => {
+        setConnectionState("fallback");
+        setSyncError(message);
+      }
+    }).catch((error) => {
+      if (controller.signal.aborted) {
+        return;
+      }
+
+      setConnectionState("fallback");
+      setSyncError(error instanceof Error ? error.message : "Live updates unavailable; using periodic refresh.");
+    });
+
+    return () => controller.abort();
+  }, [applyLifecycleUpdate, booking?.id, isTerminalRide]);
+
+  useEffect(() => {
+    if (!booking?.id || isTerminalRide || connectionState === "live") {
       return;
     }
 
@@ -73,13 +113,13 @@ export function LiveRideScreen() {
     }, LIVE_RIDE_POLL_MS);
 
     return () => window.clearInterval(intervalId);
-  }, [booking?.id, isTerminalRide, syncLifecycle]);
+  }, [booking?.id, connectionState, isTerminalRide, syncLifecycle]);
 
   const rideStateLabel = useMemo(
     () => resolveRideStateLabel(booking?.status, lifecycleStatus),
     [booking?.status, lifecycleStatus]
   );
-  const syncLabel = lastSyncedAt ? `Last checked ${formatSyncTime(lastSyncedAt)}` : "Checking live status";
+  const syncLabel = resolveSyncLabel(connectionState, lastSyncedAt);
 
   if (!booking) {
     return (
@@ -147,6 +187,9 @@ export function LiveRideScreen() {
             <h3>{currentStep}</h3>
           </div>
           <div className={styles.syncActions}>
+            <Badge tone={connectionState === "live" ? "success" : "warning"}>
+              {connectionState === "live" ? "Live" : "Syncing"}
+            </Badge>
             <Badge tone="trust">{formatVehicleType(booking.vehicleType)}</Badge>
             <Button
               size="sm"
@@ -253,3 +296,17 @@ const formatSyncTime = (value: string) =>
     minute: "2-digit",
     second: "2-digit"
   }).format(new Date(value));
+
+const resolveSyncLabel = (connectionState: LiveConnectionState, lastSyncedAt: string | null) => {
+  const timeLabel = lastSyncedAt ? formatSyncTime(lastSyncedAt) : null;
+
+  if (connectionState === "live") {
+    return timeLabel ? `Live updates connected · ${timeLabel}` : "Live updates connected";
+  }
+
+  if (connectionState === "fallback") {
+    return timeLabel ? `Using periodic refresh · ${timeLabel}` : "Using periodic refresh";
+  }
+
+  return timeLabel ? `Connecting live updates · ${timeLabel}` : "Connecting live updates";
+};

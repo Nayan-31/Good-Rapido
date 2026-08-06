@@ -2,7 +2,7 @@
 
 The backend is a modular Express and MongoDB API for the Good Rapido ride-booking platform. It is built as a modular monolith with separate public, private, and core module layers.
 
-Current status: in progress. The backend has broad module coverage and route tests across public, private, and core domains. Production integrations such as real payment providers, maps, SMS/push providers, and WebSocket live tracking are still pending.
+Current status: in progress. The backend has broad module coverage and route tests across public, private, and core domains. Ride lifecycle status streaming is available for live rider updates. Production integrations such as real payment providers, maps, SMS/push providers, and GPS/WebSocket movement tracking are still pending.
 
 ## Stack
 
@@ -218,6 +218,6 @@ npm test -- private/auth
 
 - Add live map provider integration.
 - Add payment gateway integration.
-- Add WebSocket-based ride tracking.
+- Add GPS/WebSocket-based vehicle movement tracking.
 - Add production notification providers.
 - Complete frontend-to-backend binding for remaining rider and driver screens.

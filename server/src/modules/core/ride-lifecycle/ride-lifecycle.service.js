@@ -53,6 +53,80 @@ export default class RideLifecycleService {
         });
     }
 
+    async streamRideLifecycle(authContext, rideId, { req, res, once = false, intervalMs = 2500 } = {}) {
+        const initialPayload = await this.buildRideLifecycleStreamPayload(authContext, rideId);
+        let lastSignature = null;
+        let isClosed = false;
+
+        startSseResponse(res);
+        writeSseEvent(res, 'ride_status', initialPayload);
+        lastSignature = createLifecycleSignature(initialPayload.lifecycle);
+
+        if (once) {
+            writeSseEvent(res, 'stream_closed', initialPayload);
+            res.end();
+            return;
+        }
+
+        if (isTerminalLifecycle(initialPayload.lifecycle.lifecycleStatus)) {
+            writeSseEvent(res, 'ride_closed', initialPayload);
+            res.end();
+            return;
+        }
+
+        const cleanup = () => {
+            isClosed = true;
+            clearInterval(statusInterval);
+            clearInterval(heartbeatInterval);
+        };
+        const heartbeatInterval = setInterval(() => {
+            if (!isClosed) {
+                writeSseComment(res, `heartbeat ${toIsoDate(this.now())}`);
+            }
+        }, 15000);
+        const statusInterval = setInterval(async () => {
+            if (isClosed) {
+                return;
+            }
+
+            try {
+                const nextPayload = await this.buildRideLifecycleStreamPayload(authContext, rideId);
+                const nextSignature = createLifecycleSignature(nextPayload.lifecycle);
+
+                if (nextSignature !== lastSignature) {
+                    writeSseEvent(res, 'ride_status', nextPayload);
+                    lastSignature = nextSignature;
+                }
+
+                if (isTerminalLifecycle(nextPayload.lifecycle.lifecycleStatus)) {
+                    writeSseEvent(res, 'ride_closed', nextPayload);
+                    cleanup();
+                    res.end();
+                }
+            } catch (err) {
+                writeSseEvent(res, 'ride_error', {
+                    message: err?.message || 'Ride lifecycle stream failed',
+                    streamedAt: toIsoDate(this.now())
+                });
+                cleanup();
+                res.end();
+            }
+        }, intervalMs);
+
+        req?.on?.('close', cleanup);
+        res?.on?.('close', cleanup);
+    }
+
+    async buildRideLifecycleStreamPayload(authContext, rideId) {
+        const ride = await this.findVisibleRide(authContext, rideId);
+        const lifecycle = buildRideLifecycle(ride, { now: this.now() });
+
+        return {
+            lifecycle: toRideLifecycleView(ride, lifecycle),
+            streamedAt: toIsoDate(this.now())
+        };
+    }
+
     async transitionRide(authContext, rideId, payload) {
         const actor = await this.getPrivateUserContext(authContext, { write: true });
         const ride = toPlainObject(await this.rideLifecycleDao.findRideById(rideId));
@@ -290,6 +364,44 @@ const normalizeLifecycle = (lifecycle = {}) => ({
     lastTransitionBy: lifecycle?.lastTransitionBy || null,
     transitionLog: Array.isArray(lifecycle?.transitionLog) ? lifecycle.transitionLog : []
 });
+
+const startSseResponse = (res) => {
+    res.status(200);
+    res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-cache, no-transform');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
+    res.flushHeaders?.();
+};
+
+const writeSseEvent = (res, event, payload) => {
+    res.write(`event: ${event}\n`);
+    res.write(`data: ${JSON.stringify(payload)}\n\n`);
+    res.flush?.();
+};
+
+const writeSseComment = (res, comment) => {
+    res.write(`: ${comment}\n\n`);
+    res.flush?.();
+};
+
+const createLifecycleSignature = (lifecycle = {}) => JSON.stringify({
+    lifecycleStatus: lifecycle.lifecycleStatus,
+    progressPercentage: lifecycle.progress?.percentage,
+    updatedAt: lifecycle.updatedAt,
+    transitionLogSize: Array.isArray(lifecycle.transitionLog) ? lifecycle.transitionLog.length : 0
+});
+
+const isTerminalLifecycle = (lifecycleStatus) => [
+    RIDE_LIFECYCLE_STATUSES.COMPLETED,
+    RIDE_LIFECYCLE_STATUSES.CANCELLED
+].includes(lifecycleStatus);
+
+const toIsoDate = (value) => {
+    const date = value instanceof Date ? value : new Date(value);
+
+    return Number.isNaN(date.getTime()) ? new Date().toISOString() : date.toISOString();
+};
 
 const toPlainObject = (document) => document?.toObject ? document.toObject() : document;
 

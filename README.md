@@ -2,7 +2,7 @@
 
 Good Rapido is a full-stack capstone project for a transparent ride-booking platform. The product idea is simple: riders should understand why a fare changed, why a route was selected, why a driver was matched, and how trust or safety decisions are made.
 
-Current status: demo-ready full-stack MVP. The backend modular foundation is strong, the rider, driver, and ops frontend apps are wired around the main booking lifecycle, and the core demo flow is verified from rider booking to driver completion. Production integrations such as real map provider, payment gateway, WebSocket tracking, and SMS/push/email providers are still pending.
+Current status: demo-ready full-stack MVP. The backend modular foundation is strong, the rider, driver, and ops frontend apps are wired around the main booking lifecycle, and the core demo flow is verified from rider booking to driver completion. Rider live ride status can auto-update through a backend stream with polling fallback. Production integrations such as real map provider, payment gateway, GPS/WebSocket movement tracking, and SMS/push/email providers are still pending.
 
 ## Tech Stack
 
@@ -98,6 +98,7 @@ Rider app current state:
 - Booking home screen.
 - Fare estimate screen with breakdown, confidence, and surge transparency.
 - Confirm ride flow using pricing, matching, and lifecycle concepts.
+- Live ride status stream with periodic refresh fallback.
 - Ride history and profile transparency screens.
 - Safety and notification screens.
 - API-facing services for rider flows.
@@ -124,7 +125,7 @@ Real backend data is currently active for:
 
 - Public and private auth APIs.
 - MongoDB-backed rider, driver, admin, and ops users.
-- Rider fare estimate, driver search, booking creation, current ride status, and ride history in the verified demo flow.
+- Rider fare estimate, driver search, booking creation, live status stream, current ride status, and ride history in the verified demo flow.
 - Driver login, request visibility, accept ride, arrived, start ride, complete ride, and earnings update in the verified demo flow.
 - Ops private auth, ride queue visibility, dashboard data, pricing/surge, trust-safety, fraud-dispute, communications, admin users, and analytics module structure.
 - Backend API modules, Jest tests, and full smoke demo.
@@ -132,7 +133,7 @@ Real backend data is currently active for:
 Partially integrated or UI-first areas:
 
 - Some secondary dashboard cards still use planned/sample fallback values when no live records exist.
-- Payment gateway, real map provider, WebSocket tracking, SMS/push/email delivery, and production deployment are pending.
+- Payment gateway, real map provider, GPS/WebSocket movement tracking, SMS/push/email delivery, and production deployment are pending.
 
 ## Local Setup
 

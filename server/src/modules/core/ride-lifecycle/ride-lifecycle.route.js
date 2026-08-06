@@ -10,6 +10,7 @@ import RideLifecycleDao from './ride-lifecycle.dao.js';
 import RideLifecycleService from './ride-lifecycle.service.js';
 import {
     rideLifecycleParamsSchema,
+    rideLifecycleStreamSchema,
     transitionRideLifecycleSchema
 } from './validators/ride-lifecycle.validator.js';
 
@@ -49,6 +50,7 @@ export const createRideLifecycleRouter = (dependencies = createRideLifecycleDepe
     router.use(requireRideLifecycleAccess);
 
     router.get('/options', rideLifecycleController.options);
+    router.get('/rides/:rideId/stream', validate(rideLifecycleStreamSchema), rideLifecycleController.streamRideLifecycle);
     router.get('/rides/:rideId', validate(rideLifecycleParamsSchema), rideLifecycleController.getRideLifecycle);
     router.post('/rides/:rideId/events', validate(transitionRideLifecycleSchema), rideLifecycleController.transitionRide);
 

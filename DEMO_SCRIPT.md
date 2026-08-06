@@ -448,6 +448,8 @@ Expected rider status:
 driver_en_route
 ```
 
+The rider live ride screen first tries the backend lifecycle stream. If the stream is connected, this status can update automatically after the driver accepts. If streaming is unavailable, periodic refresh fallback still updates the ride.
+
 Why this matters:
 
 This proves rider and driver apps are connected through backend data.
@@ -730,7 +732,7 @@ The core backend modules, authentication, fare estimate, booking, driver request
 Then say:
 
 ```text
-For production, real payment gateway, WebSocket live tracking, production map provider, push/SMS/email providers, and final deployment hardening are still pending.
+For production, real payment gateway, GPS/WebSocket movement tracking, production map provider, push/SMS/email providers, and final deployment hardening are still pending.
 ```
 
 This answer is honest and professional.
@@ -802,7 +804,7 @@ One issue was driver identity mismatch. Rider booking stored driver ids like drv
 Answer:
 
 ```text
-Production integrations are pending: real payment gateway, real-time WebSocket tracking, production map provider, push/SMS/email providers, deployment hardening, and deeper browser E2E tests.
+Production integrations are pending: real payment gateway, GPS/WebSocket movement tracking, production map provider, push/SMS/email providers, deployment hardening, and deeper browser E2E tests.
 ```
 
 ## 11. Final Demo Checklist
