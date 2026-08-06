@@ -57,7 +57,7 @@ ops-dashboard/
 
 ## Completed Integration
 
-- Admin/ops login, session-storage auth, session restore, refresh, and logout.
+- Admin/ops login, session-storage auth, session restore, proactive refresh, retry-on-expired-token handling, logout cleanup, and protected route guard.
 - Demo seed command for rider, driver, admin, and ops users.
 - Overview dashboard connected to private admin, private analytics, and private ride-ops.
 - Overview health cards, alerts summary, partial error handling, and loading states.

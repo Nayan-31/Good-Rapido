@@ -201,6 +201,16 @@ npm run smoke:demo
 
 The smoke command checks health, rider login, fare estimate, driver search, booking creation, driver request visibility, driver acceptance, rider live lifecycle status, driver arrived/start/complete transitions, rider history, driver earnings, and ops completed ride visibility.
 
+## Auth Session Contract
+
+- Access tokens are short-lived JWTs signed with `ACCESS_SECRET_TOKEN`.
+- Refresh tokens are signed with `REFRESH_SECRET_TOKEN`; only their hash is stored in MongoDB.
+- Rider auth lives under `public/auth`; driver, admin, and ops auth live under `private/auth`.
+- Rider and driver accounts can register through their auth routes.
+- Admin and ops accounts do not self-register; seed them or create them through controlled admin flows.
+- Frontend apps should attach access tokens to protected routes, refresh before expiry, retry one protected request after a 401, and clear browser session state when refresh/logout fails.
+- Public production deployment should eventually move refresh/session handling to secure httpOnly cookies.
+
 ## Tests
 
 Run all backend tests:
@@ -234,7 +244,10 @@ Full deployment notes are in:
 ## Current Real Data Notes
 
 - Public auth and private auth are MongoDB-backed.
-- Driver auth supports registration, login, refresh, logout, and session profile.
+- Public rider auth supports registration, login, refresh, logout, and session profile.
+- Private driver auth supports registration, login, refresh, logout, permissions, and session profile.
+- Private admin and ops auth support login, refresh, logout, permissions, and session profile. Self-registration is disabled for these roles.
+- Frontend apps attach short-lived access tokens, use refresh tokens to recover expired sessions, and clear browser session state when refresh/logout fails.
 - Core engines expose reusable logic for pricing, matching, ride lifecycle, route fairness, trust, fraud, payment, notification, and identity workflows.
 - Some business flows use deterministic engine outputs and mock-like defaults until live providers and production data sources are added.
 

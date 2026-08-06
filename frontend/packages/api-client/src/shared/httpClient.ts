@@ -19,12 +19,16 @@ export class HttpClient {
   private readonly defaultHeaders?: HeadersInit;
   private readonly fetcher: typeof fetch;
   private readonly getAccessToken?: ApiClientOptions["getAccessToken"];
+  private readonly refreshAccessToken?: ApiClientOptions["refreshAccessToken"];
+  private readonly onUnauthorized?: ApiClientOptions["onUnauthorized"];
 
   constructor(options: ApiClientOptions = {}) {
     this.baseUrl = options.baseUrl?.replace(/\/+$/, "") ?? "";
     this.defaultHeaders = options.defaultHeaders;
     this.fetcher = options.fetcher ?? ((input, init) => globalThis.fetch(input, init));
     this.getAccessToken = options.getAccessToken;
+    this.refreshAccessToken = options.refreshAccessToken;
+    this.onUnauthorized = options.onUnauthorized;
   }
 
   get<TData = unknown>(path: string, options?: RequestOptions) {
@@ -48,7 +52,41 @@ export class HttpClient {
   }
 
   private async request<TData>(method: HttpMethod, path: string, options: RequestOptions = {}) {
-    const accessToken = await this.getAccessToken?.();
+    const accessToken = this.shouldAttachAccessToken(path) ? await this.getAccessToken?.() : null;
+    const firstAttempt = await this.send(method, path, options, accessToken ?? null);
+
+    if (firstAttempt.response.ok) {
+      return firstAttempt.payload as ApiResponse<TData>;
+    }
+
+    if (this.canRetryWithFreshToken(path, options, firstAttempt.response.status)) {
+      const refreshedToken = await this.refreshAccessToken?.();
+
+      if (refreshedToken) {
+        const retryAttempt = await this.send(method, path, options, refreshedToken);
+
+        if (retryAttempt.response.ok) {
+          return retryAttempt.payload as ApiResponse<TData>;
+        }
+
+        await this.notifyUnauthorized(retryAttempt.response.status);
+        throw new ApiClientError(
+          resolveErrorMessage(retryAttempt.payload, retryAttempt.response.statusText),
+          retryAttempt.response.status,
+          retryAttempt.payload
+        );
+      }
+    }
+
+    await this.notifyUnauthorized(firstAttempt.response.status);
+    throw new ApiClientError(
+      resolveErrorMessage(firstAttempt.payload, firstAttempt.response.statusText),
+      firstAttempt.response.status,
+      firstAttempt.payload
+    );
+  }
+
+  private async send(method: HttpMethod, path: string, options: RequestOptions, accessToken: string | null) {
     const headers = new Headers(this.defaultHeaders);
 
     headers.set("Accept", "application/json");
@@ -72,11 +110,27 @@ export class HttpClient {
     });
     const payload = await readResponsePayload(response);
 
-    if (!response.ok) {
-      throw new ApiClientError(resolveErrorMessage(payload, response.statusText), response.status, payload);
-    }
+    return {
+      response,
+      payload
+    };
+  }
 
-    return payload as ApiResponse<TData>;
+  private canRetryWithFreshToken(path: string, options: RequestOptions, status: number) {
+    return status === 401
+      && !options.skipAuthRefresh
+      && !path.includes("/auth/")
+      && Boolean(this.refreshAccessToken);
+  }
+
+  private async notifyUnauthorized(status: number) {
+    if (status === 401) {
+      await this.onUnauthorized?.();
+    }
+  }
+
+  private shouldAttachAccessToken(path: string) {
+    return !/\/auth\/.+\/(?:login|register|refresh|logout)$/.test(path);
   }
 
   private createUrl(path: string, query?: ApiQuery) {

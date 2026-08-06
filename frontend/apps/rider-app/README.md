@@ -47,7 +47,10 @@ rider-app/
 
 - Rider login/session structure.
 - Session-storage based auth session.
+- Proactive access-token refresh before protected API calls.
+- Retry-on-expired-token handling through the shared API client.
 - Legacy localStorage token cleanup during migration/logout.
+- Logout and failed-refresh cleanup.
 - Auth gate.
 
 Backend modules:

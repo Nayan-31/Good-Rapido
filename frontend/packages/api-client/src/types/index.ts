@@ -13,6 +13,8 @@ export interface ApiClientOptions {
   defaultHeaders?: HeadersInit;
   fetcher?: typeof fetch;
   getAccessToken?: () => string | null | Promise<string | null>;
+  refreshAccessToken?: () => string | null | Promise<string | null>;
+  onUnauthorized?: () => void | Promise<void>;
 }
 
 export interface RequestOptions {
@@ -20,4 +22,5 @@ export interface RequestOptions {
   query?: ApiQuery;
   headers?: HeadersInit;
   signal?: AbortSignal;
+  skipAuthRefresh?: boolean;
 }

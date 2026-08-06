@@ -215,11 +215,11 @@ export function AuthScreen({
           <h2>Token storage</h2>
           <div className={styles.row}>
             <span>Access token</span>
-            <Badge tone="trust">local</Badge>
+            <Badge tone="trust">session</Badge>
           </div>
           <div className={styles.row}>
             <span>Refresh token</span>
-            <Badge tone="trust">local</Badge>
+            <Badge tone="trust">session</Badge>
           </div>
           <div className={styles.row}>
             <span>Profile cache</span>
