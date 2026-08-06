@@ -981,7 +981,7 @@ Lifecycle statuses/events include:
 
 Rider live status:
 
-The rider live screen polls lifecycle data and updates automatically when the driver accepts or moves the ride forward.
+The rider live screen connects to the ride lifecycle stream and falls back to periodic polling. This lets the rider screen update automatically when the driver accepts or moves the ride forward, while still working if streaming is unavailable.
 
 Pitch line:
 
@@ -1130,7 +1130,7 @@ When driver availability has a live current location, matching engine can calcul
 
 Production improvement:
 
-For real Rapido-like live movement, the next step is WebSocket or Server-Sent Events so rider screen receives driver location updates instantly instead of polling.
+For real Rapido-like live vehicle movement, the next step is GPS coordinates with WebSocket or a map provider stream. The current stream updates lifecycle status, not exact moving vehicle coordinates.
 
 ## 20. Route Fairness Flow
 
@@ -2137,7 +2137,7 @@ Completed or strongly structured:
 Important MVP limitations:
 
 - Some flows still use fallback/demo UI when backend permission or data is not available.
-- Real-time ride updates currently depend on polling/local state patterns; production should use WebSocket or server events.
+- Ride lifecycle status can stream from the backend with polling fallback; production should add GPS/WebSocket movement tracking for exact vehicle location.
 - Google Maps requires a billing-enabled API key; Leaflet/OpenStreetMap can be used as fallback.
 - Token storage should be hardened for production.
 - More integration tests and seed data are needed for full demo reliability.

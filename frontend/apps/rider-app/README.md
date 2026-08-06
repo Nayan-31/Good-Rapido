@@ -10,6 +10,7 @@ Current status: demo-ready rider MVP. The main rider screens and services are im
 - Booking home.
 - Fare estimate.
 - Confirm ride.
+- Live ride status stream.
 - Safety center.
 - Notifications.
 - Ride history.
@@ -90,6 +91,8 @@ core/pricing-engine
 - Matched driver summary.
 - Locked fare summary.
 - Booking confirmation path.
+- Streamed lifecycle status updates after driver actions.
+- Periodic refresh fallback when streaming is unavailable.
 
 Backend modules:
 

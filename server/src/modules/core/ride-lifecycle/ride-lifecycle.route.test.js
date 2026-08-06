@@ -193,6 +193,31 @@ describe('core ride lifecycle routes', () => {
         );
     });
 
+    test('public user can stream one lifecycle status event for their own ride', async () => {
+        dependencies.rideLifecycleDao.findPublicUserById.mockResolvedValue(riderUser);
+        dependencies.rideLifecycleDao.findRideByIdForUser.mockResolvedValue(createRideBooking({
+            authUserId: riderUser.id,
+            role: riderUser.role
+        }));
+
+        const response = await injectRequest(app, {
+            method: 'GET',
+            path: `${BASE_PATH}/rides/ride-id/stream?once=true`,
+            headers: publicAuthHeaderFor(dependencies, riderUser)
+        });
+
+        expect(response.statusCode).toBe(200);
+        expect(response.headers['content-type']).toContain('text/event-stream');
+        expect(response.text).toContain('event: ride_status');
+        expect(response.text).toContain('"lifecycleStatus":"driver_en_route"');
+        expect(response.text).toContain('event: stream_closed');
+        expect(dependencies.rideLifecycleDao.findRideByIdForUser).toHaveBeenCalledWith(
+            'ride-id',
+            riderUser.id,
+            riderUser.role
+        );
+    });
+
     test('ops user can fetch lifecycle for any ride', async () => {
         dependencies.rideLifecycleDao.findPrivateUserById.mockResolvedValue(opsUser);
         dependencies.rideLifecycleDao.findRideById.mockResolvedValue(createRideBooking());

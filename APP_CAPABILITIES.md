@@ -41,6 +41,7 @@ Riders can:
 - Understand why surge pricing is applied.
 - See fare confidence and price stability signals.
 - Confirm a ride with matched driver details.
+- See live ride lifecycle updates after driver actions.
 - Review driver trust signals before booking.
 - View route fairness and route accuracy information.
 - Access safety and help flows.
@@ -228,7 +229,7 @@ Still pending for production readiness:
 - Live map provider integration.
 - Payment gateway integration.
 - Real SMS, push, and email providers.
-- WebSocket-based live ride tracking.
+- Production GPS movement tracking with WebSocket/map provider integration.
 - Final real-data binding for some rider and driver screens.
 - Deployment setup and production environment hardening.
 
@@ -420,7 +421,8 @@ Expected result:
 
 - The driver request should show the rider booking's real pickup and dropoff.
 - The driver request should not show demo fallback locations when backend data exists.
-- After driver accepts, rider live ride should move from waiting/pending to driver accepted or `driver_en_route`.
+- After driver accepts, rider live ride should automatically move from waiting/pending to driver accepted or `driver_en_route`.
+- If the browser cannot keep the live stream open, periodic refresh fallback still updates the ride.
 - The same ride should also be visible in ops ride queue.
 
 ### 9. Manual Driver App Test
@@ -540,5 +542,5 @@ Backend test coverage currently passes with:
 
 ```text
 36 test suites
-358 tests
+359 tests
 ```

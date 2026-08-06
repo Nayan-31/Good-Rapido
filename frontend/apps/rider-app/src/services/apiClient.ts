@@ -15,7 +15,9 @@ export const apiClient = createGoodRapidoApiClient({
   getAccessToken: () => getValidRiderAccessToken()
 });
 
-const getValidRiderAccessToken = async () => {
+export const riderApiBaseUrl = baseUrl;
+
+export const getValidRiderAccessToken = async () => {
   const accessToken = readAuthSession()?.tokens.accessToken;
 
   if (accessToken && !isJwtExpired(accessToken)) {

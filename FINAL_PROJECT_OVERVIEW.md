@@ -700,6 +700,35 @@ ride-lifecycle.dao.js
 MongoDB ride booking
 ```
 
+### Lifecycle Stream Flow
+
+```text
+GET /api/v1/core/ride-lifecycle/rides/:rideId/stream
+    |
+    v
+auth guard checks public/private token
+    |
+    v
+ride-lifecycle.controller.streamRideLifecycle()
+    |
+    v
+ride-lifecycle.service.streamRideLifecycle()
+    |
+    v
+MongoDB ride booking is checked repeatedly
+    |
+    v
+frontend receives ride_status events
+```
+
+Why this was added:
+
+Before this, the rider live ride screen used periodic refresh. That works, but it feels less live.
+
+Now the rider app first tries the lifecycle stream. If the stream connects, rider status updates can arrive automatically after driver actions. If the stream fails, the old periodic refresh fallback still runs.
+
+This is not the same as a real moving map yet. It updates ride lifecycle status, not GPS movement.
+
 ### Lifecycle Transition Flow
 
 ```text
@@ -1182,7 +1211,7 @@ Latest backend test result:
 
 ```text
 36 test suites passed
-358 tests passed
+359 tests passed
 ```
 
 ## 23. What Is Still Pending For Production
@@ -1192,7 +1221,7 @@ This project is a strong MVP, but not production-ready like a real public ride-b
 Pending production work:
 
 - Real Google Maps/Mapbox production integration.
-- Real-time WebSocket ride tracking.
+- Production GPS/WebSocket movement tracking.
 - Real payment gateway.
 - Real SMS, push, and email providers.
 - Secure httpOnly cookie auth for production.
