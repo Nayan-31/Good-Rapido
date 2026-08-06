@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { authService } from "./auth.service";
-import { clearAuthSession, readAuthSession, saveAuthSession } from "./authStorage";
+import {
+  clearAuthSession,
+  readAuthSession,
+  RIDER_AUTH_SESSION_CHANGED_EVENT,
+  saveAuthSession
+} from "./authStorage";
 import type { AuthSession, LoginForm, RegisterForm } from "./auth.types";
 
 export function useAuthSession() {
@@ -108,6 +113,14 @@ export function useAuthSession() {
       // The hook exposes logged-out state after a failed restore.
     });
   }, [restoreSession]);
+
+  useEffect(() => {
+    const syncStoredSession = () => setSession(readAuthSession());
+
+    window.addEventListener(RIDER_AUTH_SESSION_CHANGED_EVENT, syncStoredSession);
+
+    return () => window.removeEventListener(RIDER_AUTH_SESSION_CHANGED_EVENT, syncStoredSession);
+  }, []);
 
   const isAuthenticated = Boolean(session?.tokens.accessToken) || isRestoring;
 

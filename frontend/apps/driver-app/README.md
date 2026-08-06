@@ -10,9 +10,11 @@ Current status: demo-ready driver MVP. The app shell, routing, auth flow, onboar
 - Driver login.
 - JWT access and refresh token flow.
 - Session-storage based frontend auth session.
+- Proactive access-token refresh before protected driver API calls.
+- Retry-on-expired-token handling through the shared API client.
 - Legacy localStorage token cleanup during migration/logout.
 - Session restore.
-- Logout.
+- Logout and failed-refresh cleanup.
 - Route protection based on auth state.
 - Header initials from the authenticated driver name.
 - Real seeded ride request visibility for the matched driver.
@@ -100,8 +102,9 @@ Login or register
 - Driver login.
 - Driver registration.
 - Session restore.
-- Token storage.
-- Logout.
+- Session-scoped token storage.
+- Proactive token refresh and retry-on-expired-token handling.
+- Logout and stale-session cleanup.
 
 Backend module:
 
@@ -256,7 +259,7 @@ npm run dev:driver
 If the backend is running on a custom port, run this from `frontend/apps/driver-app`:
 
 ```bash
-VITE_API_BASE_URL=http://localhost:3001 npm run dev -- --host 0.0.0.0 --port 5174
+VITE_API_BASE_URL=http://localhost:3000 npm run dev -- --host 0.0.0.0 --port 5174
 ```
 
 To use Google Maps in the driver app, add this in `frontend/apps/driver-app/.env.local`:

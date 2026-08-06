@@ -29,7 +29,7 @@ frontend/apps/rider-app
 
 Current coverage:
 
-- Auth/session structure.
+- Auth/session structure with restore, proactive refresh, retry-on-expired-token handling, and logout cleanup.
 - Booking home.
 - Fare estimate with breakdown, confidence, and surge transparency.
 - Confirm ride flow.
@@ -52,8 +52,8 @@ Current coverage:
 - App shell and route flow.
 - Driver login/register.
 - Session-storage based auth session.
-- Session restore.
-- Logout.
+- Session restore, proactive token refresh, retry-on-expired-token handling, and logout cleanup.
+- Protected route guard based on auth state.
 - Onboarding, availability, ride requests, active ride, earnings, trust, alerts, profile, and support flows.
 - Real rider-to-driver booking handoff in the seeded demo flow.
 - Active ride lifecycle actions for accept, arrived, start, and complete.
@@ -69,7 +69,7 @@ frontend/apps/ops-dashboard
 Current coverage:
 
 - React Vite TypeScript setup.
-- Admin/ops auth, session storage, session restore, refresh, and logout.
+- Admin/ops auth, session storage, session restore, proactive refresh, retry-on-expired-token handling, logout cleanup, and protected route guard.
 - App shell and backend-aligned route flow.
 - Overview, ride operations, pricing/surge, trust-safety, fraud-disputes, communications, admin users, and analytics flows.
 - API client method coverage for private admin, analytics, pricing, surge, fraud, auth admins, and auth ops.
@@ -91,6 +91,7 @@ Responsibilities:
 - Private backend API methods.
 - Core backend API methods.
 - Central API response and payload types.
+- Optional access-token provider, refresh-token provider, and unauthorized cleanup callback.
 
 ### UI Package
 
@@ -229,5 +230,7 @@ Deployment notes are in:
 
 - Rider, driver, admin, and ops auth use real backend APIs and MongoDB-backed users.
 - Frontend auth sessions use `sessionStorage`, and old localStorage token keys are cleaned during migration/logout.
+- The shared API client retries one protected request after a 401 by asking the active app to refresh its access token.
+- If refresh fails, the relevant app clears the session and the route guard returns the user to the auth screen.
 - The seeded demo flow verifies rider booking, driver accept/complete actions, rider history, driver earnings, and ops dashboard visibility.
 - UI screens may show planned/sample fallback values when no live records exist yet.

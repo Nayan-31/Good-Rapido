@@ -138,6 +138,8 @@ It supports:
 - MongoDB-backed authentication.
 - JWT access and refresh token flow.
 - Session-storage based frontend auth storage with legacy localStorage cleanup.
+- Proactive access-token refresh and one-time retry for expired protected requests.
+- Failed-refresh cleanup that returns rider, driver, and ops users to their auth screens.
 - Zod request validation.
 - Controller, service, DAO, DTO, validator, route, and test structure.
 - Route-level Jest tests.
@@ -530,6 +532,7 @@ Before sharing the project, confirm:
 - Driver login works.
 - Admin/ops login works after seeding.
 - Browser refresh keeps valid sessions.
+- Expired access tokens refresh automatically while refresh token is valid.
 - Logout clears sessions.
 - Backend tests pass.
 - Frontend typechecks pass.

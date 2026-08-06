@@ -3,7 +3,9 @@ import type { AuthSession, AuthUser } from "./auth.types";
 export const RIDER_ACCESS_TOKEN_KEY = "goodRapido.riderAccessToken";
 export const RIDER_REFRESH_TOKEN_KEY = "goodRapido.riderRefreshToken";
 export const RIDER_USER_KEY = "goodRapido.riderUser";
+export const RIDER_AUTH_SESSION_CHANGED_EVENT = "goodRapido:riderAuthSessionChanged";
 const LEGACY_RIDER_ACCESS_TOKEN_KEYS = ["goodRapido.accessToken", "accessToken"];
+const LEGACY_RIDER_REFRESH_TOKEN_KEYS = ["goodRapido.refreshToken", "refreshToken"];
 
 export const readAuthSession = (): AuthSession | null => {
   if (typeof window === "undefined") {
@@ -11,9 +13,10 @@ export const readAuthSession = (): AuthSession | null => {
   }
 
   const accessToken = readSessionValue(RIDER_ACCESS_TOKEN_KEY, LEGACY_RIDER_ACCESS_TOKEN_KEYS);
-  const refreshToken = readSessionValue(RIDER_REFRESH_TOKEN_KEY);
+  const refreshToken = readSessionValue(RIDER_REFRESH_TOKEN_KEY, LEGACY_RIDER_REFRESH_TOKEN_KEYS);
 
   if (!accessToken || !refreshToken) {
+    clearAuthSessionStorage();
     return null;
   }
 
@@ -35,10 +38,20 @@ export const saveAuthSession = (session: AuthSession) => {
   if (session.user) {
     sessionStorage.setItem(RIDER_USER_KEY, JSON.stringify(session.user));
     localStorage.removeItem(RIDER_USER_KEY);
+  } else {
+    sessionStorage.removeItem(RIDER_USER_KEY);
+    localStorage.removeItem(RIDER_USER_KEY);
   }
+
+  notifyAuthSessionChanged();
 };
 
 export const clearAuthSession = () => {
+  clearAuthSessionStorage();
+  notifyAuthSessionChanged();
+};
+
+const clearAuthSessionStorage = () => {
   sessionStorage.removeItem(RIDER_ACCESS_TOKEN_KEY);
   sessionStorage.removeItem(RIDER_REFRESH_TOKEN_KEY);
   sessionStorage.removeItem(RIDER_USER_KEY);
@@ -46,6 +59,13 @@ export const clearAuthSession = () => {
   localStorage.removeItem(RIDER_REFRESH_TOKEN_KEY);
   localStorage.removeItem(RIDER_USER_KEY);
   LEGACY_RIDER_ACCESS_TOKEN_KEYS.forEach((key) => localStorage.removeItem(key));
+  LEGACY_RIDER_REFRESH_TOKEN_KEYS.forEach((key) => localStorage.removeItem(key));
+};
+
+const notifyAuthSessionChanged = () => {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event(RIDER_AUTH_SESSION_CHANGED_EVENT));
+  }
 };
 
 const readStoredUser = (): AuthUser | null => {

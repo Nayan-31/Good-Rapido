@@ -7,12 +7,14 @@ import {
 } from "@/features/auth/authStorage";
 import type { AuthSession } from "@/features/auth/auth.types";
 
-const baseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000";
+const baseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3000";
 let refreshPromise: Promise<string | null> | null = null;
 
 export const apiClient = createGoodRapidoApiClient({
   baseUrl,
-  getAccessToken: () => getValidRiderAccessToken()
+  getAccessToken: () => getValidRiderAccessToken(),
+  refreshAccessToken: () => refreshRiderAccessToken(),
+  onUnauthorized: () => clearAuthSession()
 });
 
 export const riderApiBaseUrl = baseUrl;

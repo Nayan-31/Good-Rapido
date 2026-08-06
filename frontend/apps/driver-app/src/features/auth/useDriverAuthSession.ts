@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { clearDriverAuthSession, readDriverAuthSession, saveDriverAuthSession } from "./authStorage";
+import {
+  clearDriverAuthSession,
+  DRIVER_AUTH_SESSION_CHANGED_EVENT,
+  readDriverAuthSession,
+  saveDriverAuthSession
+} from "./authStorage";
 import { driverAuthService } from "./auth.service";
 import type { DriverAuthSession, DriverLoginForm, DriverRegisterForm } from "./auth.types";
 
@@ -108,9 +113,19 @@ export function useDriverAuthSession() {
     });
   }, [restoreSession]);
 
+  useEffect(() => {
+    const syncStoredSession = () => setSession(readDriverAuthSession());
+
+    window.addEventListener(DRIVER_AUTH_SESSION_CHANGED_EVENT, syncStoredSession);
+
+    return () => window.removeEventListener(DRIVER_AUTH_SESSION_CHANGED_EVENT, syncStoredSession);
+  }, []);
+
+  const isAuthenticated = Boolean(session?.tokens.accessToken) || isRestoring;
+
   return {
     session,
-    isAuthenticated: Boolean(session?.tokens.accessToken),
+    isAuthenticated,
     isRestoring,
     signIn,
     register,

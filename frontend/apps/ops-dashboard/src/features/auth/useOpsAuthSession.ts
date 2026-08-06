@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { clearOpsAuthSession, readOpsAuthSession, saveOpsAuthSession } from "./authStorage";
+import {
+  clearOpsAuthSession,
+  OPS_AUTH_SESSION_CHANGED_EVENT,
+  readOpsAuthSession,
+  saveOpsAuthSession
+} from "./authStorage";
 import { opsAuthService } from "./auth.service";
 import type { OpsAuthSession, OpsLoginForm } from "./auth.types";
 
@@ -94,9 +99,19 @@ export function useOpsAuthSession() {
     });
   }, [restoreSession]);
 
+  useEffect(() => {
+    const syncStoredSession = () => setSession(readOpsAuthSession());
+
+    window.addEventListener(OPS_AUTH_SESSION_CHANGED_EVENT, syncStoredSession);
+
+    return () => window.removeEventListener(OPS_AUTH_SESSION_CHANGED_EVENT, syncStoredSession);
+  }, []);
+
+  const isAuthenticated = Boolean(session?.tokens.accessToken) || isRestoring;
+
   return {
     session,
-    isAuthenticated: Boolean(session?.tokens.accessToken),
+    isAuthenticated,
     isRestoring,
     signIn,
     refreshSession: restoreSession,

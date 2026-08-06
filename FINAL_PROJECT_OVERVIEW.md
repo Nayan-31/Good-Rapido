@@ -294,8 +294,11 @@ That means:
 ```text
 - The current tab can use the access token.
 - Page refresh can restore the session.
+- Expiring access tokens are refreshed before protected API calls.
+- A protected request that gets 401 can retry once after refresh.
 - Old localStorage tokens are migrated and removed.
-- Logout clears sessionStorage and old localStorage keys.
+- Logout or failed refresh clears sessionStorage and old localStorage keys.
+- Route guards return the user to the auth screen after session cleanup.
 ```
 
 Why this was changed:
