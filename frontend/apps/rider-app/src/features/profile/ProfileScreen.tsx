@@ -1,5 +1,6 @@
 import { Alert, Badge, Button, Card, MetricCard, ProgressBar } from "@good-rapido/ui";
 
+import { readAuthSession } from "@/features/auth/authStorage";
 import { formatCurrency } from "@/features/pricing/pricing.utils";
 import { useProfileDashboard } from "./useProfileDashboard";
 import { formatDate, getDisplayName } from "./profile.utils";
@@ -18,6 +19,7 @@ export function ProfileScreen() {
     addHomeAddress,
     addEmergencyContact
   } = useProfileDashboard();
+  const authUser = readAuthSession()?.user ?? null;
   const totalSpend = rideHistory.reduce((sum, ride) => sum + ride.totalFare, 0);
 
   return (
@@ -26,8 +28,8 @@ export function ProfileScreen() {
         <div className={styles.heroHeader}>
           <div>
             <p className={styles.eyebrow}>Rider Profile</p>
-            <strong>{getDisplayName(profile)}</strong>
-            <span>Member since {formatDate(profile?.createdAt)}</span>
+            <strong>{getDisplayName(profile, authUser)}</strong>
+            <span>Member since {formatDate(profile?.createdAt ?? authUser?.createdAt)}</span>
           </div>
           <Badge tone={transparency.safetyReady ? "trust" : "warning"}>
             {transparency.safetyReady ? "Safe Profile" : "Needs Contact"}

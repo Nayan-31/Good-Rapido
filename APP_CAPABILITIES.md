@@ -35,19 +35,20 @@ Riders can:
 
 - Register, log in, and restore sessions.
 - Select pickup and drop-off locations.
-- Choose ride options such as bike, auto, economy cab, and premium cab.
+- Choose ride options such as bike, auto, economy cab, and premium cab with live pricing comparison values.
 - Get a fare estimate before booking.
 - View fare breakdown including base fare, distance fare, time fare, surge, fees, and tax.
 - Understand why surge pricing is applied.
 - See fare confidence and price stability signals.
+- See fare context derived from current quote, surge, and alternative pickup values.
 - Confirm a ride with matched driver details.
 - See live ride lifecycle updates after driver actions.
 - Review driver trust signals before booking.
 - View route fairness and route accuracy information.
 - Access safety and help flows.
 - Report ride issues or suspicious activity.
-- View ride history with fare transparency cards.
-- Manage rider profile, saved addresses, emergency contacts, and preferences.
+- View ride history with fare transparency cards and auto-loaded receipt details.
+- Manage rider profile, saved addresses, emergency contacts, and preferences using authenticated rider/recent ride context where possible.
 
 ## Driver App
 

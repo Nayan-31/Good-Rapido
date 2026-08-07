@@ -2,7 +2,7 @@
 
 The rider app is the customer-facing ride booking experience. It focuses on transparent pricing, booking confidence, driver trust, route fairness, safety, history, and profile transparency.
 
-Current status: demo-ready rider MVP. The main rider screens and services are implemented for booking, fare transparency, confirm ride, live ride status, safety, notifications, history, and profile. The seeded demo flow verifies booking through completed ride history.
+Current status: demo-ready rider MVP. The main rider screens and services are implemented for booking, fare transparency, confirm ride, live ride status, safety, notifications, history, and profile. Vehicle option prices on the home screen are backed by the pricing comparison API, the fare context chart is derived from quote values, ride history auto-loads the selected receipt, and profile fallbacks use authenticated rider/recent ride data where possible. The seeded demo flow verifies booking through completed ride history.
 
 ## Current Screens And Flows
 
@@ -62,7 +62,7 @@ public/auth
 ### booking
 
 - Pickup and dropoff inputs.
-- Ride type selection.
+- Ride type selection with backend-backed pricing comparison for visible fare and ETA cards.
 - Estimate CTA.
 - Local ride flow handoff.
 
@@ -80,6 +80,7 @@ core/matching-engine
 - Fare breakdown.
 - Fare confidence.
 - Surge transparency.
+- Fare context chart derived from current quote, surge, and alternative pickup data.
 
 Backend modules:
 
@@ -136,7 +137,7 @@ core/notification-engine
 
 - Ride history.
 - Fare and trust transparency cards.
-- Receipt transparency summary.
+- Receipt transparency summary that auto-loads for the selected ride.
 
 Backend modules:
 

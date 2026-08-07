@@ -30,14 +30,14 @@ frontend/apps/rider-app
 Current coverage:
 
 - Auth/session structure with restore, proactive refresh, retry-on-expired-token handling, and logout cleanup.
-- Booking home.
-- Fare estimate with breakdown, confidence, and surge transparency.
+- Booking home with pricing comparison backed vehicle cards.
+- Fare estimate with breakdown, confidence, surge transparency, and quote-derived fare context.
 - Confirm ride flow.
 - Live ride status stream with periodic refresh fallback.
 - Safety center.
 - Notifications.
-- Ride history.
-- Profile dashboard.
+- Ride history with auto-loaded receipt transparency.
+- Profile dashboard with authenticated rider and recent ride fallbacks.
 
 ### Driver App
 
@@ -232,5 +232,7 @@ Deployment notes are in:
 - Frontend auth sessions use `sessionStorage`, and old localStorage token keys are cleaned during migration/logout.
 - The shared API client retries one protected request after a 401 by asking the active app to refresh its access token.
 - If refresh fails, the relevant app clears the session and the route guard returns the user to the auth screen.
+- Rider home vehicle prices and ETAs are read from the pricing comparison API when locations are valid.
+- Rider history auto-loads the first selected receipt so fare/trust details appear from real ride data.
 - The seeded demo flow verifies rider booking, driver accept/complete actions, rider history, driver earnings, and ops dashboard visibility.
 - UI screens may show planned/sample fallback values when no live records exist yet.

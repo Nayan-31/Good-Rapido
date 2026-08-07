@@ -1,5 +1,6 @@
 import { Alert, Badge, Button, Card, MetricCard, TextField } from "@good-rapido/ui";
 
+import type { PricingQuote } from "@/features/pricing/pricing.types";
 import { VEHICLE_OPTIONS } from "./booking.constants";
 import type { BookingLocationForm, VehicleType } from "./booking.types";
 import { formatCurrency } from "./booking.utils";
@@ -11,13 +12,22 @@ export function BookingHomeScreen() {
     form,
     errors,
     estimate,
+    vehicleQuotes,
     message,
     isEstimating,
+    isLoadingVehicleQuotes,
     updateLocation,
     selectVehicle,
     updatePassengers,
     createEstimate
   } = useBookingHome();
+  const vehicleQuoteList = Object.values(vehicleQuotes).filter(Boolean) as PricingQuote[];
+  const averageConfidence = average(vehicleQuoteList.map((quote) => quote.confidence.score));
+  const bestRouteAccuracy = Math.max(
+    0,
+    ...vehicleQuoteList.map((quote) => quote.route?.quality.routeAccuracyScore ?? quote.route?.quality.score ?? 0)
+  );
+  const hasSurge = vehicleQuoteList.some((quote) => quote.surge.multiplier > 1);
 
   return (
     <section className={styles.root}>
@@ -57,32 +67,46 @@ export function BookingHomeScreen() {
         <div className={styles.vehicleSection}>
           <div className={styles.sectionHeader}>
             <p className={styles.eyebrow}>Available Rides</p>
-            <Badge tone="trust" size="sm">Live</Badge>
+            <Badge tone={isLoadingVehicleQuotes ? "info" : "trust"} size="sm">
+              {isLoadingVehicleQuotes ? "Syncing" : "Live"}
+            </Badge>
           </div>
           <div className={styles.vehicleList}>
-            {VEHICLE_OPTIONS.map((vehicle) => (
-              <VehicleOption
-                key={vehicle.type}
-                type={vehicle.type}
-                label={vehicle.label}
-                eta={vehicle.eta}
-                capacity={vehicle.capacity}
-                description={vehicle.description}
-                displayPrice={vehicle.displayPrice}
-                iconLabel={vehicle.iconLabel}
-                isSelected={form.vehicleType === vehicle.type}
-                onSelect={selectVehicle}
-              />
-            ))}
+            {VEHICLE_OPTIONS.map((vehicle) => {
+              const quote = vehicleQuotes[vehicle.type];
+
+              return (
+                <VehicleOption
+                  key={vehicle.type}
+                  type={vehicle.type}
+                  label={vehicle.label}
+                  eta={quote ? `${quote.durationMinutes} min` : vehicle.eta}
+                  capacity={vehicle.capacity}
+                  description={quote ? describeVehicleQuote(quote) : vehicle.description}
+                  displayPrice={
+                    quote
+                      ? formatCurrency(quote.breakdown.totalFare, quote.breakdown.currency)
+                      : vehicle.displayPrice
+                  }
+                  iconLabel={vehicle.iconLabel}
+                  isSelected={form.vehicleType === vehicle.type}
+                  onSelect={selectVehicle}
+                />
+              );
+            })}
           </div>
         </div>
 
         <Card className={styles.trustCard} variant="mint">
           <div>
             <p className={styles.eyebrow}>Trust Assurance</p>
-            <strong>98% Positive</strong>
+            <strong>{averageConfidence ? `${averageConfidence}% Fare Confidence` : "Ready To Price"}</strong>
           </div>
-          <span>No surge pricing currently. Drivers are rated 4.8+ stars.</span>
+          <span>
+            {vehicleQuoteList.length
+              ? `${bestRouteAccuracy || averageConfidence}% route confidence. ${hasSurge ? "Surge is included in shown prices." : "No active surge in shown prices."}`
+              : "Waiting for live fare signals."}
+          </span>
         </Card>
 
         <div className={styles.panelFooter}>
@@ -135,6 +159,24 @@ export function BookingHomeScreen() {
     </section>
   );
 }
+
+const describeVehicleQuote = (quote: PricingQuote) => {
+  if (quote.surge.multiplier > 1) {
+    return `${quote.confidence.score}% confidence • ${quote.surge.multiplier}x surge`;
+  }
+
+  return `${quote.confidence.score}% confidence • ${quote.distanceKm} km`;
+};
+
+const average = (values: number[]) => {
+  const validValues = values.filter((value) => Number.isFinite(value) && value > 0);
+
+  if (!validValues.length) {
+    return 0;
+  }
+
+  return Math.round(validValues.reduce((sum, value) => sum + value, 0) / validValues.length);
+};
 
 interface LocationFieldsProps {
   label: string;

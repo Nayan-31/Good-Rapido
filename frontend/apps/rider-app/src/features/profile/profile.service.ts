@@ -1,7 +1,7 @@
 import type { ApiResponse } from "@good-rapido/api-client";
 
 import { apiClient } from "@/services/apiClient";
-import type { RideHistoryItem } from "@/features/history/rideHistory.types";
+import type { RideHistoryItem, RideLocation } from "@/features/history/rideHistory.types";
 import type { ProfilePreferences, RiderProfile } from "./profile.types";
 
 type ProfileResponse = ApiResponse<{
@@ -27,20 +27,22 @@ export const profileService = {
       notifications: preferences
     }) as Promise<ProfileResponse>;
   },
-  addHomeAddress() {
-    return apiClient.public.profile.addSavedAddress({
+  addHomeAddress(location?: RideLocation | null) {
+    const payload = {
       label: "Home",
-      addressLine: "123 Green Park, Sector 5",
-      city: "Kolkata",
-      state: "West Bengal",
+      addressLine: location?.address ?? "Saved home location",
       country: "India",
-      pincode: "700091",
-      location: {
-        latitude: 22.5726,
-        longitude: 88.3639
-      },
       isDefault: true
-    }) as Promise<ProfileResponse>;
+    } as Record<string, unknown>;
+
+    if (location && Number.isFinite(location.latitude) && Number.isFinite(location.longitude)) {
+      payload.location = {
+        latitude: location.latitude,
+        longitude: location.longitude
+      };
+    }
+
+    return apiClient.public.profile.addSavedAddress(payload) as Promise<ProfileResponse>;
   },
   addEmergencyContact() {
     return apiClient.public.profile.addEmergencyContact({
