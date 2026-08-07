@@ -22,6 +22,10 @@ export default class PrivateNotificationsController {
         sendHttpResponse(res, await this.notificationsService.detail(req.auth, req.params.notificationId));
     });
 
+    markRead = asyncHandler(async (req, res) => {
+        sendHttpResponse(res, await this.notificationsService.markRead(req.auth, req.params.notificationId));
+    });
+
     create = asyncHandler(async (req, res) => {
         sendHttpResponse(res, await this.notificationsService.create(req.auth, req.body));
     });

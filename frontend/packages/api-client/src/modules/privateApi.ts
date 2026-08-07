@@ -197,6 +197,8 @@ export const createPrivateApi = (http: HttpClient) => ({
     create: (payload: ApiPayload) => http.post("/api/v1/private/notifications/notifications", payload),
     getNotification: (notificationId: string) =>
       http.get(pathWithParams("/api/v1/private/notifications/notifications/:notificationId", { notificationId })),
+    markRead: (notificationId: string) =>
+      http.patch(pathWithParams("/api/v1/private/notifications/notifications/:notificationId/read", { notificationId })),
     send: (notificationId: string) =>
       http.post(pathWithParams("/api/v1/private/notifications/notifications/:notificationId/send", { notificationId })),
     fail: (notificationId: string, payload: ApiPayload) =>

@@ -208,6 +208,7 @@ The smoke command checks health, rider login, fare estimate, driver search, book
 - Rider auth lives under `public/auth`; driver, admin, and ops auth live under `private/auth`.
 - Rider and driver accounts can register through their auth routes.
 - Admin and ops accounts do not self-register; seed them or create them through controlled admin flows.
+- Private driver tokens can read and mark their own notifications through `private/notifications`; admin/ops notification dashboard, create, send, retry, fail, and cancel actions remain ops-permission protected.
 - Frontend apps should attach access tokens to protected routes, refresh before expiry, retry one protected request after a 401, and clear browser session state when refresh/logout fails.
 - Public production deployment should eventually move refresh/session handling to secure httpOnly cookies.
 
@@ -223,6 +224,12 @@ Run a focused module test:
 
 ```bash
 npm test -- private/auth
+```
+
+Driver real-data route checks:
+
+```bash
+npm test -- earnings.route.test.js ride-ops.route.test.js ride-lifecycle.route.test.js trust.route.test.js notifications.route.test.js
 ```
 
 ## Docker And Deployment
@@ -247,6 +254,7 @@ Full deployment notes are in:
 - Public rider auth supports registration, login, refresh, logout, and session profile.
 - Private driver auth supports registration, login, refresh, logout, permissions, and session profile.
 - Private admin and ops auth support login, refresh, logout, permissions, and session profile. Self-registration is disabled for these roles.
+- Private notifications support driver-scoped list/detail/mark-read access for driver apps, while ops/admin delivery management remains protected.
 - Frontend apps attach short-lived access tokens, use refresh tokens to recover expired sessions, and clear browser session state when refresh/logout fails.
 - Core engines expose reusable logic for pricing, matching, ride lifecycle, route fairness, trust, fraud, payment, notification, and identity workflows.
 - Some business flows use deterministic engine outputs and mock-like defaults until live providers and production data sources are added.
@@ -257,4 +265,4 @@ Full deployment notes are in:
 - Add payment gateway integration.
 - Add GPS/WebSocket-based vehicle movement tracking.
 - Add production notification providers.
-- Complete frontend-to-backend binding for remaining rider and driver screens.
+- Complete frontend-to-backend binding for remaining secondary support/demo preview screens.

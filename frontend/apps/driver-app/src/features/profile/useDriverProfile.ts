@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { demoProfileView, driverProfileService } from "./profile.service";
+import { createEmptyProfileView, driverProfileService } from "./profile.service";
 import type { DriverAccountSettings, DriverProfileView } from "./profile.types";
 
 export function useDriverProfile() {
-  const [profile, setProfile] = useState<DriverProfileView>(demoProfileView);
+  const [profile, setProfile] = useState<DriverProfileView>(() => createEmptyProfileView());
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);

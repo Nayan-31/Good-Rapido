@@ -11,6 +11,13 @@ import {
     NOTIFICATION_TYPES
 } from './notifications.constants.js';
 
+const NOTIFICATION_ROLE_VALUES = [
+    ...Object.values(AUTH_ROLES),
+    'driver',
+    'admin',
+    'ops'
+];
+
 const relatedEntitySchema = new mongoose.Schema(
     {
         type: {
@@ -72,7 +79,7 @@ const notificationSchema = new mongoose.Schema(
         },
         role: {
             type: String,
-            enum: Object.values(AUTH_ROLES),
+            enum: NOTIFICATION_ROLE_VALUES,
             required: true,
             index: true
         },

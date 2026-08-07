@@ -1,6 +1,7 @@
 import { ApiClientError, type ApiResponse } from "@good-rapido/api-client";
 
 import { apiClient } from "@/services/apiClient";
+import { readDriverAuthSession } from "@/features/auth/authStorage";
 import type { DriverTrustProfileView } from "./trust.types";
 
 type TrustListResponse = ApiResponse<{
@@ -57,6 +58,59 @@ interface BackendTrustProfile {
   };
 }
 
+type DriverProfileResponse = ApiResponse<{
+  profile?: {
+    auth?: {
+      id?: string | null;
+      fullName?: string | null;
+      employeeCode?: string | null;
+    };
+    driver?: {
+      id?: string | null;
+      driverCode?: string | null;
+      profile?: {
+        displayName?: string | null;
+      };
+    };
+  };
+}>;
+
+export const createEmptyTrustProfile = (): DriverTrustProfileView => {
+  const authUser = readDriverAuthSession()?.user;
+  const driverName = authUser?.fullName || "Driver";
+  const trustCode = authUser?.employeeCode ? `TRUST-${authUser.employeeCode}` : "Not scored";
+
+  return {
+    driverName,
+    trustCode,
+    trustScore: 0,
+    trustLevel: "Not scored",
+    cancellationScore: 0,
+    routeFairnessScore: 0,
+    reliabilityScore: 0,
+    safetyScore: 0,
+    completedRides: 0,
+    cancellationRatio: 0,
+    riskLevel: "pending",
+    reviewStatus: "pending",
+    nextAction: "Complete real rides to generate trust signals.",
+    scores: [
+      { label: "Cancellation score", value: 0, helper: "Waiting for ride history" },
+      { label: "Route fairness", value: 0, helper: "Waiting for route data" },
+      { label: "Reliability", value: 0, helper: "Waiting for pickup data" },
+      { label: "Safety score", value: 0, helper: "Waiting for compliance data" }
+    ],
+    tips: [
+      {
+        title: "Build trust history",
+        description: "Go online after onboarding approval and complete rides to generate live trust signals.",
+        priority: "medium"
+      }
+    ],
+    backendNote: null
+  };
+};
+
 export const demoTrustProfile: DriverTrustProfileView = {
   driverName: "Amit Das",
   trustCode: "TRUST-DRV-2401",
@@ -100,7 +154,22 @@ export const demoTrustProfile: DriverTrustProfileView = {
 export const driverTrustService = {
   async loadTrustProfile(): Promise<DriverTrustProfileView> {
     const notes: string[] = [];
-    let profile = demoTrustProfile;
+    let profile = createEmptyTrustProfile();
+    let hasBackendTrustProfile = false;
+
+    try {
+      const response = await apiClient.private.driver.getProfile() as DriverProfileResponse;
+      const driver = response.data?.profile?.driver;
+      const auth = response.data?.profile?.auth;
+
+      profile = {
+        ...profile,
+        driverName: driver?.profile?.displayName || auth?.fullName || profile.driverName,
+        trustCode: driver?.driverCode ? `TRUST-${driver.driverCode}` : profile.trustCode
+      };
+    } catch (error) {
+      notes.push(resolveBackendNote(error, "Driver profile identity could not be loaded for trust display."));
+    }
 
     try {
       const response = await apiClient.private.trust.listProfiles({
@@ -111,46 +180,52 @@ export const driverTrustService = {
 
       if (backendProfile) {
         profile = mapTrustProfile(backendProfile);
+        hasBackendTrustProfile = true;
       }
     } catch (error) {
-      notes.push(resolveBackendNote(error, "Private trust profile is wired, but driver read access is not available yet."));
+      notes.push(resolveBackendNote(error, "Private trust profile is wired for ops/admin review, but this driver session cannot read it directly."));
     }
 
-    try {
-      const response = await apiClient.core.trustEngine.evaluateDriver({
-        driver: {
-          driverId: "driver-demo-001",
-          fullName: profile.driverName,
-          trustScore: profile.trustScore,
-          reliabilityScore: profile.reliabilityScore,
-          routeFairnessScore: profile.routeFairnessScore,
-          onTimeArrivalScore: profile.reliabilityScore,
-          cancellationRiskScore: Math.max(100 - profile.cancellationScore, 0),
-          cancellationRiskLevel: profile.riskLevel === "high" ? "high" : profile.riskLevel === "medium" ? "medium" : "low",
-          cancellationRatio: profile.cancellationRatio,
-          detourPercentage: 1.2,
-          completedRides: profile.completedRides,
-          rating: 4.9
-        },
-        fareSource: {
-          confidenceScore: 96
-        }
-      }) as DriverEvaluationResponse;
-      const evaluation = response.data?.evaluation;
+    if (hasBackendTrustProfile) {
+      try {
+        const response = await apiClient.core.trustEngine.evaluateDriver({
+          driver: {
+            driverId: profile.trustCode,
+            fullName: profile.driverName,
+            trustScore: profile.trustScore,
+            reliabilityScore: profile.reliabilityScore,
+            routeFairnessScore: profile.routeFairnessScore,
+            onTimeArrivalScore: profile.reliabilityScore,
+            cancellationRiskScore: Math.max(100 - profile.cancellationScore, 0),
+            cancellationRiskLevel: profile.riskLevel === "high" ? "high" : profile.riskLevel === "medium" ? "medium" : "low",
+            cancellationRatio: profile.cancellationRatio,
+            detourPercentage: Math.max(100 - profile.routeFairnessScore, 0),
+            completedRides: profile.completedRides,
+            rating: profile.safetyScore ? Math.min(profile.safetyScore / 20, 5) : undefined
+          },
+          fareSource: {
+            confidenceScore: 96
+          }
+        }) as DriverEvaluationResponse;
+        const evaluation = response.data?.evaluation;
 
-      if (evaluation) {
-        profile = {
-          ...profile,
-          trustScore: safeNumber(evaluation.trust?.score, profile.trustScore),
-          trustLevel: evaluation.trust?.level || profile.trustLevel,
-          reliabilityScore: safeNumber(evaluation.reliability?.score, profile.reliabilityScore),
-          routeFairnessScore: safeNumber(evaluation.routeFairness?.score, profile.routeFairnessScore),
-          cancellationRatio: safeNumber(evaluation.cancellationRisk?.cancellationRatio, profile.cancellationRatio),
-          riskLevel: evaluation.cancellationRisk?.level || profile.riskLevel
-        };
+        if (evaluation) {
+          profile = {
+            ...profile,
+            trustScore: safeNumber(evaluation.trust?.score, profile.trustScore),
+            trustLevel: evaluation.trust?.level || profile.trustLevel,
+            reliabilityScore: safeNumber(evaluation.reliability?.score, profile.reliabilityScore),
+            routeFairnessScore: safeNumber(evaluation.routeFairness?.score, profile.routeFairnessScore),
+            cancellationRatio: safeNumber(evaluation.cancellationRisk?.cancellationRatio, profile.cancellationRatio),
+            riskLevel: evaluation.cancellationRisk?.level || profile.riskLevel
+          };
+        }
+      } catch (error) {
+        notes.push(resolveBackendNote(error, "Core trust-engine evaluation is wired, but current trust signal payload could not be evaluated."));
       }
-    } catch (error) {
-      notes.push(resolveBackendNote(error, "Core trust-engine evaluation is wired, but current driver token cannot evaluate directly."));
+    } else if (shouldUseDemoTrustFallback()) {
+      profile = demoTrustProfile;
+      notes.push("Demo trust fallback is enabled through VITE_USE_DEMO_DRIVER_DATA.");
     }
 
     return {
@@ -163,27 +238,28 @@ export const driverTrustService = {
 };
 
 const mapTrustProfile = (profile: BackendTrustProfile): DriverTrustProfileView => {
-  const overall = safeNumber(profile.scores?.overall, profile.overallScore, demoTrustProfile.trustScore);
-  const cancellation = safeNumber(profile.scores?.cancellation, demoTrustProfile.cancellationScore);
-  const reliability = safeNumber(profile.scores?.reliability, demoTrustProfile.reliabilityScore);
-  const safety = safeNumber(profile.scores?.safety, demoTrustProfile.safetyScore);
-  const completedRides = safeNumber(profile.metrics?.completedRides, demoTrustProfile.completedRides);
-  const cancelledRides = safeNumber(profile.metrics?.cancelledRides, 18);
+  const emptyProfile = createEmptyTrustProfile();
+  const overall = safeNumber(profile.scores?.overall, profile.overallScore);
+  const cancellation = safeNumber(profile.scores?.cancellation, overall);
+  const reliability = safeNumber(profile.scores?.reliability, overall);
+  const safety = safeNumber(profile.scores?.safety, overall);
+  const completedRides = safeNumber(profile.metrics?.completedRides);
+  const cancelledRides = safeNumber(profile.metrics?.cancelledRides);
 
   return {
-    ...demoTrustProfile,
-    driverName: profile.subjectLabel || demoTrustProfile.driverName,
-    trustCode: profile.trustCode || demoTrustProfile.trustCode,
+    ...emptyProfile,
+    driverName: profile.subjectLabel || emptyProfile.driverName,
+    trustCode: profile.trustCode || emptyProfile.trustCode,
     trustScore: overall,
-    trustLevel: overall >= 90 ? "Elite" : overall >= 80 ? "Strong" : "Monitor",
+    trustLevel: overall >= 90 ? "Elite" : overall >= 80 ? "Strong" : overall > 0 ? "Monitor" : "Not scored",
     cancellationScore: cancellation,
     reliabilityScore: reliability,
     safetyScore: safety,
     completedRides,
-    cancellationRatio: completedRides ? Math.round((cancelledRides / completedRides) * 1000) / 10 : demoTrustProfile.cancellationRatio,
-    riskLevel: profile.riskLevel || demoTrustProfile.riskLevel,
-    reviewStatus: profile.reviewStatus || demoTrustProfile.reviewStatus,
-    nextAction: profile.guidance?.nextAction || demoTrustProfile.nextAction
+    cancellationRatio: completedRides ? Math.round((cancelledRides / completedRides) * 1000) / 10 : 0,
+    riskLevel: profile.riskLevel || "pending",
+    reviewStatus: profile.reviewStatus || "pending",
+    nextAction: profile.guidance?.nextAction || "Complete rides to generate trust signals."
   };
 };
 
@@ -195,6 +271,16 @@ const buildScores = (profile: DriverTrustProfileView) => [
 ];
 
 const buildTips = (profile: DriverTrustProfileView) => {
+  if (!profile.completedRides) {
+    return [
+      {
+        title: "Build trust history",
+        description: "Go online after onboarding approval and complete rides to generate live trust signals.",
+        priority: "medium" as const
+      }
+    ];
+  }
+
   const tips = [...demoTrustProfile.tips];
 
   if (profile.cancellationScore < 90) {
@@ -237,3 +323,5 @@ const uniqueNotes = (notes: string[]) => {
   const joinedNotes = Array.from(new Set(notes.filter(Boolean))).join(" ");
   return joinedNotes || null;
 };
+
+const shouldUseDemoTrustFallback = () => import.meta.env.VITE_USE_DEMO_DRIVER_DATA === "true";

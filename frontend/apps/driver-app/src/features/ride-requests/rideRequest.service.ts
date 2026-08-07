@@ -12,7 +12,7 @@ import type {
   RideRequestLoadResult
 } from "./rideRequest.types";
 
-type RideOpsQueueResponse = ApiResponse<{
+export type RideOpsQueueResponse = ApiResponse<{
   rides?: RideOpsQueueItem[];
   queue?: RideOpsQueueItem[] | {
     rides?: RideOpsQueueItem[];
@@ -23,7 +23,7 @@ type RideOpsRideResponse = ApiResponse<{
   ride?: RideOpsQueueItem;
 }>;
 
-interface RideOpsQueueItem {
+export interface RideOpsQueueItem {
   id?: string | null;
   bookingCode?: string | null;
   bookingStatus?: string | null;
@@ -132,7 +132,7 @@ export const rideRequestService = {
         request = mapRideOpsQueueItem(backendRide);
       } else if (shouldUseDemoRequestFallback()) {
         request = demoRideRequest;
-        notes.push("No assigned backend request was found, so demo ride request data is being shown.");
+        notes.push("No assigned backend request was found. Demo ride request fallback is enabled through VITE_USE_DEMO_RIDE_REQUESTS.");
       }
     } catch (error) {
       notes.push(resolveBackendNote(error, "Ride ops queue is not available for this driver session yet."));
@@ -206,20 +206,21 @@ export const rideRequestService = {
   }
 };
 
-const mapRideOpsQueueItem = (ride: RideOpsQueueItem): DriverRideRequest => {
-  const totalFare = safeNumber(ride.fare?.totalFare, demoRideRequest.fare.totalFare);
-  const distanceKm = safeNumber(ride.fare?.distanceKm, demoRideRequest.fare.distanceKm);
-  const durationMinutes = safeNumber(ride.fare?.durationMinutes, demoRideRequest.fare.durationMinutes);
+export const mapRideOpsQueueItem = (ride: RideOpsQueueItem): DriverRideRequest => {
+  const totalFare = safeNumber(ride.fare?.totalFare);
+  const distanceKm = safeNumber(ride.fare?.distanceKm);
+  const durationMinutes = safeNumber(ride.fare?.durationMinutes);
+  const confidenceScore = safeNumber(ride.fare?.confidenceScore, ride.risk?.fairPriceScore, ride.trustSignals?.fairPriceScore);
 
   return {
-    id: ride.id || demoRideRequest.id,
-    bookingCode: ride.bookingCode || demoRideRequest.bookingCode,
-    bookingStatus: ride.bookingStatus || demoRideRequest.bookingStatus,
+    id: ride.id || "ride-id",
+    bookingCode: ride.bookingCode || "Unassigned booking",
+    bookingStatus: ride.bookingStatus || "driver_selected",
     lifecycleStatus: mapLifecycleStatus(ride.lifecycleStatus),
-    pickup: mapLocation(ride.pickup, demoRideRequest.pickup),
-    dropoff: mapLocation(ride.dropoff, demoRideRequest.dropoff),
-    vehicleType: ride.vehicleType || demoRideRequest.vehicleType,
-    requestedAt: ride.createdAt || demoRideRequest.requestedAt,
+    pickup: mapLocation(ride.pickup, "Pickup unavailable"),
+    dropoff: mapLocation(ride.dropoff, "Dropoff unavailable"),
+    vehicleType: ride.vehicleType || "ride",
+    requestedAt: ride.createdAt || new Date().toISOString(),
     fare: {
       currency: "INR",
       totalFare,
@@ -231,34 +232,41 @@ const mapRideOpsQueueItem = (ride: RideOpsQueueItem): DriverRideRequest => {
       platformFee: Math.max(Math.round(totalFare * 0.04), 0),
       distanceKm,
       durationMinutes,
-      confidenceScore: safeNumber(ride.fare?.confidenceScore, ride.risk?.fairPriceScore, demoRideRequest.fare.confidenceScore)
+      confidenceScore
     },
     route: {
-      pickupEtaMinutes: safeNumber(ride.driver?.etaMinutes, demoRideRequest.route.pickupEtaMinutes),
-      pickupDistanceKm: safeNumber(ride.driver?.distanceKm, demoRideRequest.route.pickupDistanceKm),
+      pickupEtaMinutes: safeNumber(ride.driver?.etaMinutes),
+      pickupDistanceKm: safeNumber(ride.driver?.distanceKm),
       tripDistanceKm: distanceKm,
       tripDurationMinutes: durationMinutes,
-      routeFairnessScore: safeNumber(ride.trustSignals?.routeFairnessScore, ride.risk?.routeAccuracyScore, demoRideRequest.route.routeFairnessScore),
-      routeAccuracyScore: safeNumber(ride.risk?.routeAccuracyScore, ride.trustSignals?.routeAccuracyScore, demoRideRequest.route.routeAccuracyScore),
-      detourPercentage: safeNumber(ride.trustSignals?.detourPercentage, demoRideRequest.route.detourPercentage),
-      trafficLevel: "moderate"
+      routeFairnessScore: safeNumber(ride.trustSignals?.routeFairnessScore, ride.risk?.routeAccuracyScore),
+      routeAccuracyScore: safeNumber(ride.risk?.routeAccuracyScore, ride.trustSignals?.routeAccuracyScore),
+      detourPercentage: safeNumber(ride.trustSignals?.detourPercentage),
+      trafficLevel: "normal"
     },
     rider: {
-      ...demoRideRequest.rider,
+      riderName: "Rider account",
+      rating: 0,
+      completedRides: 0,
+      verificationStatus: "Backend rider profile",
       cancellationRiskLevel: mapRiskLevel(ride.risk?.cancellationRiskLevel ?? ride.trustSignals?.cancellationRiskLevel),
       cancellationRiskScore: safeNumber(
         ride.risk?.cancellationRiskScore,
-        ride.trustSignals?.cancellationRiskScore,
-        demoRideRequest.rider.cancellationRiskScore
+        ride.trustSignals?.cancellationRiskScore
       ),
-      fareConfidenceScore: safeNumber(ride.fare?.confidenceScore, demoRideRequest.rider.fareConfidenceScore),
-      fairPriceScore: safeNumber(ride.risk?.fairPriceScore, ride.trustSignals?.fairPriceScore, demoRideRequest.rider.fairPriceScore)
+      fareConfidenceScore: confidenceScore,
+      fairPriceScore: safeNumber(ride.risk?.fairPriceScore, ride.trustSignals?.fairPriceScore)
     },
-    transparencyNotes: demoRideRequest.transparencyNotes
+    transparencyNotes: buildTransparencyNotes({
+      totalFare,
+      pickupEtaMinutes: safeNumber(ride.driver?.etaMinutes),
+      pickupDistanceKm: safeNumber(ride.driver?.distanceKm),
+      fairPriceScore: safeNumber(ride.risk?.fairPriceScore, ride.trustSignals?.fairPriceScore)
+    })
   };
 };
 
-const toActiveRideSnapshot = (request: DriverRideRequest): DriverActiveRideSnapshot => ({
+export const toActiveRideSnapshot = (request: DriverRideRequest): DriverActiveRideSnapshot => ({
   ...request,
   bookingStatus: "confirmed",
   lifecycleStatus: request.lifecycleStatus === "pending_confirmation" ? "driver_en_route" : request.lifecycleStatus,
@@ -268,7 +276,7 @@ const toActiveRideSnapshot = (request: DriverRideRequest): DriverActiveRideSnaps
   }
 });
 
-const pickFirstRide = (data: RideOpsQueueResponse["data"]) => {
+export const pickFirstRide = (data: RideOpsQueueResponse["data"]) => {
   if (!data) {
     return null;
   }
@@ -307,11 +315,33 @@ const buildRiderTrustPayload = (request: DriverRideRequest): ApiPayload => ({
   }
 });
 
-const mapLocation = (location: Partial<DriverRideLocation> | null | undefined, fallback: DriverRideLocation) => ({
-  address: location?.address || fallback.address,
-  latitude: safeNumber(location?.latitude, fallback.latitude),
-  longitude: safeNumber(location?.longitude, fallback.longitude)
+const mapLocation = (location: Partial<DriverRideLocation> | null | undefined, fallbackAddress: string) => ({
+  address: location?.address || fallbackAddress,
+  latitude: safeNumber(location?.latitude),
+  longitude: safeNumber(location?.longitude)
 });
+
+const buildTransparencyNotes = ({
+  totalFare,
+  pickupEtaMinutes,
+  pickupDistanceKm,
+  fairPriceScore
+}: {
+  totalFare: number;
+  pickupEtaMinutes: number;
+  pickupDistanceKm: number;
+  fairPriceScore: number;
+}) => [
+  totalFare > 0
+    ? "Fare preview comes from the locked backend fare snapshot."
+    : "Fare snapshot is not available yet.",
+  pickupDistanceKm > 0 || pickupEtaMinutes > 0
+    ? `Pickup route is ${pickupDistanceKm} km and expected to take ${pickupEtaMinutes} minutes.`
+    : "Pickup route summary is waiting for backend driver distance.",
+  fairPriceScore > 0
+    ? `Fair price score is ${fairPriceScore}%.`
+    : "Fair price score is waiting for trust/fare signals."
+];
 
 const mapLifecycleStatus = (status: string | null | undefined): DriverRideLifecycleStatus => {
   if (
@@ -358,4 +388,4 @@ const uniqueNotes = (notes: string[]) => {
   return joinedNotes || null;
 };
 
-const shouldUseDemoRequestFallback = () => import.meta.env.VITE_USE_DEMO_RIDE_REQUESTS === "true";
+export const shouldUseDemoRequestFallback = () => import.meta.env.VITE_USE_DEMO_RIDE_REQUESTS === "true";

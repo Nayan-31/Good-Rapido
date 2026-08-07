@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { demoNotificationsView, driverNotificationsService } from "./notifications.service";
+import { driverNotificationsService, emptyNotificationsView } from "./notifications.service";
 import type { DriverNotificationsView } from "./notifications.types";
 
 export function useDriverNotifications() {
-  const [view, setView] = useState<DriverNotificationsView>(demoNotificationsView);
+  const [view, setView] = useState<DriverNotificationsView>(emptyNotificationsView);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);

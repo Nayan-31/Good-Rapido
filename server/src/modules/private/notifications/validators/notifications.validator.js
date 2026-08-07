@@ -1,5 +1,6 @@
 import z from 'zod';
 import { AUTH_ROLES } from '../../../public/auth/auth.constants.js';
+import { PRIVATE_AUTH_ROLES } from '../../auth/auth.constants.js';
 import {
     NOTIFICATION_CATEGORIES,
     NOTIFICATION_CHANNELS,
@@ -16,10 +17,14 @@ import {
 const notificationIdSchema = z.string().trim().min(1).max(80);
 const authUserIdSchema = z.string().trim().min(1).max(80);
 const noteSchema = z.string().trim().min(2).max(500);
+const notificationRecipientRoles = [
+    ...Object.values(AUTH_ROLES),
+    ...Object.values(PRIVATE_AUTH_ROLES)
+];
 
 const recipientSchema = z.object({
     authUserId: authUserIdSchema,
-    role: z.enum(Object.values(AUTH_ROLES))
+    role: z.enum(notificationRecipientRoles)
 }).strict();
 
 const relatedEntitySchema = z.object({
@@ -44,7 +49,7 @@ export const privateNotificationQuerySchema = z.object({
         category: z.enum(Object.values(NOTIFICATION_CATEGORIES)).optional(),
         priority: z.enum(Object.values(NOTIFICATION_PRIORITIES)).optional(),
         channel: z.enum(Object.values(NOTIFICATION_CHANNELS)).optional(),
-        role: z.enum(Object.values(AUTH_ROLES)).optional(),
+        role: z.enum(notificationRecipientRoles).optional(),
         q: z.string().trim().min(1).max(120).optional(),
         limit: z.coerce.number().int().min(1).max(PRIVATE_NOTIFICATION_MAX_LIMIT).optional()
     }).strict()

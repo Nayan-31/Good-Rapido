@@ -3,25 +3,18 @@ import { ApiClientError, type ApiResponse } from "@good-rapido/api-client";
 import { apiClient } from "@/services/apiClient";
 import type { DriverNotificationItem, DriverNotificationsView } from "./notifications.types";
 
-type PrivateNotificationsResponse = ApiResponse<{
+type DriverNotificationsResponse = ApiResponse<{
   notifications?: {
     notifications?: BackendNotification[];
-    summary?: Partial<DriverNotificationsView["summary"]> & {
-      totalNotifications?: number;
-      unreadCount?: number;
-      urgentCount?: number;
-    };
+    summary?: BackendNotificationSummary;
   };
 }>;
 
-type PublicNotificationsResponse = ApiResponse<{
-  notifications?: BackendNotification[];
-  summary?: {
-    totalNotifications?: number;
-    unreadCount?: number;
-    urgentCount?: number;
-  };
-}>;
+interface BackendNotificationSummary {
+  totalNotifications?: number;
+  unreadCount?: number;
+  urgentCount?: number;
+}
 
 interface BackendNotification {
   id?: string | null;
@@ -88,47 +81,52 @@ export const demoNotificationsView: DriverNotificationsView = {
   backendNote: null
 };
 
+export const emptyNotificationsView: DriverNotificationsView = {
+  notifications: [],
+  selectedNotificationId: "",
+  summary: {
+    total: 0,
+    unread: 0,
+    urgent: 0,
+    rideAlerts: 0
+  },
+  backendNote: null
+};
+
 export const driverNotificationsService = {
   async loadNotifications(): Promise<DriverNotificationsView> {
     const notes: string[] = [];
-    let notifications = demoNotificationsView.notifications;
+    let notifications = emptyNotificationsView.notifications;
+    let summary = emptyNotificationsView.summary;
 
     try {
       const response = await apiClient.private.notifications.list({
         limit: 12
-      }) as PrivateNotificationsResponse;
+      }) as DriverNotificationsResponse;
       const backendNotifications = response.data?.notifications?.notifications ?? [];
-
-      if (backendNotifications.length) {
-        notifications = backendNotifications.map(mapNotification);
-      }
+      notifications = backendNotifications.map(mapNotification);
+      summary = mapBackendSummary(response.data?.notifications?.summary, notifications);
     } catch (error) {
-      notes.push(resolveBackendNote(error, "Private notification inbox is wired, but driver read access is not available yet."));
-    }
+      notes.push(resolveBackendNote(error, "Driver notification inbox is wired, but notifications are not available for this session yet."));
 
-    try {
-      const response = await apiClient.public.notifications.list({
-        limit: 12
-      }) as PublicNotificationsResponse;
-
-      if (response.data?.notifications?.length) {
-        notifications = response.data.notifications.map(mapNotification);
+      if (shouldUseDemoNotificationsFallback()) {
+        notifications = demoNotificationsView.notifications;
+        summary = demoNotificationsView.summary;
+        notes.push("Demo notification fallback is enabled through VITE_USE_DEMO_DRIVER_DATA.");
       }
-    } catch (error) {
-      notes.push(resolveBackendNote(error, "Public notification inbox is also wired, but current driver token may not match public auth scope."));
     }
 
     return {
       notifications,
       selectedNotificationId: notifications[0]?.id ?? "",
-      summary: buildSummary(notifications),
+      summary,
       backendNote: uniqueNotes(notes)
     };
   },
 
   async markRead(notificationId: string) {
     try {
-      await apiClient.public.notifications.markRead(notificationId);
+      await apiClient.private.notifications.markRead(notificationId);
       return null;
     } catch (error) {
       return resolveBackendNote(error, "Notification was marked read locally because backend mark-read is not available for this token.");
@@ -149,10 +147,10 @@ const mapNotification = (notification: BackendNotification): DriverNotificationI
   actionLabel: notification.actionLabel || notification.action?.label || "Open"
 });
 
-const buildSummary = (notifications: DriverNotificationItem[]) => ({
-  total: notifications.length,
-  unread: notifications.filter((notification) => notification.status === "unread").length,
-  urgent: notifications.filter((notification) => notification.priority === "urgent").length,
+const mapBackendSummary = (summary: BackendNotificationSummary | undefined, notifications: DriverNotificationItem[]) => ({
+  total: safeNumber(summary?.totalNotifications, notifications.length),
+  unread: safeNumber(summary?.unreadCount, notifications.filter((notification) => notification.status === "unread").length),
+  urgent: safeNumber(summary?.urgentCount, notifications.filter((notification) => notification.priority === "urgent").length),
   rideAlerts: notifications.filter((notification) => notification.category.includes("ride")).length
 });
 
@@ -172,12 +170,20 @@ const mapStatus = (status: string | null | undefined): DriverNotificationItem["s
   return "unread";
 };
 
-const formatDateTime = (value: string) => new Intl.DateTimeFormat("en-IN", {
-  day: "2-digit",
-  month: "short",
-  hour: "2-digit",
-  minute: "2-digit"
-}).format(new Date(value));
+const formatDateTime = (value: string) => {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat("en-IN", {
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit"
+  }).format(date);
+};
 
 const resolveBackendNote = (error: unknown, fallback: string) => {
   if (error instanceof ApiClientError && (error.status === 401 || error.status === 403)) {
@@ -195,3 +201,10 @@ const uniqueNotes = (notes: string[]) => {
   const joinedNotes = Array.from(new Set(notes.filter(Boolean))).join(" ");
   return joinedNotes || null;
 };
+
+const safeNumber = (...values: Array<number | null | undefined>) => {
+  const value = values.find((candidate) => typeof candidate === "number" && Number.isFinite(candidate));
+  return value ?? 0;
+};
+
+const shouldUseDemoNotificationsFallback = () => import.meta.env.VITE_USE_DEMO_DRIVER_DATA === "true";

@@ -54,9 +54,15 @@ export function EarningsScreen() {
           </div>
 
           <div className={styles.rideList}>
-            {earnings.rides.map((ride) => (
-              <RideEarningCard key={ride.rideId} ride={ride} />
-            ))}
+            {earnings.rides.length ? (
+              earnings.rides.map((ride) => (
+                <RideEarningCard key={ride.rideId} ride={ride} />
+              ))
+            ) : (
+              <Alert tone="neutral" title="No completed rides yet">
+                Completed rides will appear here with driver fare, incentives, deductions, and payout status.
+              </Alert>
+            )}
           </div>
         </article>
 
@@ -84,19 +90,25 @@ export function EarningsScreen() {
               <Badge tone="trust">{formatMoney(summary.pendingEarnings)} pending</Badge>
             </div>
             <div className={styles.statementGrid}>
-              {earnings.statements.map((statement) => (
-                <div className={styles.statementCard} key={statement.statementId}>
-                  <div>
-                    <span>{statement.period}</span>
-                    <strong>{statement.rideCount} rides</strong>
-                    <small>{formatStatus(statement.status)}</small>
+              {earnings.statements.length ? (
+                earnings.statements.map((statement) => (
+                  <div className={styles.statementCard} key={statement.statementId}>
+                    <div>
+                      <span>{statement.period}</span>
+                      <strong>{statement.rideCount} rides</strong>
+                      <small>{formatStatus(statement.status)}</small>
+                    </div>
+                    <div>
+                      <strong>{formatMoney(statement.netEarnings)}</strong>
+                      <small>{formatMoney(statement.availableForPayout)} available</small>
+                    </div>
                   </div>
-                  <div>
-                    <strong>{formatMoney(statement.netEarnings)}</strong>
-                    <small>{formatMoney(statement.availableForPayout)} available</small>
-                  </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                <Alert tone="neutral" title="No payout statements yet">
+                  Weekly payout statements will appear after earnings are generated.
+                </Alert>
+              )}
             </div>
           </article>
 

@@ -128,12 +128,15 @@ Real backend data is currently active for:
 - MongoDB-backed rider, driver, admin, and ops users.
 - Rider pricing comparison, fare estimate, driver search, booking creation, live status stream, current ride status, ride history, receipt transparency, and profile data in the verified demo flow.
 - Driver login, request visibility, accept ride, arrived, start ride, complete ride, and earnings update in the verified demo flow.
+- Driver dashboard real-data summaries for earnings, trust, profile/document readiness, notifications, and assigned request status.
+- Driver active ride state resolves backend assigned active rides first and only uses demo ride fallback when explicitly enabled.
+- Driver notifications support private driver-scoped list/detail/mark-read access.
 - Ops private auth, ride queue visibility, dashboard data, pricing/surge, trust-safety, fraud-dispute, communications, admin users, and analytics module structure.
 - Backend API modules, Jest tests, and full smoke demo.
 
 Partially integrated or UI-first areas:
 
-- Some secondary dashboard cards still use planned/sample fallback values when no live records exist.
+- Support and provider-backed secondary cards still have a few UI-first placeholders until live support/provider records exist.
 - Payment gateway, real map provider, GPS/WebSocket movement tracking, SMS/push/email delivery, and production deployment are pending.
 
 ## Local Setup
@@ -272,6 +275,7 @@ route -> validator/middleware -> controller -> service -> dao -> model
 ## Next Work
 
 - Polish remaining fallback/sample cards with live data where needed.
+- Add live support records behind remaining driver support preview cards.
 - Add deeper browser E2E tests for rider, driver, and ops auth flows.
 - Add production-grade maps, live tracking, payment provider, and notification provider.
 - Move production auth from session-scoped browser storage to secure httpOnly cookie sessions when deployed publicly.

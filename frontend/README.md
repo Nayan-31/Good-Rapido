@@ -57,6 +57,10 @@ Current coverage:
 - Onboarding, availability, ride requests, active ride, earnings, trust, alerts, profile, and support flows.
 - Real rider-to-driver booking handoff in the seeded demo flow.
 - Active ride lifecycle actions for accept, arrived, start, and complete.
+- Driver home dashboard summary cards now use real earnings, trust, profile/document, notification, and request services.
+- Driver active ride reads backend assigned active rides before local continuity storage and does not invent demo rides unless demo mode is enabled.
+- Driver notifications use private driver-scoped list/detail/read endpoints.
+- Driver earnings, trust, profile, and notifications show clean empty states when the database has no matching records.
 
 ### Ops Dashboard
 
@@ -235,4 +239,5 @@ Deployment notes are in:
 - Rider home vehicle prices and ETAs are read from the pricing comparison API when locations are valid.
 - Rider history auto-loads the first selected receipt so fare/trust details appear from real ride data.
 - The seeded demo flow verifies rider booking, driver accept/complete actions, rider history, driver earnings, and ops dashboard visibility.
-- UI screens may show planned/sample fallback values when no live records exist yet.
+- Driver dashboard and detail screens avoid planned/sample values by default; demo fallbacks require explicit demo env flags.
+- Some support preview cards may still stay UI-first until live support ticket records exist.

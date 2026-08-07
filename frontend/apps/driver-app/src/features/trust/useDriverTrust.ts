@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { demoTrustProfile, driverTrustService } from "./trust.service";
+import { createEmptyTrustProfile, driverTrustService } from "./trust.service";
 import type { DriverTrustProfileView } from "./trust.types";
 
 export function useDriverTrust() {
-  const [profile, setProfile] = useState<DriverTrustProfileView>(demoTrustProfile);
+  const [profile, setProfile] = useState<DriverTrustProfileView>(() => createEmptyTrustProfile());
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 

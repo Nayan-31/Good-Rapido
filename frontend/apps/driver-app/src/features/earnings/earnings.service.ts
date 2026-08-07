@@ -56,6 +56,39 @@ interface BackendEarningRide {
   guidance?: string | null;
 }
 
+interface BackendEarningStatement {
+  statementId?: string;
+  period?: string;
+  rideCount?: number;
+  summary?: {
+    netEarnings?: number;
+    availableForPayout?: number;
+  };
+  status?: string;
+}
+
+export const emptyEarningsView: DriverEarningsView = {
+  summary: {
+    todayEarnings: 0,
+    weeklyEarnings: 0,
+    rideCount: 0,
+    availableForPayout: 0,
+    pendingEarnings: 0,
+    grossFare: 0,
+    driverFare: 0,
+    incentiveAmount: 0,
+    tipAmount: 0,
+    penaltyAmount: 0,
+    platformFee: 0,
+    averageNetPerRide: 0,
+    payoutStatus: "not_started",
+    nextAction: "Complete rides to build earnings and payout history."
+  },
+  rides: [],
+  statements: [],
+  backendNote: null
+};
+
 export const demoEarningsView: DriverEarningsView = {
   summary: {
     todayEarnings: 2840,
@@ -141,7 +174,7 @@ export const demoEarningsView: DriverEarningsView = {
 export const driverEarningsService = {
   async loadEarnings(): Promise<DriverEarningsView> {
     const notes: string[] = [];
-    let view = demoEarningsView;
+    let view = emptyEarningsView;
 
     try {
       const [todayResponse, weekResponse, ridesResponse, statementsResponse] = await Promise.all([
@@ -153,7 +186,12 @@ export const driverEarningsService = {
 
       view = mapEarningsResponses(todayResponse, weekResponse, ridesResponse, statementsResponse);
     } catch (error) {
-      notes.push(resolveBackendNote(error, "Earnings API is wired, but local earnings summary is being shown."));
+      notes.push(resolveBackendNote(error, "Earnings API is wired, but the driver earnings response is not available yet."));
+
+      if (shouldUseDemoEarningsFallback()) {
+        view = demoEarningsView;
+        notes.push("Demo earnings fallback is enabled through VITE_USE_DEMO_DRIVER_DATA.");
+      }
     }
 
     return {
@@ -175,34 +213,36 @@ const mapEarningsResponses = (
   const weekSummary = week?.summary ?? {};
   const rides = ridesResponse.data?.earnings?.rides ?? today?.recentRides ?? [];
   const statements = statementsResponse.data?.earnings?.statements ?? [];
+  const availableForPayout = safeNumber(todaySummary.availableForPayout);
+  const pendingEarnings = safeNumber(todaySummary.pendingEarnings);
 
   return {
     summary: {
-      todayEarnings: safeNumber(todaySummary.netEarnings, demoEarningsView.summary.todayEarnings),
-      weeklyEarnings: safeNumber(weekSummary.netEarnings, demoEarningsView.summary.weeklyEarnings),
-      rideCount: safeNumber(todaySummary.completedRides, todaySummary.rideCount, demoEarningsView.summary.rideCount),
-      availableForPayout: safeNumber(todaySummary.availableForPayout, demoEarningsView.summary.availableForPayout),
-      pendingEarnings: safeNumber(todaySummary.pendingEarnings, demoEarningsView.summary.pendingEarnings),
-      grossFare: safeNumber(todaySummary.grossFare, demoEarningsView.summary.grossFare),
-      driverFare: safeNumber(todaySummary.driverFare, demoEarningsView.summary.driverFare),
-      incentiveAmount: safeNumber(todaySummary.incentiveAmount, demoEarningsView.summary.incentiveAmount),
-      tipAmount: safeNumber(todaySummary.tipAmount, demoEarningsView.summary.tipAmount),
-      penaltyAmount: safeNumber(todaySummary.deductionAmount, demoEarningsView.summary.penaltyAmount),
-      platformFee: safeNumber(todaySummary.platformFee, demoEarningsView.summary.platformFee),
-      averageNetPerRide: safeNumber(todaySummary.averageNetPerRide, demoEarningsView.summary.averageNetPerRide),
-      payoutStatus: todaySummary.availableForPayout ? "available" : "pending",
-      nextAction: today?.guidance?.nextAction || demoEarningsView.summary.nextAction
+      todayEarnings: safeNumber(todaySummary.netEarnings),
+      weeklyEarnings: safeNumber(weekSummary.netEarnings),
+      rideCount: safeNumber(todaySummary.completedRides, todaySummary.rideCount),
+      availableForPayout,
+      pendingEarnings,
+      grossFare: safeNumber(todaySummary.grossFare),
+      driverFare: safeNumber(todaySummary.driverFare),
+      incentiveAmount: safeNumber(todaySummary.incentiveAmount),
+      tipAmount: safeNumber(todaySummary.tipAmount),
+      penaltyAmount: safeNumber(todaySummary.deductionAmount),
+      platformFee: safeNumber(todaySummary.platformFee),
+      averageNetPerRide: safeNumber(todaySummary.averageNetPerRide),
+      payoutStatus: resolvePayoutStatus({ availableForPayout, pendingEarnings }),
+      nextAction: today?.guidance?.nextAction || resolveEarningsNextAction(rides.length)
     },
-    rides: rides.length ? rides.map(mapRideEarning) : demoEarningsView.rides,
-    statements: statements.length ? statements.map(mapStatement) : demoEarningsView.statements,
+    rides: rides.map(mapRideEarning),
+    statements: statements.map(mapStatement),
     backendNote: null
   };
 };
 
 const mapRideEarning = (ride: BackendEarningRide): DriverRideEarning => ({
   rideId: ride.rideId || "ride-id",
-  bookingCode: ride.bookingCode || "GRD",
-  route: formatVehicleRoute(ride.vehicleType),
+  bookingCode: ride.bookingCode || "Unassigned booking",
+  route: formatRideLabel(ride.vehicleType),
   completedAt: ride.completedAt ? formatDateTime(ride.completedAt) : "Recently completed",
   grossFare: safeNumber(ride.grossFare),
   driverFare: safeNumber(ride.driverFare),
@@ -214,9 +254,7 @@ const mapRideEarning = (ride: BackendEarningRide): DriverRideEarning => ({
   guidance: ride.guidance || "Review payout status"
 });
 
-const mapStatement = (statement: NonNullable<EarningsStatementsResponse["data"]>["earnings"] extends infer T
-  ? T extends { statements?: Array<infer U> } ? U : never
-  : never): DriverWeeklyStatement => ({
+const mapStatement = (statement: BackendEarningStatement): DriverWeeklyStatement => ({
   statementId: statement.statementId || "statement-id",
   period: formatStatus(statement.period || "weekly"),
   rideCount: safeNumber(statement.rideCount),
@@ -225,16 +263,48 @@ const mapStatement = (statement: NonNullable<EarningsStatementsResponse["data"]>
   status: statement.status || "pending"
 });
 
-const formatVehicleRoute = (vehicleType?: string | null) => `${formatStatus(vehicleType || "ride")} earnings`;
+const formatRideLabel = (vehicleType?: string | null) => `${formatStatus(vehicleType || "ride")} earnings`;
 
-const formatDateTime = (value: string) => new Intl.DateTimeFormat("en-IN", {
-  day: "2-digit",
-  month: "short",
-  hour: "2-digit",
-  minute: "2-digit"
-}).format(new Date(value));
+const formatDateTime = (value: string) => {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat("en-IN", {
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit"
+  }).format(date);
+};
 
 const formatStatus = (value: string) => value.replace(/_/g, " ");
+
+const resolvePayoutStatus = ({
+  availableForPayout,
+  pendingEarnings
+}: {
+  availableForPayout: number;
+  pendingEarnings: number;
+}) => {
+  if (availableForPayout > 0) {
+    return "available";
+  }
+
+  if (pendingEarnings > 0) {
+    return "pending";
+  }
+
+  return "not_started";
+};
+
+const resolveEarningsNextAction = (rideCount: number) => (
+  rideCount > 0
+    ? "Review ride-level earnings and payout status."
+    : "Complete rides to build earnings and payout history."
+);
 
 const resolveBackendNote = (error: unknown, fallback: string) => {
   if (error instanceof ApiClientError && (error.status === 401 || error.status === 403)) {
@@ -257,3 +327,5 @@ const uniqueNotes = (notes: string[]) => {
   const joinedNotes = Array.from(new Set(notes.filter(Boolean))).join(" ");
   return joinedNotes || null;
 };
+
+const shouldUseDemoEarningsFallback = () => import.meta.env.VITE_USE_DEMO_DRIVER_DATA === "true";

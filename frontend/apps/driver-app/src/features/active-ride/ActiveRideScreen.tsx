@@ -194,6 +194,10 @@ export function ActiveRideScreen() {
             </article>
           </div>
         </section>
+      ) : !activeRide.isLoading ? (
+        <Alert tone="neutral" title="No active ride">
+          Accept an assigned ride request first. Once a rider booking is confirmed for this driver, the active ride lifecycle will appear here.
+        </Alert>
       ) : null}
     </section>
   );

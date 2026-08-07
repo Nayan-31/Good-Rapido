@@ -35,7 +35,7 @@ export default class PrivateNotificationsService {
     }
 
     options(authContext) {
-        this.assertNotificationOpsContext(authContext);
+        this.assertNotificationReadContext(authContext);
 
         return buildSuccessResponse({
             message: 'Private notification options fetched successfully',
@@ -60,10 +60,11 @@ export default class PrivateNotificationsService {
     }
 
     async list(authContext, query = {}) {
-        await this.getNotificationOpsUserContext(authContext);
-        const notifications = toPlainArray(await this.notificationsDao.findNotifications({
+        await this.getNotificationUserContext(authContext);
+        const limit = query.limit || PRIVATE_NOTIFICATION_DEFAULT_LIMIT;
+        const notifications = toPlainArray(await this.findNotificationsForContext(authContext, {
             ...query,
-            limit: query.limit || PRIVATE_NOTIFICATION_DEFAULT_LIMIT
+            limit
         })).map(normalizeNotification);
 
         return buildSuccessResponse({
@@ -75,13 +76,44 @@ export default class PrivateNotificationsService {
     }
 
     async detail(authContext, notificationId) {
-        await this.getNotificationOpsUserContext(authContext);
-        const notification = await this.findNotification(notificationId);
+        await this.getNotificationUserContext(authContext);
+        const notification = await this.findNotificationForContext(authContext, notificationId);
 
         return buildSuccessResponse({
             message: 'Private notification fetched successfully',
             data: {
                 notification: toPrivateNotificationDetail(notification)
+            }
+        });
+    }
+
+    async markRead(authContext, notificationId) {
+        await this.getNotificationUserContext(authContext);
+        const notification = await this.findNotificationForContext(authContext, notificationId);
+        const now = this.now();
+        const updatedNotification = authContext.role === PRIVATE_AUTH_ROLES.DRIVER
+            ? normalizeNotification(toPlainObject(await this.notificationsDao.markReadForUser(
+                notificationId,
+                authContext.userId,
+                authContext.role,
+                now
+            )))
+            : await this.updateNotification(notificationId, {
+                status: NOTIFICATION_STATUSES.READ,
+                delivery: {
+                    ...notification.delivery,
+                    readAt: now
+                }
+            });
+
+        if (!updatedNotification) {
+            throw AppError.notFound('Notification not found');
+        }
+
+        return buildSuccessResponse({
+            message: 'Private notification marked as read',
+            data: {
+                notification: toPrivateNotificationDetail(updatedNotification)
             }
         });
     }
@@ -243,6 +275,32 @@ export default class PrivateNotificationsService {
         return notification;
     }
 
+    async findNotificationsForContext(authContext, query = {}) {
+        if (authContext.role === PRIVATE_AUTH_ROLES.DRIVER) {
+            return this.notificationsDao.findNotificationsForUser(authContext.userId, authContext.role, query);
+        }
+
+        return this.notificationsDao.findNotifications(query);
+    }
+
+    async findNotificationForContext(authContext, notificationId) {
+        if (authContext.role === PRIVATE_AUTH_ROLES.DRIVER) {
+            const notification = normalizeNotification(toPlainObject(await this.notificationsDao.findByIdForUser(
+                notificationId,
+                authContext.userId,
+                authContext.role
+            )));
+
+            if (!notification) {
+                throw AppError.notFound('Notification not found');
+            }
+
+            return notification;
+        }
+
+        return this.findNotification(notificationId);
+    }
+
     async updateNotification(notificationId, payload) {
         const notification = normalizeNotification(toPlainObject(await this.notificationsDao.updateNotification(notificationId, payload)));
 
@@ -266,6 +324,48 @@ export default class PrivateNotificationsService {
         }
 
         return privateUser;
+    }
+
+    async getNotificationUserContext(authContext) {
+        this.assertNotificationReadContext(authContext);
+        const privateUser = toPlainObject(await this.notificationsDao.findPrivateUserById(authContext.userId));
+
+        if (!privateUser) {
+            throw AppError.notFound('Private user account not found');
+        }
+
+        if (privateUser.accountStatus !== PRIVATE_AUTH_ACCOUNT_STATUSES.ACTIVE) {
+            throw AppError.forbidden(`Private user account is ${privateUser.accountStatus}`);
+        }
+
+        return privateUser;
+    }
+
+    assertNotificationReadContext(authContext) {
+        if (!authContext?.userId || ![
+            PRIVATE_AUTH_ROLES.ADMIN,
+            PRIVATE_AUTH_ROLES.OPS,
+            PRIVATE_AUTH_ROLES.DRIVER
+        ].includes(authContext.role)) {
+            throw AppError.forbidden('Notification private access is required');
+        }
+
+        if (authContext.role === PRIVATE_AUTH_ROLES.DRIVER) {
+            const hasNotificationRead = authContext.permissions?.includes(PRIVATE_AUTH_PERMISSIONS.DRIVER_NOTIFICATIONS_READ)
+                || authContext.permissions?.includes(PRIVATE_AUTH_PERMISSIONS.DRIVER_PROFILE_READ);
+
+            if (!hasNotificationRead) {
+                throw AppError.forbidden('Driver notification read permission is required');
+            }
+
+            return authContext;
+        }
+
+        if (!authContext.permissions?.includes(PRIVATE_AUTH_PERMISSIONS.OPS_NOTIFICATIONS_WRITE)) {
+            throw AppError.forbidden('Notification ops permission is required');
+        }
+
+        return authContext;
     }
 
     assertNotificationOpsContext(authContext) {
@@ -320,5 +420,3 @@ const assertNotArchived = (notification = {}, message) => {
 const toPlainObject = (document) => document?.toObject ? document.toObject() : document;
 
 const toPlainArray = (documents = []) => documents.map((document) => toPlainObject(document));
-
-const getId = (document = {}) => document._id?.toString?.() || document.id || null;

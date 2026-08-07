@@ -55,14 +55,20 @@ export function NotificationsScreen() {
             <Badge tone={view.summary.unread ? "warning" : "success"}>{view.summary.unread} unread</Badge>
           </div>
           <div className={styles.notificationList}>
-            {view.notifications.map((notification) => (
-              <NotificationRow
-                key={notification.id}
-                active={selected?.id === notification.id}
-                notification={notification}
-                onSelect={notifications.selectNotification}
-              />
-            ))}
+            {view.notifications.length ? (
+              view.notifications.map((notification) => (
+                <NotificationRow
+                  key={notification.id}
+                  active={selected?.id === notification.id}
+                  notification={notification}
+                  onSelect={notifications.selectNotification}
+                />
+              ))
+            ) : (
+              <Alert tone="neutral" title="No notifications yet">
+                Ride alerts, payout updates, document reminders, and support messages will appear here.
+              </Alert>
+            )}
           </div>
         </article>
 
