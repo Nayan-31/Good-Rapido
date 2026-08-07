@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { driverEarningsService, demoEarningsView } from "./earnings.service";
+import { driverEarningsService, emptyEarningsView } from "./earnings.service";
 import type { DriverEarningsView } from "./earnings.types";
 
 export function useDriverEarnings() {
-  const [earnings, setEarnings] = useState<DriverEarningsView>(demoEarningsView);
+  const [earnings, setEarnings] = useState<DriverEarningsView>(emptyEarningsView);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 

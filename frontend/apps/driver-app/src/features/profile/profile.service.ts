@@ -1,12 +1,18 @@
 import { ApiClientError, type ApiResponse } from "@good-rapido/api-client";
 
 import { apiClient } from "@/services/apiClient";
+import { readDriverAuthSession } from "@/features/auth/authStorage";
 import type { DriverAccountSettings, DriverProfileDocument, DriverProfileVehicle, DriverProfileView } from "./profile.types";
 
 type DriverProfileResponse = ApiResponse<{
   profile?: {
     auth?: {
+      id?: string | null;
       fullName?: string | null;
+      email?: string | null;
+      phone?: string | null;
+      employeeCode?: string | null;
+      serviceZone?: string | null;
     };
     driver?: {
       driverCode?: string | null;
@@ -108,10 +114,46 @@ export const demoProfileView: DriverProfileView = {
   backendNote: null
 };
 
+export const createEmptyProfileView = (): DriverProfileView => {
+  const authUser = readDriverAuthSession()?.user;
+
+  return {
+    driverName: authUser?.fullName || "Driver",
+    driverCode: authUser?.employeeCode || "Not assigned",
+    bio: "Complete profile setup to show your public driver bio.",
+    serviceZone: authUser?.serviceZone || "not configured",
+    approvalStatus: "pending",
+    onboardingStatus: "not_started",
+    vehicle: {
+      id: "not-added",
+      label: "Vehicle not added",
+      make: "Not configured",
+      model: "",
+      registrationNumber: "Registration pending",
+      status: "draft",
+      insuranceExpiresAt: "Not available"
+    },
+    documents: [],
+    documentPercent: 0,
+    settings: {
+      rideRequestsEnabled: false,
+      marketingOptIn: false,
+      safetyTrainingAccepted: false,
+      preferredContactChannel: "in_app"
+    },
+    safetyCards: [
+      { title: "Safety training", value: "Pending", helper: "Accept safety training before rides" },
+      { title: "Document health", value: "0%", helper: "Upload required documents" },
+      { title: "Account status", value: "Pending", helper: "Complete onboarding for ride eligibility" }
+    ],
+    backendNote: null
+  };
+};
+
 export const driverProfileService = {
   async loadProfile(): Promise<DriverProfileView> {
     const notes: string[] = [];
-    let view = demoProfileView;
+    let view = createEmptyProfileView();
 
     try {
       const [profileResponse, accountResponse, vehiclesResponse, documentsResponse] = await Promise.all([
@@ -122,7 +164,12 @@ export const driverProfileService = {
       ]);
       view = mapProfile(profileResponse, accountResponse, vehiclesResponse, documentsResponse);
     } catch (error) {
-      notes.push(resolveBackendNote(error, "Driver profile/account APIs are wired, but local profile snapshot is being shown."));
+      notes.push(resolveBackendNote(error, "Driver profile/account APIs are wired, but profile data is not available yet."));
+
+      if (shouldUseDemoDriverDataFallback()) {
+        view = demoProfileView;
+        notes.push("Demo profile fallback is enabled through VITE_USE_DEMO_DRIVER_DATA.");
+      }
     }
 
     return {
@@ -148,6 +195,7 @@ const mapProfile = (
   documentsResponse: DriverDocumentsResponse
 ): DriverProfileView => {
   const profile = profileResponse.data?.profile;
+  const authUser = profile?.auth ?? readDriverAuthSession()?.user;
   const driver = profile?.driver;
   const controls = accountResponse.data?.account?.accountControls;
   const vehicles = vehiclesResponse.data?.vehicles?.vehicles ?? [];
@@ -155,28 +203,31 @@ const mapProfile = (
   const primaryVehicle = vehicles.find((vehicle) => vehicle.isPrimary)
     ?? vehicles.find((vehicle) => vehicle.id === vehiclesResponse.data?.vehicles?.summary?.primaryVehicleId)
     ?? vehicles[0];
-  const documentPercent = safeNumber(documentsResponse.data?.documents?.completion?.percent, demoProfileView.documentPercent);
+  const documentPercent = safeNumber(documentsResponse.data?.documents?.completion?.percent);
+  const approvalStatus = driver?.approvalStatus || accountResponse.data?.account?.approvalStatus || "pending";
+  const onboardingStatus = driver?.onboarding?.status || accountResponse.data?.account?.onboardingStatus || "not_started";
+  const settings = {
+    rideRequestsEnabled: controls?.rideRequestsEnabled ?? false,
+    marketingOptIn: controls?.marketingOptIn ?? false,
+    safetyTrainingAccepted: controls?.safetyTrainingAccepted ?? false,
+    preferredContactChannel: controls?.preferredContactChannel ?? "in_app"
+  };
 
   return {
-    driverName: driver?.profile?.displayName || profile?.auth?.fullName || demoProfileView.driverName,
-    driverCode: driver?.driverCode || demoProfileView.driverCode,
-    bio: driver?.profile?.bio || demoProfileView.bio,
-    serviceZone: driver?.service?.serviceZone || demoProfileView.serviceZone,
-    approvalStatus: driver?.approvalStatus || accountResponse.data?.account?.approvalStatus || demoProfileView.approvalStatus,
-    onboardingStatus: driver?.onboarding?.status || accountResponse.data?.account?.onboardingStatus || demoProfileView.onboardingStatus,
-    vehicle: primaryVehicle ? mapVehicle(primaryVehicle) : demoProfileView.vehicle,
-    documents: documents.length ? documents.map(mapDocument) : demoProfileView.documents,
+    driverName: driver?.profile?.displayName || authUser?.fullName || "Driver",
+    driverCode: driver?.driverCode || authUser?.employeeCode || "Not assigned",
+    bio: driver?.profile?.bio || "Complete profile setup to show your public driver bio.",
+    serviceZone: driver?.service?.serviceZone || authUser?.serviceZone || "not configured",
+    approvalStatus,
+    onboardingStatus,
+    vehicle: primaryVehicle ? mapVehicle(primaryVehicle) : createEmptyProfileView().vehicle,
+    documents: documents.map(mapDocument),
     documentPercent,
-    settings: {
-      rideRequestsEnabled: controls?.rideRequestsEnabled ?? demoProfileView.settings.rideRequestsEnabled,
-      marketingOptIn: controls?.marketingOptIn ?? demoProfileView.settings.marketingOptIn,
-      safetyTrainingAccepted: controls?.safetyTrainingAccepted ?? demoProfileView.settings.safetyTrainingAccepted,
-      preferredContactChannel: controls?.preferredContactChannel ?? demoProfileView.settings.preferredContactChannel
-    },
+    settings,
     safetyCards: [
-      { title: "Safety training", value: controls?.safetyTrainingAccepted ? "Accepted" : "Pending", helper: "Required for safer active rides" },
-      { title: "Document health", value: `${documentPercent}%`, helper: documents.length ? "Based on approved required documents" : demoProfileView.safetyCards[1].helper },
-      { title: "Account status", value: formatStatus(driver?.approvalStatus || "approved"), helper: "Controls ride request eligibility" }
+      { title: "Safety training", value: settings.safetyTrainingAccepted ? "Accepted" : "Pending", helper: "Required for safer active rides" },
+      { title: "Document health", value: `${documentPercent}%`, helper: documents.length ? "Based on required document status" : "Upload required documents" },
+      { title: "Account status", value: formatStatus(approvalStatus), helper: "Controls ride request eligibility" }
     ],
     backendNote: null
   };
@@ -185,8 +236,8 @@ const mapProfile = (
 const mapVehicle = (vehicle: BackendVehicle): DriverProfileVehicle => ({
   id: vehicle.id || "vehicle-id",
   label: vehicle.label || "Vehicle",
-  make: vehicle.make || "Make",
-  model: vehicle.model || "Model",
+  make: vehicle.make || "Not configured",
+  model: vehicle.model || "",
   registrationNumber: vehicle.registrationNumber || "Registration pending",
   status: vehicle.status || "draft",
   insuranceExpiresAt: vehicle.insurance?.expiresAt || "Not available"
@@ -222,3 +273,5 @@ const uniqueNotes = (notes: string[]) => {
   const joinedNotes = Array.from(new Set(notes.filter(Boolean))).join(" ");
   return joinedNotes || null;
 };
+
+const shouldUseDemoDriverDataFallback = () => import.meta.env.VITE_USE_DEMO_DRIVER_DATA === "true";

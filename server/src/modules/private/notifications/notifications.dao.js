@@ -34,12 +34,37 @@ export default class PrivateNotificationsDao {
             .limit(query.limit || 25);
     }
 
+    findNotificationsForUser(authUserId, role, query = {}) {
+        const filter = {
+            ...buildNotificationFilter(query),
+            authUserId,
+            role
+        };
+
+        return this.notificationModel
+            .find(filter)
+            .sort({ createdAt: -1 })
+            .limit(query.limit || 25);
+    }
+
     findById(notificationId) {
         if (!mongoose.isValidObjectId(notificationId)) {
             return null;
         }
 
         return this.notificationModel.findById(notificationId);
+    }
+
+    findByIdForUser(notificationId, authUserId, role) {
+        if (!mongoose.isValidObjectId(notificationId)) {
+            return null;
+        }
+
+        return this.notificationModel.findOne({
+            _id: notificationId,
+            authUserId,
+            role
+        });
     }
 
     createNotifications(payloads = []) {
@@ -54,6 +79,27 @@ export default class PrivateNotificationsDao {
         return this.notificationModel.findByIdAndUpdate(
             notificationId,
             { $set: payload },
+            { returnDocument: 'after', runValidators: true }
+        );
+    }
+
+    markReadForUser(notificationId, authUserId, role, readAt) {
+        if (!mongoose.isValidObjectId(notificationId)) {
+            return null;
+        }
+
+        return this.notificationModel.findOneAndUpdate(
+            {
+                _id: notificationId,
+                authUserId,
+                role
+            },
+            {
+                $set: {
+                    status: NOTIFICATION_STATUSES.READ,
+                    'delivery.readAt': readAt
+                }
+            },
             { returnDocument: 'after', runValidators: true }
         );
     }

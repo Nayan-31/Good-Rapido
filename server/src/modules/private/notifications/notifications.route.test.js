@@ -118,9 +118,12 @@ const createDependencies = () => ({
         findPrivateUserById: jest.fn(),
         findDashboardNotifications: jest.fn(),
         findNotifications: jest.fn(),
+        findNotificationsForUser: jest.fn(),
         findById: jest.fn(),
+        findByIdForUser: jest.fn(),
         createNotifications: jest.fn(),
-        updateNotification: jest.fn()
+        updateNotification: jest.fn(),
+        markReadForUser: jest.fn()
     },
     tokenService: new PrivateTokenService(),
     now: () => FIXED_NOW
@@ -405,12 +408,81 @@ describe('private notification routes', () => {
         expect(dependencies.notificationsDao.updateNotification).not.toHaveBeenCalled();
     });
 
-    test('driver users cannot access private notification routes', async () => {
+    test('driver users can read and mark their scoped notification inbox', async () => {
+        const driverUser = createPrivateUser(PRIVATE_AUTH_ROLES.DRIVER);
+        const driverNotification = createNotification({
+            authUserId: 'driver-id',
+            role: PRIVATE_AUTH_ROLES.DRIVER,
+            title: 'Driver request update'
+        });
+
+        dependencies.notificationsDao.findPrivateUserById.mockResolvedValue(driverUser);
+        dependencies.notificationsDao.findNotificationsForUser.mockResolvedValue([driverNotification]);
+        dependencies.notificationsDao.findByIdForUser.mockResolvedValue(driverNotification);
+        dependencies.notificationsDao.markReadForUser.mockResolvedValue({
+            ...driverNotification,
+            status: NOTIFICATION_STATUSES.READ,
+            delivery: {
+                ...driverNotification.delivery,
+                readAt: FIXED_NOW
+            }
+        });
+
+        const optionsResponse = await injectRequest(app, {
+            method: 'GET',
+            path: `${BASE_PATH}/options`,
+            headers: authHeaderFor(dependencies, driverUser)
+        });
+
+        expect(optionsResponse.statusCode).toBe(200);
+
+        const listResponse = await injectRequest(app, {
+            method: 'GET',
+            path: `${BASE_PATH}/notifications`,
+            headers: authHeaderFor(dependencies, driverUser)
+        });
+
+        expect(listResponse.statusCode).toBe(200);
+        expect(listResponse.body.data.notifications.notifications[0].role).toBe(PRIVATE_AUTH_ROLES.DRIVER);
+        expect(dependencies.notificationsDao.findNotificationsForUser).toHaveBeenCalledWith('driver-id', PRIVATE_AUTH_ROLES.DRIVER, {
+            limit: 25
+        });
+
+        const detailResponse = await injectRequest(app, {
+            method: 'GET',
+            path: `${BASE_PATH}/notifications/notification-id`,
+            headers: authHeaderFor(dependencies, driverUser)
+        });
+
+        expect(detailResponse.statusCode).toBe(200);
+        expect(dependencies.notificationsDao.findByIdForUser).toHaveBeenCalledWith(
+            'notification-id',
+            'driver-id',
+            PRIVATE_AUTH_ROLES.DRIVER
+        );
+
+        const readResponse = await injectRequest(app, {
+            method: 'PATCH',
+            path: `${BASE_PATH}/notifications/notification-id/read`,
+            headers: authHeaderFor(dependencies, driverUser)
+        });
+
+        expect(readResponse.statusCode).toBe(200);
+        expect(readResponse.body.data.notification.status).toBe(NOTIFICATION_STATUSES.READ);
+        expect(dependencies.notificationsDao.markReadForUser).toHaveBeenCalledWith(
+            'notification-id',
+            'driver-id',
+            PRIVATE_AUTH_ROLES.DRIVER,
+            FIXED_NOW
+        );
+    });
+
+    test('driver users cannot access ops notification dashboard', async () => {
         const driverUser = createPrivateUser(PRIVATE_AUTH_ROLES.DRIVER);
 
         const response = await injectRequest(app, {
             method: 'GET',
-            path: `${BASE_PATH}/options`,
+            path: `${BASE_PATH}/dashboard`,
             headers: authHeaderFor(dependencies, driverUser)
         });
 

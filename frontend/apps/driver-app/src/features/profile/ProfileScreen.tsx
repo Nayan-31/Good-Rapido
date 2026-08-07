@@ -113,9 +113,15 @@ export function ProfileScreen({ onLogout }: ProfileScreenProps) {
             </div>
             <ProgressBar value={profile.documentPercent} showValue label="Document readiness" tone={profile.documentPercent >= 80 ? "success" : "warning"} />
             <div className={styles.documentList}>
-              {profile.documents.map((document) => (
-                <DocumentRow key={document.type} document={document} />
-              ))}
+              {profile.documents.length ? (
+                profile.documents.map((document) => (
+                  <DocumentRow key={document.type} document={document} />
+                ))
+              ) : (
+                <Alert tone="neutral" title="No documents uploaded yet">
+                  Upload required driver documents from onboarding to unlock ride request eligibility.
+                </Alert>
+              )}
             </div>
           </article>
 
@@ -221,9 +227,15 @@ const formatDate = (value: string) => {
     return value;
   }
 
+  const parseDate = new Date(value);
+
+  if (Number.isNaN(parseDate.getTime())) {
+    return value;
+  }
+
   return new Intl.DateTimeFormat("en-IN", {
     day: "2-digit",
     month: "short",
     year: "numeric"
-  }).format(new Date(value));
+  }).format(parseDate);
 };

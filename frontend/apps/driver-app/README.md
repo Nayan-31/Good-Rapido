@@ -20,6 +20,10 @@ Current status: demo-ready driver MVP. The app shell, routing, auth flow, onboar
 - Real seeded ride request visibility for the matched driver.
 - Accept, arrived, start, and complete ride actions through backend lifecycle APIs.
 - Earnings update after completed demo rides.
+- Driver dashboard cards read earnings, trust, document, notification, and request summaries from the same services used by the detail screens.
+- Active ride state loads backend assigned active rides first, local accepted-ride continuity second, and demo data only when `VITE_USE_DEMO_RIDE_REQUESTS=true`.
+- Driver earnings, trust, profile, and notification screens default to honest empty states when the backend has no live records.
+- Driver notifications can be listed and marked read through private driver-scoped notification APIs.
 
 Primary backend modules used now:
 
@@ -41,15 +45,16 @@ MongoDB collection used now:
 
 ```text
 private_auth_users
+public_notifications
 ```
 
 ## What Still Uses Fallbacks When No Live Records Exist
 
-- Some secondary dashboard metrics.
 - Some empty-state helper cards.
-- Some notification/support preview text.
+- Demo-only driver ride, earnings, trust, profile, and notification data can be enabled for screenshots with explicit demo environment flags.
+- Support preview text still stays partially UI-first until live support ticket records exist.
 
-These fallbacks keep the demo readable when the local database has no matching records yet. The main auth, booking handoff, active ride lifecycle, and earnings smoke flow are backend-verified.
+These fallbacks keep the demo readable only when intentionally enabled. The main auth, booking handoff, active ride lifecycle, driver notifications, and earnings smoke flow are backend-verified.
 
 ## Structure
 
@@ -212,6 +217,8 @@ core/trust-engine
 - Ride alerts.
 - Document approval alerts.
 - Earnings and payout alerts.
+- Mark notification as read.
+- Private driver-scoped read access; ops/admin notification creation and delivery actions remain protected.
 
 Backend modules to connect:
 
@@ -270,6 +277,15 @@ VITE_GOOGLE_MAPS_API_KEY=your_google_maps_api_key
 
 The key must have Google Maps JavaScript API enabled. Without this key, the app uses Leaflet/OpenStreetMap fallback.
 
+Optional demo fallbacks:
+
+```bash
+VITE_USE_DEMO_RIDE_REQUESTS=true
+VITE_USE_DEMO_DRIVER_DATA=true
+```
+
+Keep these unset for real-data testing so empty backend states stay honest.
+
 ## Verify
 
 ```bash
@@ -286,9 +302,7 @@ npm run build:driver
 
 ## Next Work
 
-- Connect availability API.
-- Connect onboarding, documents, and vehicle APIs.
-- Connect ride request accept/decline flow.
-- Connect active ride lifecycle actions.
-- Connect earnings and trust dashboards.
-- Replace hardcoded UI metrics with backend data.
+- Add deeper browser E2E coverage for auth to completed ride.
+- Add production map/GPS provider keys for real deployment.
+- Add live support ticket records for all support preview cards.
+- Add production SMS/push/email provider integrations for notification delivery.

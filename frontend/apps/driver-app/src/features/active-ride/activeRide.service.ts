@@ -1,7 +1,14 @@
 import { ApiClientError, type ApiPayload, type ApiResponse } from "@good-rapido/api-client";
 
 import { apiClient } from "@/services/apiClient";
-import { demoRideRequest } from "@/features/ride-requests/rideRequest.service";
+import {
+  demoRideRequest,
+  mapRideOpsQueueItem,
+  pickFirstRide,
+  shouldUseDemoRequestFallback,
+  toActiveRideSnapshot,
+  type RideOpsQueueResponse
+} from "@/features/ride-requests/rideRequest.service";
 import { readActiveDriverRide, saveActiveDriverRide } from "@/features/ride-requests/rideRequest.storage";
 import type {
   DriverActiveRideSnapshot,
@@ -21,7 +28,24 @@ type RoutePlanResponse = ApiResponse<{
 interface BackendLifecycleView {
   lifecycleStatus?: DriverRideLifecycleStatus | string | null;
   ride?: {
+    id?: string | null;
+    bookingCode?: string | null;
     bookingStatus?: string | null;
+    pickup?: {
+      address?: string | null;
+      latitude?: number;
+      longitude?: number;
+    } | null;
+    dropoff?: {
+      address?: string | null;
+      latitude?: number;
+      longitude?: number;
+    } | null;
+    vehicleType?: string | null;
+    driver?: {
+      etaMinutes?: number;
+      distanceKm?: number;
+    } | null;
     fare?: {
       totalFare?: number;
       distanceKm?: number;
@@ -60,7 +84,37 @@ interface BackendRoutePlan {
 export const activeRideService = {
   async loadActiveRide(): Promise<ActiveRideLoadResult> {
     const notes: string[] = [];
-    let ride = readActiveDriverRide() ?? createDemoActiveRide();
+    let ride: DriverActiveRideSnapshot | null = null;
+
+    try {
+      const response = await apiClient.private.rideOps.listRides({
+        status: "active",
+        limit: 1
+      }) as RideOpsQueueResponse;
+      const backendRide = pickFirstRide(response.data);
+
+      if (backendRide) {
+        ride = toActiveRideSnapshot(mapRideOpsQueueItem(backendRide));
+      }
+    } catch (error) {
+      notes.push(resolveBackendNote(error, "Active ride lookup is not available for this driver session yet."));
+    }
+
+    if (!ride) {
+      ride = readActiveDriverRide();
+    }
+
+    if (!ride && shouldUseDemoRequestFallback()) {
+      ride = createDemoActiveRide();
+      notes.push("No active backend ride was found. Demo active ride fallback is enabled through VITE_USE_DEMO_RIDE_REQUESTS.");
+    }
+
+    if (!ride) {
+      return {
+        ride: null,
+        backendNote: uniqueNotes(notes)
+      };
+    }
 
     try {
       const lifecycleResponse = await apiClient.core.rideLifecycle.getRideLifecycle(ride.id) as LifecycleResponse;
@@ -86,7 +140,12 @@ export const activeRideService = {
 
   async transitionRide(event: DriverLifecycleEvent): Promise<ActiveRideActionResult> {
     const occurredAt = new Date().toISOString();
-    const currentRide = readActiveDriverRide() ?? createDemoActiveRide();
+    const currentRide = readActiveDriverRide();
+
+    if (!currentRide) {
+      throw new Error("No active ride is available for lifecycle transition.");
+    }
+
     let ride = currentRide;
     let backendNote: string | null = null;
 
@@ -148,11 +207,25 @@ const mergeLifecycleResponse = (
 
   const trustSignals = lifecycle.ride?.trustSignals;
   const fare = lifecycle.ride?.fare;
+  const lifecycleRide = lifecycle.ride;
 
   return {
     ...ride,
-    bookingStatus: lifecycle.ride?.bookingStatus || ride.bookingStatus,
+    id: lifecycleRide?.id || ride.id,
+    bookingCode: lifecycleRide?.bookingCode || ride.bookingCode,
+    bookingStatus: lifecycleRide?.bookingStatus || ride.bookingStatus,
     lifecycleStatus: mapLifecycleStatus(lifecycle.lifecycleStatus),
+    pickup: {
+      address: lifecycleRide?.pickup?.address || ride.pickup.address,
+      latitude: safeNumber(lifecycleRide?.pickup?.latitude, ride.pickup.latitude),
+      longitude: safeNumber(lifecycleRide?.pickup?.longitude, ride.pickup.longitude)
+    },
+    dropoff: {
+      address: lifecycleRide?.dropoff?.address || ride.dropoff.address,
+      latitude: safeNumber(lifecycleRide?.dropoff?.latitude, ride.dropoff.latitude),
+      longitude: safeNumber(lifecycleRide?.dropoff?.longitude, ride.dropoff.longitude)
+    },
+    vehicleType: lifecycleRide?.vehicleType || ride.vehicleType,
     fare: {
       ...ride.fare,
       totalFare: safeNumber(fare?.totalFare, ride.fare.totalFare),
@@ -163,6 +236,8 @@ const mergeLifecycleResponse = (
     },
     route: {
       ...ride.route,
+      pickupEtaMinutes: safeNumber(lifecycleRide?.driver?.etaMinutes, ride.route.pickupEtaMinutes),
+      pickupDistanceKm: safeNumber(lifecycleRide?.driver?.distanceKm, ride.route.pickupDistanceKm),
       tripDistanceKm: safeNumber(fare?.distanceKm, ride.route.tripDistanceKm),
       tripDurationMinutes: safeNumber(fare?.durationMinutes, ride.route.tripDurationMinutes),
       routeFairnessScore: safeNumber(trustSignals?.routeFairnessScore, ride.route.routeFairnessScore),

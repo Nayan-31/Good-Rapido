@@ -69,6 +69,7 @@ Drivers can:
 - Share current location status.
 - Select service zones.
 - View availability warnings.
+- See dashboard cards backed by earnings, trust, profile/document, notification, and assigned request services.
 - Review incoming ride requests.
 - See fare preview and pickup route summary.
 - Accept or decline ride requests.
@@ -78,10 +79,10 @@ Drivers can:
   - start ride
   - complete ride
 - View route fairness and detour warnings.
-- View earnings summary, ride earnings, incentives, penalties, and payout status.
-- View trust score, reliability score, cancellation score, and improvement tips.
-- View notifications and support flows.
-- Manage profile, vehicle info, document status, account settings, and logout.
+- View backend earnings summary, ride earnings, incentives, penalties, and payout status.
+- View trust score, reliability score, cancellation score, and improvement tips with honest pending state when trust records do not exist yet.
+- View driver-scoped notifications and mark them as read.
+- Manage profile, vehicle info, document status, account settings, and logout using private driver/profile/document/vehicle APIs.
 
 ## Ops Dashboard
 
@@ -223,7 +224,7 @@ Current stable status:
 - Backend module coverage is strong.
 - Backend tests are passing.
 - Rider app has MVP booking, fare, ride, safety, history, and profile flows.
-- Driver app has real authentication, real booking handoff, active ride lifecycle actions, and complete workflow screens.
+- Driver app has real authentication, real booking handoff, backend-first active ride lifecycle actions, driver-scoped notifications, backend earnings/profile summaries, and complete workflow screens.
 - Ops dashboard has auth, overview, ride operations, pricing/surge, trust-safety, fraud-disputes, communications, admin users, and analytics connected.
 - Shared API client and UI package are available.
 
@@ -233,7 +234,7 @@ Still pending for production readiness:
 - Payment gateway integration.
 - Real SMS, push, and email providers.
 - Production GPS movement tracking with WebSocket/map provider integration.
-- Final real-data binding for some rider and driver screens.
+- Final real-data binding for remaining support/provider-backed preview cards.
 - Deployment setup and production environment hardening.
 
 ## How To Test The Whole App
@@ -303,6 +304,7 @@ For driver request testing, keep demo ride fallback off unless you intentionally
 
 ```text
 VITE_USE_DEMO_RIDE_REQUESTS=false
+VITE_USE_DEMO_DRIVER_DATA=false
 ```
 
 ### 4. Start Backend
@@ -448,12 +450,15 @@ Open the driver app and test:
 - Log out and log back in.
 - Open onboarding, availability, ride requests, active ride, earnings, trust, alerts, profile, and support routes.
 - To see actual incoming requests, create a rider booking for a ride type, then log in as the matched seeded driver shown on the rider confirm screen.
+- In notifications, verify the inbox loads only notifications scoped to the logged-in driver and mark-read changes the unread count.
+- In earnings, verify completed rides appear after the driver completes the ride lifecycle.
+- In profile, verify new accounts show pending/missing onboarding data instead of fake approved records.
 
 Expected result:
 
 - Driver auth should use real backend and MongoDB.
 - Token storage and session restore should work.
-- Workflow screens should load and show the planned driver flow.
+- Workflow screens should load real records where present and honest empty states where records do not exist yet.
 
 ### 10. Manual Ops Dashboard Test
 

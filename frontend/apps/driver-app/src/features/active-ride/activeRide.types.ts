@@ -13,7 +13,7 @@ export interface DriverLiveLocation {
 }
 
 export interface ActiveRideLoadResult {
-  ride: DriverActiveRideSnapshot;
+  ride: DriverActiveRideSnapshot | null;
   backendNote: string | null;
 }
 
