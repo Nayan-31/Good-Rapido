@@ -1,18 +1,23 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { ApiClientError } from "@good-rapido/api-client";
-import { DEFAULT_BOOKING_FORM } from "./booking.constants";
+import type { PricingQuote } from "@/features/pricing/pricing.types";
+import { DEFAULT_BOOKING_FORM, VEHICLE_OPTIONS } from "./booking.constants";
 import { bookingService } from "./booking.service";
 import { rideFlowStorage } from "./rideFlowStorage";
 import type { BookingHomeErrors, BookingHomeForm, BookingLocationForm, FareEstimate, VehicleType } from "./booking.types";
 import { hasBookingHomeErrors, validateBookingHomeForm } from "./booking.utils";
 
+type VehicleQuoteMap = Partial<Record<VehicleType, PricingQuote>>;
+
 export function useBookingHome() {
   const [form, setForm] = useState<BookingHomeForm>(DEFAULT_BOOKING_FORM);
   const [errors, setErrors] = useState<BookingHomeErrors>({});
   const [estimate, setEstimate] = useState<FareEstimate | null>(null);
+  const [vehicleQuotes, setVehicleQuotes] = useState<VehicleQuoteMap>({});
   const [message, setMessage] = useState<string | null>(null);
   const [isEstimating, setIsEstimating] = useState(false);
+  const [isLoadingVehicleQuotes, setIsLoadingVehicleQuotes] = useState(false);
 
   const updateLocation = useCallback((kind: "pickup" | "dropoff", patch: Partial<BookingLocationForm>) => {
     setForm((currentForm) => ({
@@ -37,6 +42,45 @@ export function useBookingHome() {
       passengers
     }));
   }, []);
+
+  const vehicleTypes = useMemo(() => VEHICLE_OPTIONS.map((vehicle) => vehicle.type), []);
+
+  const loadVehicleQuotes = useCallback(async () => {
+    const nextErrors = validateBookingHomeForm(form);
+
+    if (hasBookingHomeErrors(nextErrors)) {
+      setVehicleQuotes({});
+      return;
+    }
+
+    setIsLoadingVehicleQuotes(true);
+
+    try {
+      const response = await bookingService.compareVehicleOptions(form, vehicleTypes);
+      const quotes = response.data?.comparison.quotes ?? [];
+      const quoteMap = quotes.reduce<VehicleQuoteMap>((map, quote) => {
+        if (quote.vehicleType) {
+          map[quote.vehicleType] = quote;
+        }
+
+        return map;
+      }, {});
+
+      setVehicleQuotes(quoteMap);
+    } catch {
+      setVehicleQuotes({});
+    } finally {
+      setIsLoadingVehicleQuotes(false);
+    }
+  }, [form, vehicleTypes]);
+
+  useEffect(() => {
+    const timerId = window.setTimeout(() => {
+      void loadVehicleQuotes();
+    }, 350);
+
+    return () => window.clearTimeout(timerId);
+  }, [loadVehicleQuotes]);
 
   const createEstimate = useCallback(async () => {
     const nextErrors = validateBookingHomeForm(form);
@@ -75,8 +119,10 @@ export function useBookingHome() {
     form,
     errors,
     estimate,
+    vehicleQuotes,
     message,
     isEstimating,
+    isLoadingVehicleQuotes,
     updateLocation,
     selectVehicle,
     updatePassengers,

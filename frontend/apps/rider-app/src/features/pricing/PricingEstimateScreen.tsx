@@ -98,7 +98,7 @@ export function PricingEstimateScreen() {
                   {quote.guidance.highSurge ? "Higher due to surge" : "Stable"}
                 </Badge>
               </div>
-              <FareContextChart />
+              <FareContextChart quote={quote} />
             </div>
 
             <div className={styles.actions}>
@@ -140,16 +140,31 @@ function BreakdownRow({
   );
 }
 
-function FareContextChart() {
+function FareContextChart({ quote }: { quote: ReturnType<typeof usePricingEstimate>["quote"] }) {
+  const totalFare = quote?.breakdown.totalFare ?? 0;
+  const alternativeFares = quote?.alternativePickups.map((pickup) => pickup.estimatedFare).filter((fare) => fare > 0) ?? [];
+  const lowFare = alternativeFares.length ? Math.min(...alternativeFares) : Math.round(totalFare * 0.94);
+  const highFare = Math.round(totalFare * Math.max(1.06, quote?.surge.multiplier ?? 1));
+  const farePoints = [
+    lowFare,
+    Math.round((lowFare + totalFare) / 2),
+    Math.round(totalFare * 0.97),
+    Math.round(totalFare * 0.99),
+    totalFare,
+    Math.round((totalFare + highFare) / 2),
+    highFare
+  ];
+  const maxFare = Math.max(...farePoints, 1);
+
   return (
     <div className={styles.chart} aria-hidden="true">
-      <span />
-      <span />
-      <span />
-      <span />
-      <span className={styles.currentBar} />
-      <span />
-      <span />
+      {farePoints.map((fare, index) => (
+        <span
+          className={index === 4 ? styles.currentBar : undefined}
+          key={`${fare}-${index}`}
+          style={{ minHeight: `${Math.max(26, Math.round((fare / maxFare) * 92))}px` }}
+        />
+      ))}
     </div>
   );
 }

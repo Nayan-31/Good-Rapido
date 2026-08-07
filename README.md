@@ -95,11 +95,11 @@ frontend/
 Rider app current state:
 
 - Authentication/session structure with restore, refresh, stale-token cleanup, and logout.
-- Booking home screen.
-- Fare estimate screen with breakdown, confidence, and surge transparency.
+- Booking home screen with backend-backed vehicle pricing comparison.
+- Fare estimate screen with breakdown, confidence, surge transparency, and quote-derived fare context.
 - Confirm ride flow using pricing, matching, and lifecycle concepts.
 - Live ride status stream with periodic refresh fallback.
-- Ride history and profile transparency screens.
+- Ride history with auto-loaded receipt transparency and profile transparency screens.
 - Safety and notification screens.
 - API-facing services for rider flows.
 
@@ -126,7 +126,7 @@ Real backend data is currently active for:
 - Public and private auth APIs.
 - Session refresh and logout APIs for rider, driver, admin, and ops sessions.
 - MongoDB-backed rider, driver, admin, and ops users.
-- Rider fare estimate, driver search, booking creation, live status stream, current ride status, and ride history in the verified demo flow.
+- Rider pricing comparison, fare estimate, driver search, booking creation, live status stream, current ride status, ride history, receipt transparency, and profile data in the verified demo flow.
 - Driver login, request visibility, accept ride, arrived, start ride, complete ride, and earnings update in the verified demo flow.
 - Ops private auth, ride queue visibility, dashboard data, pricing/surge, trust-safety, fraud-dispute, communications, admin users, and analytics module structure.
 - Backend API modules, Jest tests, and full smoke demo.

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { ApiClientError } from "@good-rapido/api-client";
 import { rideHistoryService } from "./rideHistory.service";
@@ -11,6 +11,7 @@ export function useRideHistory() {
   const [fares, setFares] = useState<FareHistoryItem[]>([]);
   const [selectedRideId, setSelectedRideId] = useState<string | null>(null);
   const [receipt, setReceipt] = useState<RideReceipt | null>(null);
+  const autoReceiptRideId = useRef<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isReceiptLoading, setIsReceiptLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -66,6 +67,20 @@ export function useRideHistory() {
       setIsReceiptLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    if (
+      !selectedRide?.id
+      || receipt?.ride.id === selectedRide.id
+      || isReceiptLoading
+      || autoReceiptRideId.current === selectedRide.id
+    ) {
+      return;
+    }
+
+    autoReceiptRideId.current = selectedRide.id;
+    void loadReceipt(selectedRide.id);
+  }, [isReceiptLoading, loadReceipt, receipt?.ride.id, selectedRide?.id]);
 
   return {
     filter,

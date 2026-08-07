@@ -76,7 +76,14 @@ export function useProfileDashboard() {
     setMessage(null);
 
     try {
-      const response = await profileService.addHomeAddress();
+      const recentPickup = rideHistory.find((ride) => ride.pickup.address)?.pickup ?? null;
+
+      if (!recentPickup) {
+        setMessage("No recent pickup location available to save yet.");
+        return;
+      }
+
+      const response = await profileService.addHomeAddress(recentPickup);
       setProfile(response.data?.profile ?? null);
       setMessage(response.message);
     } catch (error) {
@@ -84,7 +91,7 @@ export function useProfileDashboard() {
     } finally {
       setIsSaving(false);
     }
-  }, []);
+  }, [rideHistory]);
 
   const addEmergencyContact = useCallback(async () => {
     setIsSaving(true);

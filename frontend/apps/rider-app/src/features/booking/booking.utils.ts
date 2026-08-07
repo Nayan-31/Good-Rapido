@@ -1,4 +1,4 @@
-import type { BookingHomeErrors, BookingHomeForm, BookingLocationForm } from "./booking.types";
+import type { BookingHomeErrors, BookingHomeForm, BookingLocationForm, VehicleType } from "./booking.types";
 
 export const validateBookingHomeForm = (form: BookingHomeForm): BookingHomeErrors => {
   const errors: BookingHomeErrors = {};
@@ -41,6 +41,14 @@ export const buildFareEstimatePayload = (form: BookingHomeForm) => ({
   dropoff: toLocationPayload(form.dropoff),
   vehicleType: form.vehicleType,
   passengers: Number(form.passengers),
+  requestedAt: new Date().toISOString()
+});
+
+export const buildPricingComparisonPayload = (form: BookingHomeForm, vehicleTypes: VehicleType[]) => ({
+  pickup: toLocationPayload(form.pickup),
+  dropoff: toLocationPayload(form.dropoff),
+  vehicleTypes,
+  serviceZone: "default",
   requestedAt: new Date().toISOString()
 });
 

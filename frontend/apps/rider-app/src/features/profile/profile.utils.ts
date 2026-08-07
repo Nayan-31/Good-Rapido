@@ -1,4 +1,5 @@
 import type { RideHistoryItem } from "@/features/history/rideHistory.types";
+import type { AuthUser } from "@/features/auth/auth.types";
 import type { ProfilePreferences, ProfileTransparency, RiderProfile } from "./profile.types";
 
 export const buildProfileTransparency = (
@@ -31,7 +32,8 @@ export const formatDate = (value: string | null | undefined) => {
   }).format(new Date(value));
 };
 
-export const getDisplayName = (profile: RiderProfile | null) => profile?.displayName || "Good Rapido Rider";
+export const getDisplayName = (profile: RiderProfile | null, authUser?: AuthUser | null) =>
+  profile?.displayName || authUser?.fullName || authUser?.phone || "Good Rapido Rider";
 
 const average = (values: number[]) => {
   const validValues = values.filter((value) => Number.isFinite(value) && value > 0);
