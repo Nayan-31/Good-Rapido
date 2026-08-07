@@ -232,6 +232,12 @@ Driver real-data route checks:
 npm test -- earnings.route.test.js ride-ops.route.test.js ride-lifecycle.route.test.js trust.route.test.js notifications.route.test.js
 ```
 
+Ops admin-action route checks:
+
+```bash
+npm test -- pricing.route.test.js surge.route.test.js fraud.route.test.js disputes.route.test.js notifications.route.test.js admin.route.test.js
+```
+
 ## Docker And Deployment
 
 Run local API + MongoDB through Docker Compose:
@@ -255,6 +261,7 @@ Full deployment notes are in:
 - Private driver auth supports registration, login, refresh, logout, permissions, and session profile.
 - Private admin and ops auth support login, refresh, logout, permissions, and session profile. Self-registration is disabled for these roles.
 - Private notifications support driver-scoped list/detail/mark-read access for driver apps, while ops/admin delivery management remains protected.
+- Ops admin-action APIs cover pricing create/update/activate/archive/simulate, surge create/update/activate/pause/end/archive/simulate, fraud assign/confirm/dismiss/resolve/simulate, dispute assign/evidence/resolve/reject, notification create/send/retry/fail/cancel, and admin user create/update/status/permissions.
 - Frontend apps attach short-lived access tokens, use refresh tokens to recover expired sessions, and clear browser session state when refresh/logout fails.
 - Core engines expose reusable logic for pricing, matching, ride lifecycle, route fairness, trust, fraud, payment, notification, and identity workflows.
 - Some business flows use deterministic engine outputs and mock-like defaults until live providers and production data sources are added.

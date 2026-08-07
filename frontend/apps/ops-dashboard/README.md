@@ -2,7 +2,7 @@
 
 The ops dashboard is the internal web app for admin and operations teams. It is separate from the passenger-facing rider app and the driver app.
 
-Current status: ops foundation ready. The app has React, Vite, TypeScript, routing, protected admin/ops auth wiring, real overview data binding, real ride-ops queue binding, ride detail review, ops-state updates, ride confirmation, driver reassignment, cancellation actions, pricing rule controls, surge rule controls, fare impact simulation, trust-safety review workflows, fraud-dispute operations, communications workflows, and admin user management. Analytics is still being completed module by module.
+Current status: ops foundation ready. The app has React, Vite, TypeScript, routing, protected admin/ops auth wiring, real overview data binding, real ride-ops queue binding, ride detail review, ops-state updates, ride confirmation, driver reassignment, cancellation actions, pricing rule controls, surge rule controls, fare impact simulation, trust-safety review workflows, fraud-dispute operations, communications workflows, and admin user management. Final admin-action QA has been verified for pricing, surge, fraud, disputes, notifications, and admin users.
 
 ## What This App Does
 
@@ -88,6 +88,25 @@ ops-dashboard/
 - Admin user directory with role, status, search filters, create user, and profile update actions.
 - Account status controls for active, pending, blocked, and suspended users.
 - Permission matrix UI with grouped permissions and protected update flow.
+
+## Final Admin-Action QA
+
+The following ops/admin action flows have been checked from screen action to frontend service to shared API client to backend route coverage:
+
+- Pricing rules: list, detail, create draft, update draft, activate, archive, and pricing simulation.
+- Surge rules: list, detail, create, update, activate, pause, end, archive, and surge simulation.
+- Fraud cases: queue, detail, assign reviewer, confirm, dismiss, resolve, and risk simulation.
+- Disputes: queue, detail, assign owner, request evidence, resolve with refund amount, and reject.
+- Notifications: list, detail, create, send, retry, fail, cancel, and incident broadcast payloads.
+- Admin users: directory filters, user detail, create user, update profile, update status, and update permissions through the permission matrix.
+
+Latest QA commands run for this check:
+
+```bash
+npm --prefix frontend run typecheck:ops
+npm --prefix frontend run typecheck:api-client
+npm --prefix server test -- pricing.route.test.js surge.route.test.js fraud.route.test.js disputes.route.test.js notifications.route.test.js admin.route.test.js
+```
 
 ## Run
 

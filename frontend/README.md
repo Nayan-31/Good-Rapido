@@ -77,6 +77,7 @@ Current coverage:
 - App shell and backend-aligned route flow.
 - Overview, ride operations, pricing/surge, trust-safety, fraud-disputes, communications, admin users, and analytics flows.
 - API client method coverage for private admin, analytics, pricing, surge, fraud, auth admins, and auth ops.
+- Final admin-action QA verified for pricing rule actions, surge rule actions, fraud case actions, dispute actions, notification delivery actions, and admin user account/permission actions.
 
 ## Shared Packages
 
