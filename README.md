@@ -2,7 +2,7 @@
 
 Good Rapido is a full-stack capstone project for a transparent ride-booking platform. The product idea is simple: riders should understand why a fare changed, why a route was selected, why a driver was matched, and how trust or safety decisions are made.
 
-Current status: demo-ready full-stack MVP. The backend modular foundation is strong, the rider, driver, and ops frontend apps are wired around the main booking lifecycle, and the core demo flow is verified from rider booking to driver completion. Rider live ride status can auto-update through a backend stream with polling fallback. Frontend auth now uses session-scoped storage, proactive access-token refresh, retry-on-expired-token handling, stale token cleanup, and route guards across rider, driver, and ops apps. Production integrations such as real map provider, payment gateway, GPS/WebSocket movement tracking, and SMS/push/email providers are still pending.
+Current status: demo-ready full-stack MVP. The backend modular foundation is strong, the rider, driver, and ops frontend apps are wired around the main booking lifecycle, and the core demo flow is verified from rider booking to driver completion. Rider live ride status can auto-update through a backend stream with polling fallback. Frontend auth now uses session-scoped storage, proactive access-token refresh, retry-on-expired-token handling, stale token cleanup, and route guards across rider, driver, and ops apps. Ops final admin-action QA is verified for pricing, surge, fraud, disputes, notifications, and admin users. Production integrations such as real map provider, payment gateway, GPS/WebSocket movement tracking, and SMS/push/email providers are still pending.
 
 ## Tech Stack
 
@@ -118,6 +118,7 @@ Ops dashboard current state:
 - Backend-aligned app shell and routing.
 - Overview, ride operations, pricing/surge, trust-safety, fraud-disputes, communications, admin users, and analytics flows.
 - API client methods for private admin, analytics, pricing, surge, fraud, admin auth, ops auth, and ride operations.
+- Final admin-action QA for pricing rules, surge rules, fraud cases, disputes, notifications, and admin user permissions/status controls.
 
 ## Real Data Status
 
@@ -132,6 +133,7 @@ Real backend data is currently active for:
 - Driver active ride state resolves backend assigned active rides first and only uses demo ride fallback when explicitly enabled.
 - Driver notifications support private driver-scoped list/detail/mark-read access.
 - Ops private auth, ride queue visibility, dashboard data, pricing/surge, trust-safety, fraud-dispute, communications, admin users, and analytics module structure.
+- Ops admin-action flows verified through frontend typecheck, shared API client typecheck, and focused backend route tests for pricing, surge, fraud, disputes, notifications, and admin users.
 - Backend API modules, Jest tests, and full smoke demo.
 
 Partially integrated or UI-first areas:
