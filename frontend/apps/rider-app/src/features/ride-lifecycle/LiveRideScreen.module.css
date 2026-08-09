@@ -11,6 +11,12 @@
   gap: var(--gr-space-4);
 }
 
+.trackingPanel {
+  display: grid;
+  gap: var(--gr-space-4);
+  overflow: hidden;
+}
+
 .heroHeader,
 .sectionHeader,
 .actions {
@@ -101,7 +107,7 @@
   width: 12px;
   height: 12px;
   margin-top: 4px;
-  border: 3px solid var(--gr-color-aqua);
+  border: 3px solid var(--gr-color-mint);
   border-radius: 999px;
 }
 
@@ -110,6 +116,96 @@
 }
 
 .metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--gr-space-3);
+}
+
+.liveMapCanvas {
+  position: relative;
+  min-height: 260px;
+  overflow: hidden;
+  border: 1px solid var(--gr-color-border);
+  border-radius: var(--gr-radius-md);
+  background:
+    linear-gradient(135deg, rgba(91, 229, 211, 0.2), rgba(2, 32, 54, 0.08)),
+    var(--gr-color-soft-gray);
+}
+
+.mapGrid {
+  position: absolute;
+  inset: 0;
+  opacity: 0.72;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.72) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.72) 1px, transparent 1px);
+  background-size: 44px 44px;
+}
+
+.routeStroke {
+  position: absolute;
+  left: 22%;
+  top: 29%;
+  width: 56%;
+  height: 46%;
+  border-right: 8px solid var(--gr-color-dark-navy);
+  border-bottom: 8px solid var(--gr-color-dark-navy);
+  border-radius: 0 0 42px 0;
+  opacity: 0.86;
+}
+
+.mapPin,
+.driverPin {
+  position: absolute;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transform: translate(-50%, -50%);
+  border-radius: 999px;
+  box-shadow: var(--gr-shadow-md);
+  font-weight: var(--gr-font-weight-heavy);
+  letter-spacing: 0;
+}
+
+.mapPin {
+  width: 34px;
+  height: 34px;
+  border: 3px solid #fff;
+  color: #fff;
+  font-size: var(--gr-text-small);
+}
+
+.pickupPin {
+  background: var(--gr-color-deep-teal);
+}
+
+.dropoffPin {
+  background: var(--gr-color-danger);
+}
+
+.driverPin {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #fff;
+  background: var(--gr-color-mint);
+  color: var(--gr-color-dark-navy);
+  font-size: var(--gr-text-label);
+  transition: left 420ms ease, top 420ms ease;
+}
+
+.driverDirection {
+  position: absolute;
+  top: -9px;
+  width: 0;
+  height: 0;
+  border-right: 8px solid transparent;
+  border-bottom: 12px solid var(--gr-color-dark-navy);
+  border-left: 8px solid transparent;
+  transform-origin: 50% 28px;
+}
+
+.trackingStats {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--gr-space-3);
@@ -126,6 +222,10 @@
 
 @media (max-width: 720px) {
   .metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .trackingStats {
     grid-template-columns: 1fr;
   }
 

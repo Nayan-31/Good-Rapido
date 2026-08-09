@@ -27,6 +27,7 @@ export const toRideLifecycleView = (ride = {}, lifecycle = {}) => ({
     lifecycleStatus: lifecycle.lifecycleStatus,
     timeline: toTimeline(lifecycle.timeline),
     progress: toProgress(lifecycle.progress),
+    tracking: toTracking(ride.tracking),
     guidance: lifecycle.guidance || {},
     availableEvents: lifecycle.availableEvents || [],
     transitionLog: toTransitionLog(ride.lifecycle?.transitionLog),
@@ -93,6 +94,23 @@ const toProgress = (progress = {}) => ({
     nextAction: progress.nextAction || null
 });
 
+const toTracking = (tracking = {}) => ({
+    lastDriverLocation: tracking.lastDriverLocation ? toTrackingLocation(tracking.lastDriverLocation) : null,
+    path: (Array.isArray(tracking.path) ? tracking.path : []).map(toTrackingLocation),
+    updatedAt: tracking.updatedAt || null
+});
+
+const toTrackingLocation = (location = {}) => ({
+    latitude: numberOrZero(location.latitude),
+    longitude: numberOrZero(location.longitude),
+    accuracyMeters: nullableNumber(location.accuracyMeters),
+    headingDegrees: nullableNumber(location.headingDegrees),
+    speedKmph: nullableNumber(location.speedKmph),
+    source: location.source || 'gps',
+    capturedAt: location.capturedAt || null,
+    receivedAt: location.receivedAt || null
+});
+
 const toTransitionLog = (transitionLog = []) => (Array.isArray(transitionLog) ? transitionLog : []).map((entry) => ({
     event: entry.event || null,
     note: entry.note || null,
@@ -103,6 +121,8 @@ const toTransitionLog = (transitionLog = []) => (Array.isArray(transitionLog) ? 
 }));
 
 const numberOrZero = (value) => Number.isFinite(value) ? value : 0;
+
+const nullableNumber = (value) => Number.isFinite(value) ? value : null;
 
 const getId = (document = {}) => document._id?.toString?.() || document.id || null;
 

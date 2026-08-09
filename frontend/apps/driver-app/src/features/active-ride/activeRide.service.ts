@@ -170,8 +170,20 @@ export const activeRideService = {
     };
   },
 
-  syncDriverLocation(location: DriverLiveLocation) {
-    return apiClient.private.availability.updateLocation({
+  async syncDriverLocation(rideId: string, location: DriverLiveLocation) {
+    const trackingResponse = await apiClient.core.rideLifecycle.updateDriverLocation(rideId, {
+      location: {
+        latitude: location.latitude,
+        longitude: location.longitude,
+        accuracyMeters: location.accuracyMeters ?? undefined,
+        headingDegrees: location.headingDegrees ?? undefined,
+        speedKmph: location.speedKmph ?? undefined,
+        source: location.source,
+        capturedAt: location.capturedAt
+      }
+    });
+
+    void apiClient.private.availability.updateLocation({
       currentLocation: {
         latitude: location.latitude,
         longitude: location.longitude,
@@ -183,7 +195,9 @@ export const activeRideService = {
         capturedAt: location.capturedAt
       },
       activeServiceZones: ["kolkata"]
-    });
+    }).catch(() => undefined);
+
+    return trackingResponse;
   }
 };
 

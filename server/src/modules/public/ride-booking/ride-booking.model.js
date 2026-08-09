@@ -343,6 +343,67 @@ const rideLifecycleSchema = new mongoose.Schema(
     { _id: false }
 );
 
+const rideTrackingLocationSchema = new mongoose.Schema(
+    {
+        latitude: {
+            type: Number,
+            required: true,
+            min: -90,
+            max: 90
+        },
+        longitude: {
+            type: Number,
+            required: true,
+            min: -180,
+            max: 180
+        },
+        accuracyMeters: {
+            type: Number,
+            min: 0
+        },
+        headingDegrees: {
+            type: Number,
+            min: 0,
+            max: 360
+        },
+        speedKmph: {
+            type: Number,
+            min: 0
+        },
+        source: {
+            type: String,
+            enum: ['gps', 'network', 'manual'],
+            default: 'gps'
+        },
+        capturedAt: {
+            type: Date,
+            required: true
+        },
+        receivedAt: {
+            type: Date,
+            required: true
+        }
+    },
+    { _id: false }
+);
+
+const rideTrackingSchema = new mongoose.Schema(
+    {
+        lastDriverLocation: {
+            type: rideTrackingLocationSchema,
+            default: null
+        },
+        path: {
+            type: [rideTrackingLocationSchema],
+            default: []
+        },
+        updatedAt: {
+            type: Date
+        }
+    },
+    { _id: false }
+);
+
 const rideBookingSchema = new mongoose.Schema(
     {
         bookingCode: {
@@ -431,6 +492,10 @@ const rideBookingSchema = new mongoose.Schema(
         },
         lifecycle: {
             type: rideLifecycleSchema,
+            default: {}
+        },
+        tracking: {
+            type: rideTrackingSchema,
             default: {}
         }
     },

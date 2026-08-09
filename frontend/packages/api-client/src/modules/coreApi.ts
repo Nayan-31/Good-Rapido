@@ -18,6 +18,8 @@ export const createCoreApi = (http: HttpClient) => ({
     getOptions: () => http.get("/api/v1/core/ride-lifecycle/options"),
     getRideLifecycle: (rideId: string) =>
       http.get(pathWithParams("/api/v1/core/ride-lifecycle/rides/:rideId", { rideId })),
+    updateDriverLocation: (rideId: string, payload: ApiPayload) =>
+      http.patch(pathWithParams("/api/v1/core/ride-lifecycle/rides/:rideId/tracking/location", { rideId }), payload),
     transitionRide: (rideId: string, payload: ApiPayload) =>
       http.post(pathWithParams("/api/v1/core/ride-lifecycle/rides/:rideId/events", { rideId }), payload)
   },

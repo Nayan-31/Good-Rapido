@@ -11,7 +11,8 @@ import RideLifecycleService from './ride-lifecycle.service.js';
 import {
     rideLifecycleParamsSchema,
     rideLifecycleStreamSchema,
-    transitionRideLifecycleSchema
+    transitionRideLifecycleSchema,
+    updateDriverLocationSchema
 } from './validators/ride-lifecycle.validator.js';
 
 const createRideLifecycleDependencies = ({
@@ -52,6 +53,7 @@ export const createRideLifecycleRouter = (dependencies = createRideLifecycleDepe
     router.get('/options', rideLifecycleController.options);
     router.get('/rides/:rideId/stream', validate(rideLifecycleStreamSchema), rideLifecycleController.streamRideLifecycle);
     router.get('/rides/:rideId', validate(rideLifecycleParamsSchema), rideLifecycleController.getRideLifecycle);
+    router.patch('/rides/:rideId/tracking/location', validate(updateDriverLocationSchema), rideLifecycleController.updateDriverLocation);
     router.post('/rides/:rideId/events', validate(transitionRideLifecycleSchema), rideLifecycleController.transitionRide);
 
     return router;

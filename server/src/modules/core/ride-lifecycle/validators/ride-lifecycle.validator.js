@@ -49,3 +49,20 @@ export const transitionRideLifecycleSchema = z.object({
         { message: 'Cancellation reason is required when cancelling ride lifecycle', path: ['reason'] }
     )
 });
+
+export const updateDriverLocationSchema = z.object({
+    params: z.object({
+        rideId: rideIdSchema
+    }),
+    body: z.object({
+        location: z.object({
+            latitude: z.number().min(-90).max(90),
+            longitude: z.number().min(-180).max(180),
+            accuracyMeters: z.number().min(0).max(10000).nullable().optional(),
+            headingDegrees: z.number().min(0).max(360).nullable().optional(),
+            speedKmph: z.number().min(0).max(240).nullable().optional(),
+            capturedAt: z.coerce.date().optional(),
+            source: z.enum(['gps', 'network', 'manual']).default('gps')
+        }).strict()
+    }).strict()
+});
