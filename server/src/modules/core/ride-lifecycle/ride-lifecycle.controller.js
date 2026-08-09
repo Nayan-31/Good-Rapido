@@ -26,4 +26,8 @@ export default class RideLifecycleController {
     transitionRide = asyncHandler(async (req, res) => {
         sendHttpResponse(res, await this.rideLifecycleService.transitionRide(req.auth, req.params.rideId, req.body));
     });
+
+    updateDriverLocation = asyncHandler(async (req, res) => {
+        sendHttpResponse(res, await this.rideLifecycleService.updateDriverLocation(req.auth, req.params.rideId, req.body));
+    });
 }

@@ -2,7 +2,7 @@
 
 The driver app is the operational app for drivers. It focuses on authentication, onboarding, availability, ride execution, earnings clarity, trust improvement, and support.
 
-Current status: demo-ready driver MVP. The app shell, routing, auth flow, onboarding, availability, ride request, active ride, earnings, trust, profile, notifications, and support flows are implemented. The seeded demo flow verifies real rider-to-driver request handoff and ride lifecycle actions.
+Current status: demo-ready driver MVP. The app shell, routing, auth flow, onboarding, availability, ride request, active ride, live GPS tracking, earnings, trust, profile, notifications, and support flows are implemented. The seeded demo flow verifies real rider-to-driver request handoff and ride lifecycle actions.
 
 ## What Is Real Now
 
@@ -19,6 +19,8 @@ Current status: demo-ready driver MVP. The app shell, routing, auth flow, onboar
 - Header initials from the authenticated driver name.
 - Real seeded ride request visibility for the matched driver.
 - Accept, arrived, start, and complete ride actions through backend lifecycle APIs.
+- Active ride browser GPS watch publishes ride-specific driver coordinates to `core/ride-lifecycle`.
+- GPS updates are also mirrored to driver availability as a best-effort location freshness signal.
 - Earnings update after completed demo rides.
 - Driver dashboard cards read earnings, trust, document, notification, and request summaries from the same services used by the detail screens.
 - Active ride state loads backend assigned active rides first, local accepted-ride continuity second, and demo data only when `VITE_USE_DEMO_RIDE_REQUESTS=true`.
@@ -170,9 +172,8 @@ core/trust-engine
 - Mark arrived.
 - Start ride.
 - Complete ride.
-- Live bike movement on a real map.
-- Google Maps route view when `VITE_GOOGLE_MAPS_API_KEY` is configured.
-- Leaflet/OpenStreetMap fallback when a Google Maps key is not available.
+- Live bike movement data published to the rider tracking stream.
+- Lightweight route preview for demo tracking while the production map provider remains optional.
 - Route fairness and detour indicators.
 
 Backend modules to connect:

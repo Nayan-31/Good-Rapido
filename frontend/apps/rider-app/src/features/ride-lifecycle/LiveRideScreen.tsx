@@ -5,7 +5,7 @@ import { rideFlowStorage } from "@/features/booking/rideFlowStorage";
 import type { RideFlowDraft } from "@/features/booking/rideFlowStorage";
 import { formatCurrency, formatVehicleType } from "@/features/pricing/pricing.utils";
 import { confirmRideService } from "./confirmRide.service";
-import type { RideBooking, RideLifecycleView } from "./confirmRide.types";
+import type { RideBooking, RideLifecycleView, RideTrackingLocation } from "./confirmRide.types";
 import styles from "./LiveRideScreen.module.css";
 
 const LIVE_RIDE_POLL_MS = 5000;
@@ -150,6 +150,11 @@ export function LiveRideScreen() {
     ?? booking.dropoff.address
     ?? draft?.form.dropoff.address
     ?? "Dropoff selected";
+  const liveDriverLocation = lifecycle?.tracking?.lastDriverLocation ?? null;
+  const trackingUpdatedAt = lifecycle?.tracking?.updatedAt
+    ?? liveDriverLocation?.receivedAt
+    ?? liveDriverLocation?.capturedAt
+    ?? null;
 
   return (
     <section className={styles.root}>
@@ -211,6 +216,14 @@ export function LiveRideScreen() {
         </div>
       </Card>
 
+      <LiveTrackingPanel
+        booking={booking}
+        lifecycle={lifecycle}
+        location={liveDriverLocation}
+        updatedAt={trackingUpdatedAt}
+        connectionState={connectionState}
+      />
+
       {syncError ? (
         <Alert tone="warning" title="Live Status Update">
           {syncError}
@@ -252,6 +265,54 @@ export function LiveRideScreen() {
         </Button>
       </div>
     </section>
+  );
+}
+
+interface LiveTrackingPanelProps {
+  booking: RideBooking;
+  lifecycle: RideLifecycleView | null;
+  location: RideTrackingLocation | null;
+  updatedAt: string | null;
+  connectionState: LiveConnectionState;
+}
+
+function LiveTrackingPanel({ booking, lifecycle, location, updatedAt, connectionState }: LiveTrackingPanelProps) {
+  const pickup = lifecycle?.ride.pickup ?? booking.pickup;
+  const dropoff = lifecycle?.ride.dropoff ?? booking.dropoff;
+  const positions = resolveTrackingPositions(pickup, dropoff, location);
+  const lastGpsLabel = updatedAt ? formatSyncTime(updatedAt) : "Waiting";
+
+  return (
+    <Card className={styles.trackingPanel}>
+      <div className={styles.sectionHeader}>
+        <div>
+          <p className={styles.eyebrow}>Live GPS Tracking</p>
+          <h3>{location ? "Driver movement synced" : "Waiting for driver GPS"}</h3>
+        </div>
+        <Badge tone={location && connectionState === "live" ? "success" : "warning"}>
+          {location && connectionState === "live" ? "Realtime" : "Standby"}
+        </Badge>
+      </div>
+
+      <div className={styles.liveMapCanvas} aria-label="Live driver tracking map preview">
+        <div className={styles.mapGrid} />
+        <span className={`${styles.mapPin} ${styles.pickupPin}`} style={toCssPosition(positions.pickup)}>P</span>
+        <span className={`${styles.mapPin} ${styles.dropoffPin}`} style={toCssPosition(positions.dropoff)}>D</span>
+        <span className={styles.routeStroke} />
+        {location ? (
+          <span className={styles.driverPin} style={toCssPosition(positions.driver)}>
+            <span className={styles.driverDirection} style={{ transform: `rotate(${location.headingDegrees ?? 0}deg)` }} />
+            DR
+          </span>
+        ) : null}
+      </div>
+
+      <div className={styles.trackingStats}>
+        <MetricCard label="Last GPS" value={lastGpsLabel} />
+        <MetricCard label="Accuracy" value={location?.accuracyMeters ? `${location.accuracyMeters} m` : "Pending"} />
+        <MetricCard label="Speed" value={location?.speedKmph ? `${location.speedKmph} km/h` : "Pending"} />
+      </div>
+    </Card>
   );
 }
 
@@ -310,3 +371,61 @@ const resolveSyncLabel = (connectionState: LiveConnectionState, lastSyncedAt: st
 
   return timeLabel ? `Connecting live updates · ${timeLabel}` : "Connecting live updates";
 };
+
+const resolveTrackingPositions = (
+  pickup: RideBooking["pickup"],
+  dropoff: RideBooking["dropoff"],
+  driver: RideTrackingLocation | null
+) => {
+  const points = [
+    { latitude: pickup.latitude, longitude: pickup.longitude },
+    { latitude: dropoff.latitude, longitude: dropoff.longitude },
+    driver ? { latitude: driver.latitude, longitude: driver.longitude } : null
+  ].filter(isTrackablePoint);
+  const latitudes = points.map((point) => point.latitude);
+  const longitudes = points.map((point) => point.longitude);
+  const minLatitude = Math.min(...latitudes);
+  const maxLatitude = Math.max(...latitudes);
+  const minLongitude = Math.min(...longitudes);
+  const maxLongitude = Math.max(...longitudes);
+
+  return {
+    pickup: toMapPosition(pickup, minLatitude, maxLatitude, minLongitude, maxLongitude, { x: 22, y: 26 }),
+    dropoff: toMapPosition(dropoff, minLatitude, maxLatitude, minLongitude, maxLongitude, { x: 78, y: 76 }),
+    driver: driver
+      ? toMapPosition(driver, minLatitude, maxLatitude, minLongitude, maxLongitude, { x: 38, y: 42 })
+      : { x: 38, y: 42 }
+  };
+};
+
+const toMapPosition = (
+  point: { latitude: number; longitude: number },
+  minLatitude: number,
+  maxLatitude: number,
+  minLongitude: number,
+  maxLongitude: number,
+  fallback: { x: number; y: number }
+) => {
+  if (!isTrackablePoint(point)) {
+    return fallback;
+  }
+
+  const latitudeSpan = Math.max(maxLatitude - minLatitude, 0.0001);
+  const longitudeSpan = Math.max(maxLongitude - minLongitude, 0.0001);
+
+  return {
+    x: clamp(12 + ((point.longitude - minLongitude) / longitudeSpan) * 76, 12, 88),
+    y: clamp(88 - ((point.latitude - minLatitude) / latitudeSpan) * 76, 12, 88)
+  };
+};
+
+const toCssPosition = (position: { x: number; y: number }) => ({
+  left: `${position.x}%`,
+  top: `${position.y}%`
+});
+
+const isTrackablePoint = (point: { latitude: number; longitude: number } | null): point is { latitude: number; longitude: number } => (
+  Boolean(point) && Number.isFinite(point?.latitude) && Number.isFinite(point?.longitude)
+);
+
+const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);

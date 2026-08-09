@@ -71,8 +71,24 @@ export interface RideLifecycleView {
     currentStep: string | null;
     nextAction: string | null;
   };
+  tracking: {
+    lastDriverLocation: RideTrackingLocation | null;
+    path: RideTrackingLocation[];
+    updatedAt: string | null;
+  };
   guidance: Record<string, unknown>;
   availableEvents: string[];
+}
+
+export interface RideTrackingLocation {
+  latitude: number;
+  longitude: number;
+  accuracyMeters: number | null;
+  headingDegrees: number | null;
+  speedKmph: number | null;
+  source: "gps" | "network" | "manual" | string;
+  capturedAt: string | null;
+  receivedAt: string | null;
 }
 
 export type RideBookingResponse = ApiResponse<{

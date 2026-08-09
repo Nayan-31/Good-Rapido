@@ -129,7 +129,8 @@ const createDependencies = () => ({
         findPrivateUserById: jest.fn(),
         findRideById: jest.fn(),
         findRideByIdForUser: jest.fn(),
-        updateRideById: jest.fn()
+        updateRideById: jest.fn(),
+        updateRideTrackingById: jest.fn()
     },
     publicTokenService: new PublicTokenService(),
     privateTokenService: new PrivateTokenService(),
@@ -216,6 +217,39 @@ describe('core ride lifecycle routes', () => {
             riderUser.id,
             riderUser.role
         );
+    });
+
+    test('public lifecycle stream includes latest driver GPS tracking', async () => {
+        dependencies.rideLifecycleDao.findPublicUserById.mockResolvedValue(riderUser);
+        dependencies.rideLifecycleDao.findRideByIdForUser.mockResolvedValue(createRideBooking({
+            authUserId: riderUser.id,
+            role: riderUser.role,
+            tracking: {
+                lastDriverLocation: {
+                    latitude: 22.5812,
+                    longitude: 88.3499,
+                    accuracyMeters: 12,
+                    headingDegrees: 90,
+                    speedKmph: 18,
+                    source: 'gps',
+                    capturedAt: new Date('2026-01-01T08:09:30.000Z'),
+                    receivedAt: new Date('2026-01-01T08:09:31.000Z')
+                },
+                path: [],
+                updatedAt: new Date('2026-01-01T08:09:31.000Z')
+            }
+        }));
+
+        const response = await injectRequest(app, {
+            method: 'GET',
+            path: `${BASE_PATH}/rides/ride-id/stream?once=true`,
+            headers: publicAuthHeaderFor(dependencies, riderUser)
+        });
+
+        expect(response.statusCode).toBe(200);
+        expect(response.text).toContain('"tracking"');
+        expect(response.text).toContain('"latitude":22.5812');
+        expect(response.text).toContain('"speedKmph":18');
     });
 
     test('ops user can fetch lifecycle for any ride', async () => {
@@ -312,6 +346,56 @@ describe('core ride lifecycle routes', () => {
         expect(response.body.data.lifecycle.transitionLog[0].actorRole).toBe(PRIVATE_AUTH_ROLES.DRIVER);
     });
 
+    test('driver user can publish live GPS location for assigned ride', async () => {
+        const driverUser = createPrivateUser(PRIVATE_AUTH_ROLES.DRIVER, {
+            employeeCode: 'DRV-CAB-RAJESH'
+        });
+        const ride = createRideBooking();
+        const capturedAt = new Date('2026-01-01T08:09:30.000Z');
+
+        dependencies.rideLifecycleDao.findPrivateUserById.mockResolvedValue(driverUser);
+        dependencies.rideLifecycleDao.findRideById.mockResolvedValue(ride);
+        dependencies.rideLifecycleDao.updateRideTrackingById.mockImplementation(async (_rideId, location) => ({
+            ...ride,
+            tracking: {
+                lastDriverLocation: location,
+                path: [location],
+                updatedAt: location.receivedAt
+            },
+            updatedAt: FIXED_NOW
+        }));
+
+        const response = await injectRequest(app, {
+            method: 'PATCH',
+            path: `${BASE_PATH}/rides/ride-id/tracking/location`,
+            headers: privateAuthHeaderFor(dependencies, driverUser),
+            body: {
+                location: {
+                    latitude: 22.5812,
+                    longitude: 88.3499,
+                    accuracyMeters: 12,
+                    headingDegrees: 90,
+                    speedKmph: 18,
+                    capturedAt: capturedAt.toISOString(),
+                    source: 'gps'
+                }
+            }
+        });
+
+        expect(response.statusCode).toBe(200);
+        expect(response.body.data.lifecycle.tracking.lastDriverLocation.latitude).toBe(22.5812);
+        expect(response.body.data.lifecycle.tracking.lastDriverLocation.speedKmph).toBe(18);
+        expect(dependencies.rideLifecycleDao.updateRideTrackingById).toHaveBeenCalledWith(
+            'ride-id',
+            expect.objectContaining({
+                latitude: 22.5812,
+                longitude: 88.3499,
+                capturedAt
+            }),
+            { pathLimit: 50 }
+        );
+    });
+
     test('ops user can complete an in-progress ride', async () => {
         const ride = createRideBooking({
             lifecycle: {
@@ -379,5 +463,26 @@ describe('core ride lifecycle routes', () => {
 
         expect(response.statusCode).toBe(403);
         expect(response.body.message).toBe('Ride lifecycle private access is required');
+    });
+
+    test('public user cannot publish driver GPS location', async () => {
+        dependencies.rideLifecycleDao.findPublicUserById.mockResolvedValue(riderUser);
+
+        const response = await injectRequest(app, {
+            method: 'PATCH',
+            path: `${BASE_PATH}/rides/ride-id/tracking/location`,
+            headers: publicAuthHeaderFor(dependencies, riderUser),
+            body: {
+                location: {
+                    latitude: 22.5812,
+                    longitude: 88.3499,
+                    source: 'gps'
+                }
+            }
+        });
+
+        expect(response.statusCode).toBe(403);
+        expect(response.body.message).toBe('Ride lifecycle private access is required');
+        expect(dependencies.rideLifecycleDao.updateRideTrackingById).not.toHaveBeenCalled();
     });
 });

@@ -2,7 +2,7 @@
 
 The rider app is the customer-facing ride booking experience. It focuses on transparent pricing, booking confidence, driver trust, route fairness, safety, history, and profile transparency.
 
-Current status: demo-ready rider MVP. The main rider screens and services are implemented for booking, fare transparency, confirm ride, live ride status, safety, notifications, history, and profile. Vehicle option prices on the home screen are backed by the pricing comparison API, the fare context chart is derived from quote values, ride history auto-loads the selected receipt, and profile fallbacks use authenticated rider/recent ride data where possible. The seeded demo flow verifies booking through completed ride history.
+Current status: demo-ready rider MVP. The main rider screens and services are implemented for booking, fare transparency, confirm ride, live ride status, live driver GPS tracking, safety, notifications, history, and profile. Vehicle option prices on the home screen are backed by the pricing comparison API, the fare context chart is derived from quote values, ride history auto-loads the selected receipt, and profile fallbacks use authenticated rider/recent ride data where possible. The seeded demo flow verifies booking through completed ride history.
 
 ## Current Screens And Flows
 
@@ -11,6 +11,7 @@ Current status: demo-ready rider MVP. The main rider screens and services are im
 - Fare estimate.
 - Confirm ride.
 - Live ride status stream.
+- Live driver GPS tracking panel.
 - Safety center.
 - Notifications.
 - Ride history.
@@ -96,6 +97,8 @@ core/pricing-engine
 - Locked fare summary.
 - Booking confirmation path.
 - Streamed lifecycle status updates after driver actions.
+- Streamed driver GPS tracking updates from `core/ride-lifecycle`.
+- Lightweight route preview that moves the driver marker without requiring a real map provider.
 - Periodic refresh fallback when streaming is unavailable.
 
 Backend modules:

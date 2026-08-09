@@ -2,7 +2,7 @@
 
 The backend is a modular Express and MongoDB API for the Good Rapido ride-booking platform. It is built as a modular monolith with separate public, private, and core module layers.
 
-Current status: in progress. The backend has broad module coverage and route tests across public, private, and core domains. Ride lifecycle status streaming is available for live rider updates. Production integrations such as real payment providers, maps, SMS/push providers, and GPS/WebSocket movement tracking are still pending.
+Current status: in progress. The backend has broad module coverage and route tests across public, private, and core domains. Ride lifecycle status streaming is available for live rider updates, and assigned-driver GPS updates are now stored on the ride document for rider tracking. Production integrations such as real payment providers, maps, SMS/push providers, and dedicated WebSocket transport are still pending.
 
 ## Stack
 
@@ -232,6 +232,12 @@ Driver real-data route checks:
 npm test -- earnings.route.test.js ride-ops.route.test.js ride-lifecycle.route.test.js trust.route.test.js notifications.route.test.js
 ```
 
+Ride lifecycle GPS tracking route checks:
+
+```bash
+npm test -- ride-lifecycle.route.test.js
+```
+
 Ops admin-action route checks:
 
 ```bash
@@ -262,6 +268,7 @@ Full deployment notes are in:
 - Private admin and ops auth support login, refresh, logout, permissions, and session profile. Self-registration is disabled for these roles.
 - Private notifications support driver-scoped list/detail/mark-read access for driver apps, while ops/admin delivery management remains protected.
 - Ops admin-action APIs cover pricing create/update/activate/archive/simulate, surge create/update/activate/pause/end/archive/simulate, fraud assign/confirm/dismiss/resolve/simulate, dispute assign/evidence/resolve/reject, notification create/send/retry/fail/cancel, and admin user create/update/status/permissions.
+- Core ride lifecycle stores assigned-driver GPS updates on the ride document and exposes `tracking.lastDriverLocation` through the rider lifecycle stream.
 - Frontend apps attach short-lived access tokens, use refresh tokens to recover expired sessions, and clear browser session state when refresh/logout fails.
 - Core engines expose reusable logic for pricing, matching, ride lifecycle, route fairness, trust, fraud, payment, notification, and identity workflows.
 - Some business flows use deterministic engine outputs and mock-like defaults until live providers and production data sources are added.
@@ -270,6 +277,6 @@ Full deployment notes are in:
 
 - Add live map provider integration.
 - Add payment gateway integration.
-- Add GPS/WebSocket-based vehicle movement tracking.
+- Add dedicated WebSocket transport if the lifecycle stream needs to move beyond SSE/polling fallback.
 - Add production notification providers.
 - Complete frontend-to-backend binding for remaining secondary support/demo preview screens.

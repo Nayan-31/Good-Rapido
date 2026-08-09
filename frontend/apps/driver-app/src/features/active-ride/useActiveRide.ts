@@ -64,6 +64,10 @@ export function useActiveRide() {
   const syncDriverLocation = useCallback(async (location: DriverLiveLocation) => {
     setDriverLocation(location);
 
+    if (!ride?.id) {
+      return;
+    }
+
     const now = Date.now();
 
     if (now - lastLocationSyncAtRef.current < LOCATION_SYNC_MIN_MS) {
@@ -73,12 +77,12 @@ export function useActiveRide() {
     lastLocationSyncAtRef.current = now;
 
     try {
-      await activeRideService.syncDriverLocation(location);
+      await activeRideService.syncDriverLocation(ride.id, location);
       setLocationError(null);
     } catch (syncError) {
       setLocationError(resolveError(syncError, "Unable to sync live GPS location"));
     }
-  }, []);
+  }, [ride?.id]);
 
   const stopLocationTracking = useCallback(() => {
     if (watchIdRef.current !== null && typeof navigator !== "undefined" && navigator.geolocation) {

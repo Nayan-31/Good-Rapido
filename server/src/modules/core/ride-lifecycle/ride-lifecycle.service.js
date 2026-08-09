@@ -21,6 +21,8 @@ import {
     toRideLifecycleView
 } from './dto/ride-lifecycle.dto.js';
 
+const RIDE_TRACKING_PATH_LIMIT = 50;
+
 export default class RideLifecycleService {
     constructor({ rideLifecycleDao, now = () => new Date() }) {
         this.rideLifecycleDao = rideLifecycleDao;
@@ -168,6 +170,47 @@ export default class RideLifecycleService {
 
         return buildSuccessResponse({
             message: 'Ride lifecycle updated successfully',
+            data: {
+                lifecycle: toRideLifecycleView(
+                    updatedRide,
+                    buildRideLifecycle(updatedRide, { now: this.now() })
+                )
+            }
+        });
+    }
+
+    async updateDriverLocation(authContext, rideId, payload) {
+        const actor = await this.getPrivateUserContext(authContext, { write: true });
+        const ride = toPlainObject(await this.rideLifecycleDao.findRideById(rideId));
+
+        if (!ride) {
+            throw AppError.notFound('Ride not found');
+        }
+
+        this.assertPrivateRideAccess(authContext, actor, ride);
+
+        const currentLifecycle = buildRideLifecycle(ride, { now: this.now() });
+
+        if (isTerminalLifecycle(currentLifecycle.lifecycleStatus)) {
+            throw AppError.badRequest('Driver location cannot be updated after ride is closed');
+        }
+
+        const location = normalizeDriverTrackingLocation(payload.location, {
+            capturedAt: payload.location.capturedAt || this.now(),
+            receivedAt: this.now()
+        });
+        const updatedRide = toPlainObject(await this.rideLifecycleDao.updateRideTrackingById(
+            rideId,
+            location,
+            { pathLimit: RIDE_TRACKING_PATH_LIMIT }
+        ));
+
+        if (!updatedRide) {
+            throw AppError.notFound('Ride not found');
+        }
+
+        return buildSuccessResponse({
+            message: 'Driver live location updated successfully',
             data: {
                 lifecycle: toRideLifecycleView(
                     updatedRide,
@@ -365,6 +408,17 @@ const normalizeLifecycle = (lifecycle = {}) => ({
     transitionLog: Array.isArray(lifecycle?.transitionLog) ? lifecycle.transitionLog : []
 });
 
+const normalizeDriverTrackingLocation = (location = {}, { capturedAt, receivedAt }) => ({
+    latitude: location.latitude,
+    longitude: location.longitude,
+    ...(location.accuracyMeters !== undefined && location.accuracyMeters !== null ? { accuracyMeters: location.accuracyMeters } : {}),
+    ...(location.headingDegrees !== undefined && location.headingDegrees !== null ? { headingDegrees: location.headingDegrees } : {}),
+    ...(location.speedKmph !== undefined && location.speedKmph !== null ? { speedKmph: location.speedKmph } : {}),
+    source: location.source || 'gps',
+    capturedAt,
+    receivedAt
+});
+
 const startSseResponse = (res) => {
     res.status(200);
     res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
@@ -389,7 +443,13 @@ const createLifecycleSignature = (lifecycle = {}) => JSON.stringify({
     lifecycleStatus: lifecycle.lifecycleStatus,
     progressPercentage: lifecycle.progress?.percentage,
     updatedAt: lifecycle.updatedAt,
-    transitionLogSize: Array.isArray(lifecycle.transitionLog) ? lifecycle.transitionLog.length : 0
+    transitionLogSize: Array.isArray(lifecycle.transitionLog) ? lifecycle.transitionLog.length : 0,
+    driverLocation: {
+        latitude: lifecycle.tracking?.lastDriverLocation?.latitude,
+        longitude: lifecycle.tracking?.lastDriverLocation?.longitude,
+        capturedAt: lifecycle.tracking?.lastDriverLocation?.capturedAt,
+        receivedAt: lifecycle.tracking?.lastDriverLocation?.receivedAt
+    }
 });
 
 const isTerminalLifecycle = (lifecycleStatus) => [

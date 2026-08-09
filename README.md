@@ -2,7 +2,7 @@
 
 Good Rapido is a full-stack capstone project for a transparent ride-booking platform. The product idea is simple: riders should understand why a fare changed, why a route was selected, why a driver was matched, and how trust or safety decisions are made.
 
-Current status: demo-ready full-stack MVP. The backend modular foundation is strong, the rider, driver, and ops frontend apps are wired around the main booking lifecycle, and the core demo flow is verified from rider booking to driver completion. Rider live ride status can auto-update through a backend stream with polling fallback. Frontend auth now uses session-scoped storage, proactive access-token refresh, retry-on-expired-token handling, stale token cleanup, and route guards across rider, driver, and ops apps. Ops final admin-action QA is verified for pricing, surge, fraud, disputes, notifications, and admin users. Production integrations such as real map provider, payment gateway, GPS/WebSocket movement tracking, and SMS/push/email providers are still pending.
+Current status: demo-ready full-stack MVP. The backend modular foundation is strong, the rider, driver, and ops frontend apps are wired around the main booking lifecycle, and the core demo flow is verified from rider booking to driver completion. Rider live ride status and driver GPS movement can auto-update through the ride lifecycle realtime stream with polling fallback. Frontend auth now uses session-scoped storage, proactive access-token refresh, retry-on-expired-token handling, stale token cleanup, and route guards across rider, driver, and ops apps. Ops final admin-action QA is verified for pricing, surge, fraud, disputes, notifications, and admin users. Production integrations such as real map provider, payment gateway, dedicated WebSocket transport, and SMS/push/email providers are still pending.
 
 ## Tech Stack
 
@@ -98,7 +98,7 @@ Rider app current state:
 - Booking home screen with backend-backed vehicle pricing comparison.
 - Fare estimate screen with breakdown, confidence, surge transparency, and quote-derived fare context.
 - Confirm ride flow using pricing, matching, and lifecycle concepts.
-- Live ride status stream with periodic refresh fallback.
+- Live ride status and driver GPS tracking stream with periodic refresh fallback.
 - Ride history with auto-loaded receipt transparency and profile transparency screens.
 - Safety and notification screens.
 - API-facing services for rider flows.
@@ -109,6 +109,7 @@ Driver app current state:
 - App shell, routing, and feature folder structure.
 - Real private driver authentication: register, login, session restore, refresh, logout, and protected routes.
 - Driver onboarding, availability, ride requests, active ride lifecycle, earnings, trust, alerts, profile, and support flows.
+- Active ride GPS watch publishes driver movement into the backend ride lifecycle tracking stream.
 - Seeded driver accounts can receive real rider bookings in the request queue and complete the ride lifecycle.
 
 Ops dashboard current state:
@@ -129,6 +130,7 @@ Real backend data is currently active for:
 - MongoDB-backed rider, driver, admin, and ops users.
 - Rider pricing comparison, fare estimate, driver search, booking creation, live status stream, current ride status, ride history, receipt transparency, and profile data in the verified demo flow.
 - Driver login, request visibility, accept ride, arrived, start ride, complete ride, and earnings update in the verified demo flow.
+- Driver active ride GPS updates are stored on the ride document and streamed back to the rider live tracking screen.
 - Driver dashboard real-data summaries for earnings, trust, profile/document readiness, notifications, and assigned request status.
 - Driver active ride state resolves backend assigned active rides first and only uses demo ride fallback when explicitly enabled.
 - Driver notifications support private driver-scoped list/detail/mark-read access.
@@ -139,7 +141,7 @@ Real backend data is currently active for:
 Partially integrated or UI-first areas:
 
 - Support and provider-backed secondary cards still have a few UI-first placeholders until live support/provider records exist.
-- Payment gateway, real map provider, GPS/WebSocket movement tracking, SMS/push/email delivery, and production deployment are pending.
+- Payment gateway, real map provider, dedicated WebSocket transport, SMS/push/email delivery, and production deployment are pending.
 
 ## Local Setup
 

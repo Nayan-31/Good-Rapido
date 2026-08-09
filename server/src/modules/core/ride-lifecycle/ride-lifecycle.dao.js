@@ -57,4 +57,27 @@ export default class RideLifecycleDao {
             { returnDocument: 'after', runValidators: true }
         );
     }
+
+    updateRideTrackingById(rideId, location, { pathLimit = 50 } = {}) {
+        if (!mongoose.isValidObjectId(rideId)) {
+            return null;
+        }
+
+        return this.rideModel.findByIdAndUpdate(
+            rideId,
+            {
+                $set: {
+                    'tracking.lastDriverLocation': location,
+                    'tracking.updatedAt': location.receivedAt
+                },
+                $push: {
+                    'tracking.path': {
+                        $each: [location],
+                        $slice: -pathLimit
+                    }
+                }
+            },
+            { returnDocument: 'after', runValidators: true }
+        );
+    }
 }
