@@ -24,6 +24,11 @@ const envSchema = z.object({
     ACCESS_SECRET_TOKEN: z.string().default(appConstant.ACCESS_SECRET_TOKEN),
     ACCESS_TOKEN_EXPIRES_IN: z.string().default(appConstant.ACCESS_TOKEN_EXPIRES_IN),
     REFRESH_TOKEN_EXPIRES_IN: z.string().default(appConstant.REFRESH_TOKEN_EXPIRES_IN),
+    PAYMENT_GATEWAY_PROVIDER: z.enum(['mock', 'razorpay', 'stripe']).default(appConstant.PAYMENT_GATEWAY_PROVIDER),
+    RAZORPAY_KEY_ID: z.string().default(appConstant.RAZORPAY_KEY_ID),
+    RAZORPAY_KEY_SECRET: z.string().default(appConstant.RAZORPAY_KEY_SECRET),
+    STRIPE_SECRET_KEY: z.string().default(appConstant.STRIPE_SECRET_KEY),
+    STRIPE_PUBLISHABLE_KEY: z.string().default(appConstant.STRIPE_PUBLISHABLE_KEY),
 })
 
 const parsed = envSchema.safeParse(process.env)

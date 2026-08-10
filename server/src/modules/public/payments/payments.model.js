@@ -2,6 +2,8 @@ import mongoose from 'mongoose';
 import { AUTH_ROLES } from '../auth/auth.constants.js';
 import {
     PAYMENT_CURRENCY,
+    PAYMENT_GATEWAY_PROVIDERS,
+    PAYMENT_GATEWAY_STATUSES,
     PAYMENT_METHODS,
     PAYMENT_REFUND_REASONS,
     PAYMENT_STATUSES
@@ -100,6 +102,88 @@ const refundSchema = new mongoose.Schema(
         },
         resolvedAt: {
             type: Date
+        },
+        gatewayProvider: {
+            type: String,
+            enum: Object.values(PAYMENT_GATEWAY_PROVIDERS)
+        },
+        gatewayRefundId: {
+            type: String,
+            trim: true,
+            maxlength: 120
+        },
+        gatewayStatus: {
+            type: String,
+            enum: Object.values(PAYMENT_GATEWAY_STATUSES)
+        },
+        gatewayFailureReason: {
+            type: String,
+            trim: true,
+            maxlength: 180
+        }
+    },
+    { _id: false }
+);
+
+const gatewaySchema = new mongoose.Schema(
+    {
+        provider: {
+            type: String,
+            enum: Object.values(PAYMENT_GATEWAY_PROVIDERS),
+            default: PAYMENT_GATEWAY_PROVIDERS.MOCK
+        },
+        status: {
+            type: String,
+            enum: Object.values(PAYMENT_GATEWAY_STATUSES),
+            default: PAYMENT_GATEWAY_STATUSES.NOT_REQUIRED
+        },
+        orderId: {
+            type: String,
+            trim: true,
+            maxlength: 120
+        },
+        paymentIntentId: {
+            type: String,
+            trim: true,
+            maxlength: 120
+        },
+        paymentId: {
+            type: String,
+            trim: true,
+            maxlength: 120
+        },
+        checkoutId: {
+            type: String,
+            trim: true,
+            maxlength: 120
+        },
+        clientSecret: {
+            type: String,
+            trim: true,
+            maxlength: 260
+        },
+        publicKey: {
+            type: String,
+            trim: true,
+            maxlength: 180
+        },
+        paymentUrl: {
+            type: String,
+            trim: true,
+            maxlength: 500
+        },
+        failureReason: {
+            type: String,
+            trim: true,
+            maxlength: 180
+        },
+        rawStatus: {
+            type: String,
+            trim: true,
+            maxlength: 80
+        },
+        lastEventAt: {
+            type: Date
         }
     },
     { _id: false }
@@ -184,6 +268,10 @@ const paymentSchema = new mongoose.Schema(
             type: String,
             trim: true,
             index: true
+        },
+        gateway: {
+            type: gatewaySchema,
+            default: {}
         },
         idempotencyKey: {
             type: String,

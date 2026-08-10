@@ -35,6 +35,8 @@ export const toPublicPayment = (payment) => ({
         after: nullableNumber(payment.walletBalanceAfter)
     },
     gatewayReference: payment.gatewayReference || null,
+    gateway: toPublicGateway(payment.gateway),
+    failureReason: payment.failureReason || null,
     capturedAt: payment.capturedAt || null,
     refundableUntil: payment.refundableUntil || null,
     refund: payment.refund ? toPublicRefund(payment) : null,
@@ -64,7 +66,28 @@ export const toPublicRefund = (payment) => ({
     note: payment.refund?.note || null,
     amount: numberOrZero(payment.refund?.amount),
     requestedAt: payment.refund?.requestedAt || null,
-    resolvedAt: payment.refund?.resolvedAt || null
+    resolvedAt: payment.refund?.resolvedAt || null,
+    gateway: {
+        provider: payment.refund?.gatewayProvider || null,
+        refundId: payment.refund?.gatewayRefundId || null,
+        status: payment.refund?.gatewayStatus || null,
+        failureReason: payment.refund?.gatewayFailureReason || null
+    }
+});
+
+const toPublicGateway = (gateway = {}) => ({
+    provider: gateway?.provider || null,
+    status: gateway?.status || null,
+    orderId: gateway?.orderId || null,
+    paymentId: gateway?.paymentId || null,
+    paymentIntentId: gateway?.paymentIntentId || null,
+    checkoutId: gateway?.checkoutId || null,
+    clientSecret: gateway?.clientSecret || null,
+    publicKey: gateway?.publicKey || null,
+    paymentUrl: gateway?.paymentUrl || null,
+    failureReason: gateway?.failureReason || null,
+    rawStatus: gateway?.rawStatus || null,
+    lastEventAt: gateway?.lastEventAt || null
 });
 
 const toPublicRideSnapshot = (ride = {}) => ({

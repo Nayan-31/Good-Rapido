@@ -42,3 +42,32 @@ export const refundPaymentSchema = z.object({
         amount: z.coerce.number().min(1).max(200000).optional()
     })
 });
+
+export const paymentSuccessSchema = z.object({
+    params: z.object({
+        paymentId: nonEmptyString
+    }),
+    body: z.object({
+        providerPaymentId: z.string().trim().min(2).max(120).optional(),
+        providerOrderId: z.string().trim().min(2).max(120).optional(),
+        providerPaymentIntentId: z.string().trim().min(2).max(120).optional(),
+        providerSignature: z.string().trim().min(8).max(260).optional(),
+        razorpayPaymentId: z.string().trim().min(2).max(120).optional(),
+        razorpayOrderId: z.string().trim().min(2).max(120).optional(),
+        razorpaySignature: z.string().trim().min(8).max(260).optional(),
+        rawProviderStatus: z.string().trim().min(2).max(80).optional()
+    }).strict()
+});
+
+export const paymentFailureSchema = z.object({
+    params: z.object({
+        paymentId: nonEmptyString
+    }),
+    body: z.object({
+        failureReason: z.string().trim().min(2).max(180),
+        providerPaymentId: z.string().trim().min(2).max(120).optional(),
+        providerOrderId: z.string().trim().min(2).max(120).optional(),
+        providerPaymentIntentId: z.string().trim().min(2).max(120).optional(),
+        rawProviderStatus: z.string().trim().min(2).max(80).optional()
+    }).strict()
+});

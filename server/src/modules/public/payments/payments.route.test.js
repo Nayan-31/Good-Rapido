@@ -7,6 +7,8 @@ import { injectRequest } from '../../../shared/test/httpTestClient.js';
 import { RIDE_BOOKING_STATUSES } from '../ride-booking/ride-booking.constants.js';
 import {
     PAYMENT_CURRENCY,
+    PAYMENT_GATEWAY_PROVIDERS,
+    PAYMENT_GATEWAY_STATUSES,
     PAYMENT_METHODS,
     PAYMENT_REFUND_REASONS,
     PAYMENT_STATUSES,
@@ -110,6 +112,11 @@ const createPayment = (overrides = {}) => ({
     walletBalanceBefore: PAYMENT_WALLET_OPENING_BALANCE,
     walletBalanceAfter: PAYMENT_WALLET_OPENING_BALANCE - 350,
     gatewayReference: 'personal_wallet-ref',
+    gateway: {
+        provider: PAYMENT_GATEWAY_PROVIDERS.MOCK,
+        status: PAYMENT_GATEWAY_STATUSES.NOT_REQUIRED,
+        lastEventAt: new Date('2026-01-01T08:10:00.000Z')
+    },
     capturedAt: new Date('2026-01-01T08:10:00.000Z'),
     refundableUntil: new Date('2026-01-08T08:10:00.000Z'),
     refund: null,
@@ -124,10 +131,17 @@ const createDependencies = () => ({
         findByIdForUser: jest.fn(),
         findHistoryForUser: jest.fn(),
         findSuccessfulByRideForUser: jest.fn(),
-        requestRefund: jest.fn()
+        requestRefund: jest.fn(),
+        updatePaymentForUser: jest.fn()
     },
     ridesDao: {
         findByIdForUser: jest.fn()
+    },
+    paymentGateway: {
+        createPaymentSession: jest.fn(),
+        confirmPaymentSuccess: jest.fn(),
+        markPaymentFailed: jest.fn(),
+        createRefund: jest.fn()
     },
     tokenService: new TokenService(),
     now: () => FIXED_NOW
@@ -222,6 +236,156 @@ describe('public payments routes', () => {
             status: PAYMENT_STATUSES.SUCCEEDED,
             amount: 350
         }));
+    });
+
+    test('pay ride creates a gateway session for UPI payments', async () => {
+        const user = createUser();
+        const ride = createRideBooking(user.role, {
+            authUserId: user.id,
+            role: user.role
+        });
+        const gatewaySession = {
+            provider: PAYMENT_GATEWAY_PROVIDERS.MOCK,
+            status: PAYMENT_GATEWAY_STATUSES.REQUIRES_ACTION,
+            orderId: 'mock-order-id',
+            checkoutId: 'mock-checkout-id',
+            clientSecret: 'mock-client-secret',
+            gatewayReference: 'mock-gateway-ref',
+            rawStatus: PAYMENT_GATEWAY_STATUSES.REQUIRES_ACTION,
+            lastEventAt: FIXED_NOW
+        };
+
+        dependencies.ridesDao.findByIdForUser.mockResolvedValue(ride);
+        dependencies.paymentsDao.findSuccessfulByRideForUser.mockResolvedValue(null);
+        dependencies.paymentGateway.createPaymentSession.mockResolvedValue(gatewaySession);
+        dependencies.paymentsDao.create.mockImplementation(async (payload) => createPayment({
+            ...payload,
+            id: 'payment-id',
+            _id: 'payment-id',
+            createdAt: FIXED_NOW,
+            updatedAt: FIXED_NOW
+        }));
+
+        const response = await injectRequest(app, {
+            method: 'POST',
+            path: `${BASE_PATH}/rides/ride-id/pay`,
+            headers: authHeaderFor(dependencies, user),
+            body: {
+                paymentMethod: PAYMENT_METHODS.UPI
+            }
+        });
+
+        expect(response.statusCode).toBe(201);
+        expect(response.body.data.payment.status).toBe(PAYMENT_STATUSES.PENDING);
+        expect(response.body.data.payment.gateway.provider).toBe(PAYMENT_GATEWAY_PROVIDERS.MOCK);
+        expect(response.body.data.payment.gateway.orderId).toBe('mock-order-id');
+        expect(dependencies.paymentGateway.createPaymentSession).toHaveBeenCalledWith(expect.objectContaining({
+            amount: 350,
+            paymentMethod: PAYMENT_METHODS.UPI
+        }));
+        expect(dependencies.paymentsDao.create).toHaveBeenCalledWith(expect.objectContaining({
+            method: PAYMENT_METHODS.UPI,
+            status: PAYMENT_STATUSES.PENDING,
+            gatewayReference: 'mock-gateway-ref',
+            gateway: expect.objectContaining({
+                status: PAYMENT_GATEWAY_STATUSES.REQUIRES_ACTION
+            })
+        }));
+    });
+
+    test('payment success callback marks gateway payment successful', async () => {
+        const user = createUser();
+        const pendingPayment = createPayment({
+            authUserId: user.id,
+            role: user.role,
+            method: PAYMENT_METHODS.UPI,
+            status: PAYMENT_STATUSES.PENDING,
+            capturedAt: null,
+            refundableUntil: null,
+            gateway: {
+                provider: PAYMENT_GATEWAY_PROVIDERS.MOCK,
+                status: PAYMENT_GATEWAY_STATUSES.REQUIRES_ACTION,
+                orderId: 'mock-order-id'
+            }
+        });
+        const gatewayResult = {
+            provider: PAYMENT_GATEWAY_PROVIDERS.MOCK,
+            status: PAYMENT_GATEWAY_STATUSES.SUCCEEDED,
+            paymentId: 'mock-payment-id',
+            orderId: 'mock-order-id',
+            gatewayReference: 'mock-payment-id',
+            rawStatus: PAYMENT_GATEWAY_STATUSES.SUCCEEDED,
+            lastEventAt: FIXED_NOW
+        };
+
+        dependencies.paymentsDao.findByIdForUser.mockResolvedValue(pendingPayment);
+        dependencies.paymentGateway.confirmPaymentSuccess.mockResolvedValue(gatewayResult);
+        dependencies.paymentsDao.updatePaymentForUser.mockImplementation(async (_paymentId, _userId, _role, payload) => createPayment({
+            ...pendingPayment,
+            ...payload,
+            updatedAt: FIXED_NOW
+        }));
+
+        const response = await injectRequest(app, {
+            method: 'POST',
+            path: `${BASE_PATH}/payment-id/success`,
+            headers: authHeaderFor(dependencies, user),
+            body: {
+                providerPaymentId: 'mock-payment-id',
+                providerOrderId: 'mock-order-id'
+            }
+        });
+
+        expect(response.statusCode).toBe(200);
+        expect(response.body.data.payment.status).toBe(PAYMENT_STATUSES.SUCCEEDED);
+        expect(response.body.data.payment.gateway.status).toBe(PAYMENT_GATEWAY_STATUSES.SUCCEEDED);
+        expect(response.body.data.payment.gateway.paymentId).toBe('mock-payment-id');
+    });
+
+    test('payment failure callback marks gateway payment failed', async () => {
+        const user = createUser();
+        const pendingPayment = createPayment({
+            authUserId: user.id,
+            role: user.role,
+            method: PAYMENT_METHODS.CARD,
+            status: PAYMENT_STATUSES.PENDING,
+            gateway: {
+                provider: PAYMENT_GATEWAY_PROVIDERS.MOCK,
+                status: PAYMENT_GATEWAY_STATUSES.REQUIRES_ACTION,
+                paymentIntentId: 'mock-intent-id'
+            }
+        });
+        const gatewayResult = {
+            provider: PAYMENT_GATEWAY_PROVIDERS.MOCK,
+            status: PAYMENT_GATEWAY_STATUSES.FAILED,
+            paymentIntentId: 'mock-intent-id',
+            failureReason: 'Card declined',
+            rawStatus: PAYMENT_GATEWAY_STATUSES.FAILED,
+            lastEventAt: FIXED_NOW
+        };
+
+        dependencies.paymentsDao.findByIdForUser.mockResolvedValue(pendingPayment);
+        dependencies.paymentGateway.markPaymentFailed.mockResolvedValue(gatewayResult);
+        dependencies.paymentsDao.updatePaymentForUser.mockImplementation(async (_paymentId, _userId, _role, payload) => createPayment({
+            ...pendingPayment,
+            ...payload,
+            updatedAt: FIXED_NOW
+        }));
+
+        const response = await injectRequest(app, {
+            method: 'POST',
+            path: `${BASE_PATH}/payment-id/failure`,
+            headers: authHeaderFor(dependencies, user),
+            body: {
+                failureReason: 'Card declined',
+                providerPaymentIntentId: 'mock-intent-id'
+            }
+        });
+
+        expect(response.statusCode).toBe(200);
+        expect(response.body.data.payment.status).toBe(PAYMENT_STATUSES.FAILED);
+        expect(response.body.data.payment.failureReason).toBe('Card declined');
+        expect(response.body.data.payment.gateway.status).toBe(PAYMENT_GATEWAY_STATUSES.FAILED);
     });
 
     test('pay ride prevents duplicate successful payments', async () => {
@@ -334,6 +498,52 @@ describe('public payments routes', () => {
                 amount: 120
             })
         );
+    });
+
+    test('refund request can resolve provider refunds immediately', async () => {
+        const user = createUser();
+        const payment = createPayment({
+            authUserId: user.id,
+            role: user.role,
+            method: PAYMENT_METHODS.CARD,
+            gateway: {
+                provider: PAYMENT_GATEWAY_PROVIDERS.MOCK,
+                status: PAYMENT_GATEWAY_STATUSES.SUCCEEDED,
+                paymentIntentId: 'mock-intent-id',
+                paymentId: 'mock-payment-id'
+            }
+        });
+
+        dependencies.paymentsDao.findByIdForUser.mockResolvedValue(payment);
+        dependencies.paymentGateway.createRefund.mockResolvedValue({
+            provider: PAYMENT_GATEWAY_PROVIDERS.MOCK,
+            refundId: 'mock-refund-id',
+            status: PAYMENT_GATEWAY_STATUSES.REFUNDED,
+            rawStatus: PAYMENT_GATEWAY_STATUSES.REFUNDED
+        });
+        dependencies.paymentsDao.updatePaymentForUser.mockImplementation(async (_paymentId, _userId, _role, payload) => createPayment({
+            ...payment,
+            ...payload,
+            updatedAt: FIXED_NOW
+        }));
+
+        const response = await injectRequest(app, {
+            method: 'POST',
+            path: `${BASE_PATH}/payment-id/refund`,
+            headers: authHeaderFor(dependencies, user),
+            body: {
+                reason: PAYMENT_REFUND_REASONS.DUPLICATE_PAYMENT,
+                amount: 80
+            }
+        });
+
+        expect(response.statusCode).toBe(200);
+        expect(response.body.data.payment.status).toBe(PAYMENT_STATUSES.REFUNDED);
+        expect(response.body.data.refund.gateway.refundId).toBe('mock-refund-id');
+        expect(dependencies.paymentGateway.createRefund).toHaveBeenCalledWith(payment, {
+            amount: 80,
+            reason: PAYMENT_REFUND_REASONS.DUPLICATE_PAYMENT
+        });
     });
 
     test('missing rides return not found during payment', async () => {

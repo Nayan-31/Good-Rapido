@@ -26,6 +26,14 @@ export default class PaymentsController {
         sendHttpResponse(res, await this.paymentsService.payRide(req.auth, req.params.rideId, req.body));
     });
 
+    confirmPaymentSuccess = asyncHandler(async (req, res) => {
+        sendHttpResponse(res, await this.paymentsService.confirmPaymentSuccess(req.auth, req.params.paymentId, req.body));
+    });
+
+    markPaymentFailed = asyncHandler(async (req, res) => {
+        sendHttpResponse(res, await this.paymentsService.markPaymentFailed(req.auth, req.params.paymentId, req.body));
+    });
+
     requestRefund = asyncHandler(async (req, res) => {
         sendHttpResponse(res, await this.paymentsService.requestRefund(req.auth, req.params.paymentId, req.body));
     });

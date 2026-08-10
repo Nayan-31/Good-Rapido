@@ -2,7 +2,7 @@
 
 This workspace contains the frontend apps and shared frontend packages for Good Rapido.
 
-Current status: demo-ready frontend MVP. Rider, driver, and ops apps are wired around the main booking lifecycle. The verified demo flow covers rider booking, driver request handling, live driver GPS tracking, ride completion, driver earnings, and ops visibility. Some secondary cards still use planned/sample fallback values when no live records exist.
+Current status: demo-ready frontend MVP. Rider, driver, and ops apps are wired around the main booking lifecycle. The verified demo flow covers rider booking, driver request handling, live driver GPS tracking, payment API wiring, ride completion, driver earnings, and ops visibility. Some secondary cards still use planned/sample fallback values when no live records exist.
 
 ## Workspace Structure
 
@@ -35,6 +35,7 @@ Current coverage:
 - Confirm ride flow.
 - Live ride status stream with periodic refresh fallback.
 - Live GPS tracking panel that moves the driver marker from backend `tracking.lastDriverLocation` updates.
+- Payment API client methods for provider payment success, failure, refunds, history, and detail flows.
 - Safety center.
 - Notifications.
 - Ride history with auto-loaded receipt transparency.

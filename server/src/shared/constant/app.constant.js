@@ -9,5 +9,10 @@ export default {
     ACCESS_SECRET_TOKEN: 'local-access-secret-change-me',
     REFRESH_SECRET_TOKEN: 'local-refresh-secret-change-me',
     ACCESS_TOKEN_EXPIRES_IN: '15m',
-    REFRESH_TOKEN_EXPIRES_IN: '7d'
+    REFRESH_TOKEN_EXPIRES_IN: '7d',
+    PAYMENT_GATEWAY_PROVIDER: 'mock',
+    RAZORPAY_KEY_ID: '',
+    RAZORPAY_KEY_SECRET: '',
+    STRIPE_SECRET_KEY: '',
+    STRIPE_PUBLISHABLE_KEY: ''
 }

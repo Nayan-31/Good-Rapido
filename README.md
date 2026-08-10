@@ -2,7 +2,7 @@
 
 Good Rapido is a full-stack capstone project for a transparent ride-booking platform. The product idea is simple: riders should understand why a fare changed, why a route was selected, why a driver was matched, and how trust or safety decisions are made.
 
-Current status: demo-ready full-stack MVP. The backend modular foundation is strong, the rider, driver, and ops frontend apps are wired around the main booking lifecycle, and the core demo flow is verified from rider booking to driver completion. Rider live ride status and driver GPS movement can auto-update through the ride lifecycle realtime stream with polling fallback. Frontend auth now uses session-scoped storage, proactive access-token refresh, retry-on-expired-token handling, stale token cleanup, and route guards across rider, driver, and ops apps. Ops final admin-action QA is verified for pricing, surge, fraud, disputes, notifications, and admin users. Production integrations such as real map provider, payment gateway, dedicated WebSocket transport, and SMS/push/email providers are still pending.
+Current status: demo-ready full-stack MVP. The backend modular foundation is strong, the rider, driver, and ops frontend apps are wired around the main booking lifecycle, and the core demo flow is verified from rider booking to driver completion. Rider live ride status and driver GPS movement can auto-update through the ride lifecycle realtime stream with polling fallback. Frontend auth now uses session-scoped storage, proactive access-token refresh, retry-on-expired-token handling, stale token cleanup, and route guards across rider, driver, and ops apps. Real payment gateway code is ready with mock, Razorpay, and Stripe provider paths; live credentials and webhook deployment verification are still pending. Ops final admin-action QA is verified for pricing, surge, fraud, disputes, notifications, and admin users. Production integrations such as real map provider, dedicated WebSocket transport, and SMS/push/email providers are still pending.
 
 ## Tech Stack
 
@@ -129,6 +129,7 @@ Real backend data is currently active for:
 - Session refresh and logout APIs for rider, driver, admin, and ops sessions.
 - MongoDB-backed rider, driver, admin, and ops users.
 - Rider pricing comparison, fare estimate, driver search, booking creation, live status stream, current ride status, ride history, receipt transparency, and profile data in the verified demo flow.
+- Public payments can create provider-backed UPI/card payment sessions, confirm success, mark failures, and process provider-aware refund requests.
 - Driver login, request visibility, accept ride, arrived, start ride, complete ride, and earnings update in the verified demo flow.
 - Driver active ride GPS updates are stored on the ride document and streamed back to the rider live tracking screen.
 - Driver dashboard real-data summaries for earnings, trust, profile/document readiness, notifications, and assigned request status.
@@ -141,7 +142,7 @@ Real backend data is currently active for:
 Partially integrated or UI-first areas:
 
 - Support and provider-backed secondary cards still have a few UI-first placeholders until live support/provider records exist.
-- Payment gateway, real map provider, dedicated WebSocket transport, SMS/push/email delivery, and production deployment are pending.
+- Real map provider, dedicated WebSocket transport, SMS/push/email delivery, production payment webhooks, and production deployment are pending.
 
 ## Local Setup
 
@@ -281,6 +282,6 @@ route -> validator/middleware -> controller -> service -> dao -> model
 - Polish remaining fallback/sample cards with live data where needed.
 - Add live support records behind remaining driver support preview cards.
 - Add deeper browser E2E tests for rider, driver, and ops auth flows.
-- Add production-grade maps, live tracking, payment provider, and notification provider.
+- Add production-grade maps, live tracking, production payment webhooks, and notification provider.
 - Move production auth from session-scoped browser storage to secure httpOnly cookie sessions when deployed publicly.
 - Improve README screenshots and deployment notes after provider integrations are stable.
