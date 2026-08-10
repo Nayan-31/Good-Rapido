@@ -67,6 +67,10 @@ export const createPublicApi = (http: HttpClient) => ({
     getHistory: (query?: ApiQuery) => http.get("/api/v1/public/payments/history", { query }),
     payRide: (rideId: string, payload: ApiPayload) =>
       http.post(pathWithParams("/api/v1/public/payments/rides/:rideId/pay", { rideId }), payload),
+    confirmPaymentSuccess: (paymentId: string, payload: ApiPayload) =>
+      http.post(pathWithParams("/api/v1/public/payments/:paymentId/success", { paymentId }), payload),
+    markPaymentFailed: (paymentId: string, payload: ApiPayload) =>
+      http.post(pathWithParams("/api/v1/public/payments/:paymentId/failure", { paymentId }), payload),
     requestRefund: (paymentId: string, payload: ApiPayload) =>
       http.post(pathWithParams("/api/v1/public/payments/:paymentId/refund", { paymentId }), payload),
     getPayment: (paymentId: string) =>

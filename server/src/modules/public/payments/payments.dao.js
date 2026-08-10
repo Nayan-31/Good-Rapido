@@ -58,4 +58,16 @@ export default class PaymentsDao {
             { returnDocument: 'after', runValidators: true }
         );
     }
+
+    updatePaymentForUser(paymentId, authUserId, role, payload) {
+        if (!mongoose.isValidObjectId(paymentId)) {
+            return null;
+        }
+
+        return this.model.findOneAndUpdate(
+            { _id: paymentId, authUserId, role },
+            { $set: payload },
+            { returnDocument: 'after', runValidators: true }
+        );
+    }
 }

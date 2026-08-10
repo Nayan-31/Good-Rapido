@@ -15,6 +15,22 @@ export const PAYMENT_STATUSES = Object.freeze({
     REFUNDED: 'refunded'
 });
 
+export const PAYMENT_GATEWAY_PROVIDERS = Object.freeze({
+    MOCK: 'mock',
+    RAZORPAY: 'razorpay',
+    STRIPE: 'stripe'
+});
+
+export const PAYMENT_GATEWAY_STATUSES = Object.freeze({
+    NOT_REQUIRED: 'not_required',
+    SESSION_CREATED: 'session_created',
+    REQUIRES_ACTION: 'requires_action',
+    SUCCEEDED: 'succeeded',
+    FAILED: 'failed',
+    REFUND_REQUESTED: 'refund_requested',
+    REFUNDED: 'refunded'
+});
+
 export const PAYMENT_REFUND_REASONS = Object.freeze({
     DRIVER_CANCELLED: 'driver_cancelled',
     OVERCHARGED: 'overcharged',

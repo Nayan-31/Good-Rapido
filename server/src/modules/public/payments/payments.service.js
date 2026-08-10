@@ -2,6 +2,7 @@ import { buildSuccessResponse } from '../../../shared/utils/apiResponse.js';
 import AppError from '../../../shared/utils/appError.js';
 import { RIDE_BOOKING_STATUSES } from '../ride-booking/ride-booking.constants.js';
 import {
+    PAYMENT_GATEWAY_STATUSES,
     PAYMENT_METHODS,
     PAYMENT_STATUSES
 } from './payments.constants.js';
@@ -23,11 +24,13 @@ import {
     resolvePaymentMethod as resolveCorePaymentMethod
 } from '../../core/payment-engine/payment-engine.engine.js';
 import { PAYMENT_ENGINE_METHOD_CATALOG } from '../../core/payment-engine/payment-engine.constants.js';
+import PaymentGatewayService from './payments.gateway.js';
 
 export default class PaymentsService {
-    constructor({ paymentsDao, ridesDao, now = () => new Date() }) {
+    constructor({ paymentsDao, ridesDao, now = () => new Date(), paymentGateway = new PaymentGatewayService({ now }) }) {
         this.paymentsDao = paymentsDao;
         this.ridesDao = ridesDao;
+        this.paymentGateway = paymentGateway;
         this.now = now;
     }
 
@@ -109,20 +112,32 @@ export default class PaymentsService {
         });
         const paymentMethod = paymentIntent.method;
         const { breakdown, wallet, settlement, capture } = paymentIntent;
+        const paymentCode = createPaymentCode(this.now());
+        const rideSnapshot = this.toRideSnapshot(rideObject);
 
         if (paymentMethod.code === PAYMENT_METHODS.PERSONAL_WALLET && !wallet.hasSufficientBalance) {
             throw AppError.badRequest('Insufficient wallet balance');
         }
 
         const isCashPayment = paymentMethod.code === PAYMENT_METHODS.CASH;
+        const isGatewayPayment = isGatewayPaymentMethod(paymentMethod.code);
+        const gatewaySession = isGatewayPayment
+            ? await this.paymentGateway.createPaymentSession({
+                paymentCode,
+                amount: breakdown.amount,
+                currency: paymentIntent.currency,
+                paymentMethod: paymentMethod.code,
+                rideSnapshot
+            })
+            : null;
         const payment = await this.paymentsDao.create({
-            paymentCode: createPaymentCode(this.now()),
+            paymentCode,
             authUserId: userId,
             role,
             rideId: getId(rideObject),
-            rideSnapshot: this.toRideSnapshot(rideObject),
+            rideSnapshot,
             method: paymentMethod.code,
-            status: settlement.paymentStatus,
+            status: isGatewayPayment ? PAYMENT_STATUSES.PENDING : settlement.paymentStatus,
             currency: paymentIntent.currency,
             fareAmount: breakdown.fareAmount,
             tipAmount: breakdown.tipAmount,
@@ -130,18 +145,94 @@ export default class PaymentsService {
             amount: breakdown.amount,
             walletBalanceBefore: wallet.before ?? undefined,
             walletBalanceAfter: wallet.after ?? undefined,
-            gatewayReference: capture.gatewayReference,
+            gatewayReference: gatewaySession?.gatewayReference || capture.gatewayReference,
+            gateway: gatewaySession ? toGatewayPayload(gatewaySession) : {
+                status: PAYMENT_GATEWAY_STATUSES.NOT_REQUIRED,
+                lastEventAt: this.now()
+            },
             idempotencyKey: payload.idempotencyKey,
-            capturedAt: capture.capturedAt,
-            refundableUntil: capture.refundableUntil
+            capturedAt: isGatewayPayment ? null : capture.capturedAt,
+            refundableUntil: isGatewayPayment ? null : capture.refundableUntil
         });
 
         return buildSuccessResponse({
             statusCode: 201,
-            message: isCashPayment ? 'Cash payment recorded successfully' : 'Ride payment completed successfully',
+            message: resolvePaymentCreateMessage({ isCashPayment, isGatewayPayment }),
             data: {
                 payment: toPublicPayment(toPlainObject(payment)),
-                guidance: paymentIntent.guidance
+                guidance: isGatewayPayment
+                    ? 'Payment session created. Confirm success or failure after provider checkout callback.'
+                    : paymentIntent.guidance
+            }
+        });
+    }
+
+    async confirmPaymentSuccess(authContext, paymentId, payload) {
+        const { userId, role } = this.assertAuthContext(authContext);
+        const payment = await this.findPayment(authContext, paymentId);
+
+        if (payment.status === PAYMENT_STATUSES.SUCCEEDED) {
+            throw AppError.conflict('Payment is already successful');
+        }
+
+        if (!isGatewayPaymentRecord(payment)) {
+            throw AppError.badRequest('Payment does not require gateway confirmation');
+        }
+
+        const gatewayResult = await this.paymentGateway.confirmPaymentSuccess(payment, payload);
+        const capturedAt = this.now();
+        const updatedPayment = await this.paymentsDao.updatePaymentForUser(paymentId, userId, role, {
+            status: PAYMENT_STATUSES.SUCCEEDED,
+            failureReason: null,
+            gatewayReference: gatewayResult.gatewayReference || payment.gatewayReference,
+            gateway: {
+                ...payment.gateway,
+                ...toGatewayPayload(gatewayResult),
+                status: PAYMENT_GATEWAY_STATUSES.SUCCEEDED
+            },
+            capturedAt,
+            refundableUntil: addDays(capturedAt, 7)
+        });
+
+        if (!updatedPayment) {
+            throw AppError.notFound('Payment not found');
+        }
+
+        return buildSuccessResponse({
+            message: 'Payment marked successful successfully',
+            data: {
+                payment: toPublicPayment(toPlainObject(updatedPayment))
+            }
+        });
+    }
+
+    async markPaymentFailed(authContext, paymentId, payload) {
+        const { userId, role } = this.assertAuthContext(authContext);
+        const payment = await this.findPayment(authContext, paymentId);
+
+        if (payment.status === PAYMENT_STATUSES.SUCCEEDED) {
+            throw AppError.badRequest('Successful payments cannot be marked failed');
+        }
+
+        const gatewayResult = await this.paymentGateway.markPaymentFailed(payment, payload);
+        const updatedPayment = await this.paymentsDao.updatePaymentForUser(paymentId, userId, role, {
+            status: PAYMENT_STATUSES.FAILED,
+            failureReason: gatewayResult.failureReason,
+            gateway: {
+                ...payment.gateway,
+                ...toGatewayPayload(gatewayResult),
+                status: PAYMENT_GATEWAY_STATUSES.FAILED
+            }
+        });
+
+        if (!updatedPayment) {
+            throw AppError.notFound('Payment not found');
+        }
+
+        return buildSuccessResponse({
+            message: 'Payment marked failed successfully',
+            data: {
+                payment: toPublicPayment(toPlainObject(updatedPayment))
             }
         });
     }
@@ -173,12 +264,40 @@ export default class PaymentsService {
             throw AppError.badRequest('Refund amount cannot be greater than payment amount');
         }
 
-        const updatedPayment = await this.paymentsDao.requestRefund(paymentId, userId, role, {
+        const gatewayRefund = isGatewayPaymentRecord(payment)
+            ? await this.paymentGateway.createRefund(payment, {
+                amount: refundAmount,
+                reason: payload.reason
+            })
+            : null;
+        const nextRefundStatus = gatewayRefund?.status === PAYMENT_GATEWAY_STATUSES.REFUNDED
+            ? PAYMENT_STATUSES.REFUNDED
+            : PAYMENT_STATUSES.REFUND_REQUESTED;
+        const refundPayload = {
             reason: payload.reason,
             note: payload.note,
             amount: refundAmount,
-            requestedAt: this.now()
-        });
+            requestedAt: this.now(),
+            resolvedAt: nextRefundStatus === PAYMENT_STATUSES.REFUNDED ? this.now() : undefined,
+            gatewayProvider: gatewayRefund?.provider,
+            gatewayRefundId: gatewayRefund?.refundId,
+            gatewayStatus: gatewayRefund?.status,
+            gatewayFailureReason: gatewayRefund?.status === PAYMENT_GATEWAY_STATUSES.FAILED
+                ? (gatewayRefund.rawStatus || 'Gateway refund failed')
+                : undefined
+        };
+        const updatedPayment = gatewayRefund
+            ? await this.paymentsDao.updatePaymentForUser(paymentId, userId, role, {
+                status: nextRefundStatus,
+                refund: refundPayload,
+                gateway: {
+                    ...payment.gateway,
+                    status: gatewayRefund.status,
+                    rawStatus: gatewayRefund.rawStatus || gatewayRefund.status,
+                    lastEventAt: this.now()
+                }
+            })
+            : await this.paymentsDao.requestRefund(paymentId, userId, role, refundPayload);
 
         if (!updatedPayment) {
             throw AppError.notFound('Payment not found');
@@ -236,3 +355,43 @@ export default class PaymentsService {
 const toPlainObject = (document) => document?.toObject ? document.toObject() : document;
 
 const getId = (document) => document._id?.toString?.() || document.id;
+
+const isGatewayPaymentMethod = (methodCode) => [
+    PAYMENT_METHODS.UPI,
+    PAYMENT_METHODS.CARD
+].includes(methodCode);
+
+const isGatewayPaymentRecord = (payment = {}) => Boolean(
+    payment.gateway
+    && payment.gateway.status
+    && payment.gateway.status !== PAYMENT_GATEWAY_STATUSES.NOT_REQUIRED
+);
+
+const toGatewayPayload = (gateway = {}) => ({
+    provider: gateway.provider,
+    status: gateway.status,
+    orderId: gateway.orderId,
+    paymentIntentId: gateway.paymentIntentId,
+    paymentId: gateway.paymentId,
+    checkoutId: gateway.checkoutId,
+    clientSecret: gateway.clientSecret,
+    publicKey: gateway.publicKey,
+    paymentUrl: gateway.paymentUrl,
+    failureReason: gateway.failureReason,
+    rawStatus: gateway.rawStatus,
+    lastEventAt: gateway.lastEventAt
+});
+
+const resolvePaymentCreateMessage = ({ isCashPayment, isGatewayPayment }) => {
+    if (isCashPayment) {
+        return 'Cash payment recorded successfully';
+    }
+
+    if (isGatewayPayment) {
+        return 'Payment session created successfully';
+    }
+
+    return 'Ride payment completed successfully';
+};
+
+const addDays = (date, days) => new Date(date.getTime() + days * 24 * 60 * 60 * 1000);

@@ -2,7 +2,7 @@
 
 The rider app is the customer-facing ride booking experience. It focuses on transparent pricing, booking confidence, driver trust, route fairness, safety, history, and profile transparency.
 
-Current status: demo-ready rider MVP. The main rider screens and services are implemented for booking, fare transparency, confirm ride, live ride status, live driver GPS tracking, safety, notifications, history, and profile. Vehicle option prices on the home screen are backed by the pricing comparison API, the fare context chart is derived from quote values, ride history auto-loads the selected receipt, and profile fallbacks use authenticated rider/recent ride data where possible. The seeded demo flow verifies booking through completed ride history.
+Current status: demo-ready rider MVP. The main rider screens and services are implemented for booking, fare transparency, confirm ride, live ride status, live driver GPS tracking, safety, notifications, history, payments, and profile. Vehicle option prices on the home screen are backed by the pricing comparison API, the fare context chart is derived from quote values, ride history auto-loads the selected receipt, and profile fallbacks use authenticated rider/recent ride data where possible. The seeded demo flow verifies booking through completed ride history.
 
 ## Current Screens And Flows
 
@@ -14,6 +14,7 @@ Current status: demo-ready rider MVP. The main rider screens and services are im
 - Live driver GPS tracking panel.
 - Safety center.
 - Notifications.
+- Payment gateway API methods for pay, success, failure, refund, history, and detail flows.
 - Ride history.
 - Profile dashboard.
 
@@ -151,6 +152,22 @@ core/route-engine
 core/trust-engine
 ```
 
+### payments
+
+- Payment method list and wallet summary.
+- Ride payment creation.
+- Gateway success callback.
+- Gateway failure callback.
+- Refund request.
+- Payment detail and history support.
+
+Backend modules:
+
+```text
+public/payments
+core/payment-engine
+```
+
 ### profile
 
 - Rider profile dashboard.
@@ -197,6 +214,6 @@ npm run build:rider
 
 - Complete end-to-end persisted ride booking.
 - Connect live route and route fairness data.
-- Connect real payment and refund data.
+- Add provider checkout UI once Razorpay/Stripe frontend credentials are configured.
 - Connect fraud report submission.
 - Polish loading, empty, and error states.

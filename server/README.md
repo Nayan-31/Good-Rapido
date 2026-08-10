@@ -2,7 +2,7 @@
 
 The backend is a modular Express and MongoDB API for the Good Rapido ride-booking platform. It is built as a modular monolith with separate public, private, and core module layers.
 
-Current status: in progress. The backend has broad module coverage and route tests across public, private, and core domains. Ride lifecycle status streaming is available for live rider updates, and assigned-driver GPS updates are now stored on the ride document for rider tracking. Production integrations such as real payment providers, maps, SMS/push providers, and dedicated WebSocket transport are still pending.
+Current status: in progress. The backend has broad module coverage and route tests across public, private, and core domains. Ride lifecycle status streaming is available for live rider updates, assigned-driver GPS updates are stored on the ride document for rider tracking, and public payments now support mock, Razorpay, and Stripe gateway paths. Production integrations such as maps, SMS/push providers, dedicated WebSocket transport, and live payment webhook verification are still pending.
 
 ## Stack
 
@@ -123,6 +123,11 @@ ACCESS_SECRET_TOKEN=local-access-secret-change-me
 REFRESH_SECRET_TOKEN=local-refresh-secret-change-me
 ACCESS_TOKEN_EXPIRES_IN=15m
 REFRESH_TOKEN_EXPIRES_IN=7d
+PAYMENT_GATEWAY_PROVIDER=mock
+RAZORPAY_KEY_ID=
+RAZORPAY_KEY_SECRET=
+STRIPE_SECRET_KEY=
+STRIPE_PUBLISHABLE_KEY=
 ```
 
 Copy `server/.env.example` when preparing a new local or deployment environment.
@@ -238,6 +243,12 @@ Ride lifecycle GPS tracking route checks:
 npm test -- ride-lifecycle.route.test.js
 ```
 
+Payment gateway route checks:
+
+```bash
+npm test -- payments.route.test.js payment-engine.route.test.js
+```
+
 Ops admin-action route checks:
 
 ```bash
@@ -269,6 +280,7 @@ Full deployment notes are in:
 - Private notifications support driver-scoped list/detail/mark-read access for driver apps, while ops/admin delivery management remains protected.
 - Ops admin-action APIs cover pricing create/update/activate/archive/simulate, surge create/update/activate/pause/end/archive/simulate, fraud assign/confirm/dismiss/resolve/simulate, dispute assign/evidence/resolve/reject, notification create/send/retry/fail/cancel, and admin user create/update/status/permissions.
 - Core ride lifecycle stores assigned-driver GPS updates on the ride document and exposes `tracking.lastDriverLocation` through the rider lifecycle stream.
+- Public payments create gateway sessions for UPI/card methods, support success/failure callbacks, store provider metadata, and route refunds through the configured provider when available.
 - Frontend apps attach short-lived access tokens, use refresh tokens to recover expired sessions, and clear browser session state when refresh/logout fails.
 - Core engines expose reusable logic for pricing, matching, ride lifecycle, route fairness, trust, fraud, payment, notification, and identity workflows.
 - Some business flows use deterministic engine outputs and mock-like defaults until live providers and production data sources are added.
@@ -276,7 +288,7 @@ Full deployment notes are in:
 ## Next Work
 
 - Add live map provider integration.
-- Add payment gateway integration.
+- Add live payment webhook verification after production Razorpay/Stripe credentials are configured.
 - Add dedicated WebSocket transport if the lifecycle stream needs to move beyond SSE/polling fallback.
 - Add production notification providers.
 - Complete frontend-to-backend binding for remaining secondary support/demo preview screens.
