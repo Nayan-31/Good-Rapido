@@ -20,6 +20,8 @@ export function AvailabilityScreen() {
   const profile = driverProfile.profile;
   const trust = driverTrust.profile;
   const request = rideRequests.request;
+  const canAcceptRequest = request?.bookingStatus === "driver_selected" && request.lifecycleStatus === "pending_confirmation";
+  const hasActiveRide = Boolean(request && !canAcceptRequest);
   const isOnline = availability?.isOnline ?? false;
   const blockers = availability?.guidance.blockers ?? [];
   const locationFresh = availability?.guidance.locationFresh ?? false;
@@ -115,10 +117,10 @@ export function AvailabilityScreen() {
           <div className={styles.panelHeader}>
             <div>
               <span className={styles.eyebrow}>Active ride/request</span>
-              <h2>{request ? "Incoming request" : isOnline ? "Waiting for request" : "Ready once online"}</h2>
+              <h2>{request ? (hasActiveRide ? "Active ride" : "Incoming request") : isOnline ? "Waiting for request" : "Ready once online"}</h2>
             </div>
             <Badge tone={request ? "success" : isOnline ? "info" : "warning"}>
-              {request ? `${request.route.pickupEtaMinutes} min pickup` : isOnline ? "Online" : "Offline"}
+              {request ? (hasActiveRide ? formatStatus(request.lifecycleStatus) : `${request.route.pickupEtaMinutes} min pickup`) : isOnline ? "Online" : "Offline"}
             </Badge>
           </div>
 
@@ -161,17 +163,17 @@ export function AvailabilityScreen() {
               fullWidth
               type="button"
               variant="mint"
-              disabled={!isOnline || !request || rideRequests.isSaving}
+              disabled={!isOnline || !canAcceptRequest || rideRequests.isSaving}
               isLoading={rideRequests.isSaving}
               onClick={() => void rideRequests.acceptRequest()}
             >
-              Accept ride
+              {hasActiveRide ? "Ride already active" : "Accept ride"}
             </Button>
             <Button
               fullWidth
               type="button"
               variant="secondary"
-              disabled={!isOnline || !request || rideRequests.isSaving}
+              disabled={!isOnline || !canAcceptRequest || rideRequests.isSaving}
               onClick={() => void rideRequests.declineRequest()}
             >
               Decline

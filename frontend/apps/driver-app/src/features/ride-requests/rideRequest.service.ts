@@ -56,7 +56,10 @@ export interface RideOpsQueueItem {
     detourPercentage?: number;
   } | null;
   createdAt?: string | null;
+  updatedAt?: string | null;
 }
+
+const PENDING_REQUEST_MAX_AGE_MS = 15 * 60 * 1000;
 
 export const demoRideRequest: DriverRideRequest = {
   id: "demo-ride-req-001",
@@ -121,18 +124,42 @@ export const rideRequestService = {
     let request: DriverRideRequest | null = null;
 
     try {
+      const activeResponse = await apiClient.private.rideOps.listRides({
+        status: "active",
+        limit: 10
+      }) as RideOpsQueueResponse;
+      const activeRide = pickFirstRide(activeResponse.data);
+
+      if (activeRide) {
+        request = mapRideOpsQueueItem(activeRide);
+        notes.push("An active ride is already assigned to this driver. Pending request controls are paused until the ride is completed.");
+      }
+    } catch (error) {
+      notes.push(resolveBackendNote(error, "Active ride lookup is not available for this driver session yet."));
+    }
+
+    try {
+      if (request) {
+        return {
+          request,
+          backendNote: uniqueNotes(notes)
+        };
+      }
+
       const response = await apiClient.private.rideOps.listRides({
         status: "pending_confirmation",
         bookingStatus: "driver_selected",
-        limit: 1
+        limit: 10
       }) as RideOpsQueueResponse;
-      const backendRide = pickFirstRide(response.data);
+      const backendRide = pickFreshPendingRide(response.data);
 
       if (backendRide) {
         request = mapRideOpsQueueItem(backendRide);
       } else if (shouldUseDemoRequestFallback()) {
         request = demoRideRequest;
         notes.push("No assigned backend request was found. Demo ride request fallback is enabled through VITE_USE_DEMO_RIDE_REQUESTS.");
+      } else if (pickFirstRide(response.data)) {
+        notes.push("Only stale pending requests were found, so they were hidden from the live driver queue.");
       }
     } catch (error) {
       notes.push(resolveBackendNote(error, "Ride ops queue is not available for this driver session yet."));
@@ -142,7 +169,7 @@ export const rideRequestService = {
       }
     }
 
-    if (request) {
+    if (request?.lifecycleStatus === "pending_confirmation") {
       await Promise.allSettled([
         apiClient.core.matchingEngine.match(buildMatchingPayload(request)),
         apiClient.core.trustEngine.assess(buildRiderTrustPayload(request))
@@ -277,19 +304,55 @@ export const toActiveRideSnapshot = (request: DriverRideRequest): DriverActiveRi
 });
 
 export const pickFirstRide = (data: RideOpsQueueResponse["data"]) => {
+  const rides = collectRideItems(data).sort(sortNewestRide);
+
+  return rides[0] ?? null;
+};
+
+const pickFreshPendingRide = (data: RideOpsQueueResponse["data"]) => {
+  const rides = collectRideItems(data)
+    .filter((ride) => isFreshPendingRequest(ride))
+    .sort(sortNewestRide);
+
+  return rides[0] ?? null;
+};
+
+const collectRideItems = (data: RideOpsQueueResponse["data"]) => {
   if (!data) {
-    return null;
+    return [];
   }
 
-  if (data.rides?.[0]) {
-    return data.rides[0];
+  if (data.rides?.length) {
+    return data.rides;
   }
 
   if (Array.isArray(data.queue)) {
-    return data.queue[0] ?? null;
+    return data.queue;
   }
 
-  return data.queue?.rides?.[0] ?? null;
+  return data.queue?.rides ?? [];
+};
+
+const isFreshPendingRequest = (ride: RideOpsQueueItem) => {
+  const createdAt = getRideTime(ride.createdAt);
+
+  if (!createdAt) {
+    return true;
+  }
+
+  return Date.now() - createdAt <= PENDING_REQUEST_MAX_AGE_MS;
+};
+
+const sortNewestRide = (left: RideOpsQueueItem, right: RideOpsQueueItem) => (
+  getRideTime(right.createdAt, right.updatedAt) - getRideTime(left.createdAt, left.updatedAt)
+);
+
+const getRideTime = (...values: Array<string | null | undefined>) => {
+  const timestamp = values
+    .map((value) => value ? new Date(value).getTime() : 0)
+    .find((value) => Number.isFinite(value) && value > 0);
+
+  return timestamp ?? 0;
 };
 
 const buildMatchingPayload = (request: DriverRideRequest): ApiPayload => ({

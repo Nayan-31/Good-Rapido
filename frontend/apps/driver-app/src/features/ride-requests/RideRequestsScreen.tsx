@@ -11,19 +11,21 @@ export interface RideRequestsScreenProps {
 export function RideRequestsScreen({ onRideAccepted }: RideRequestsScreenProps) {
   const rideRequests = useRideRequests(onRideAccepted);
   const request = rideRequests.request;
+  const canAcceptRequest = request?.bookingStatus === "driver_selected" && request.lifecycleStatus === "pending_confirmation";
+  const hasActiveRide = Boolean(request && !canAcceptRequest);
 
   return (
     <section className={styles.screen}>
       <section className={styles.hero}>
         <div>
           <Badge tone="warning">Step 04</Badge>
-          <h1>Incoming ride request</h1>
-          <p>Review pickup effort, payout, rider trust, fare confidence, and route fairness before accepting the trip.</p>
+          <h1>{hasActiveRide ? "Active ride assigned" : "Incoming ride request"}</h1>
+          <p>{hasActiveRide ? "A ride is already accepted for this driver. Continue lifecycle actions from the Ride tab." : "Review pickup effort, payout, rider trust, fare confidence, and route fairness before accepting the trip."}</p>
         </div>
         <div className={styles.timerCard}>
-          <span>Decision window</span>
-          <strong>{request ? "18s" : "--"}</strong>
-          <small>{request ? "Auto refresh ready" : "No request"}</small>
+          <span>{hasActiveRide ? "Ride status" : "Decision window"}</span>
+          <strong>{request ? (hasActiveRide ? formatStatus(request.lifecycleStatus) : "18s") : "--"}</strong>
+          <small>{request ? (hasActiveRide ? "Open Ride tab" : "Auto refresh ready") : "No request"}</small>
         </div>
       </section>
 
@@ -50,7 +52,7 @@ export function RideRequestsScreen({ onRideAccepted }: RideRequestsScreenProps) 
               <div className={styles.requestTitle}>
                 <div>
                   <span className={styles.eyebrow}>New request</span>
-                  <h2>{request.rider.riderName}</h2>
+                  <h2>{hasActiveRide ? "Current active ride" : request.rider.riderName}</h2>
                 </div>
                 <span className={styles.requestCode}>{request.bookingCode}</span>
               </div>
@@ -134,26 +136,32 @@ export function RideRequestsScreen({ onRideAccepted }: RideRequestsScreenProps) 
               </ul>
             </article>
 
-            <div className={styles.actionRow}>
-              <Button
-                fullWidth
-                isLoading={rideRequests.isSaving}
-                type="button"
-                variant="mint"
-                onClick={() => void rideRequests.acceptRequest()}
-              >
-                Accept ride
-              </Button>
-              <Button
-                fullWidth
-                disabled={rideRequests.isSaving}
-                type="button"
-                variant="secondary"
-                onClick={() => void rideRequests.declineRequest()}
-              >
-                Decline
-              </Button>
-            </div>
+            {canAcceptRequest ? (
+              <div className={styles.actionRow}>
+                <Button
+                  fullWidth
+                  isLoading={rideRequests.isSaving}
+                  type="button"
+                  variant="mint"
+                  onClick={() => void rideRequests.acceptRequest()}
+                >
+                  Accept ride
+                </Button>
+                <Button
+                  fullWidth
+                  disabled={rideRequests.isSaving}
+                  type="button"
+                  variant="secondary"
+                  onClick={() => void rideRequests.declineRequest()}
+                >
+                  Decline
+                </Button>
+              </div>
+            ) : (
+              <Alert tone="trust" title="Ride already accepted">
+                This booking is no longer an incoming request. Use the Ride tab to continue the lifecycle for this trip.
+              </Alert>
+            )}
           </div>
 
           <article className={styles.mapPanel} aria-label="Pickup route summary">
@@ -227,6 +235,8 @@ function FareRow({ label, value, highlight = false }: FareRowProps) {
 }
 
 const formatMoney = (value: number) => `Rs ${Math.round(value).toLocaleString("en-IN")}`;
+
+const formatStatus = (value: string) => value.replace(/_/g, " ");
 
 const riskTone = (riskLevel: DriverRideRiskLevel) => {
   if (riskLevel === "high") {

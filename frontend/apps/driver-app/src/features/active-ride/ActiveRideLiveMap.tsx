@@ -24,6 +24,7 @@ import {
 } from "@/components/maps/leaflet";
 import type { DriverActiveRideSnapshot, DriverRideLifecycleStatus, DriverRideLocation } from "@/features/ride-requests/rideRequest.types";
 import type { DriverLiveLocation } from "./activeRide.types";
+import { resolveKnownRideLocation } from "./activeRide.locations";
 import styles from "./ActiveRideScreen.module.css";
 
 interface ActiveRideLiveMapProps {
@@ -560,10 +561,17 @@ const useResolvedMapState = (
   ride: DriverActiveRideSnapshot,
   driverLocation: DriverLiveLocation | null
 ): ResolvedMapState => {
-  const previewLocation = usePreviewBikeLocation(ride, driverLocation);
-  const driverCoordinate = toLatLng(driverLocation ?? previewLocation ?? ride.pickup);
-  const pickupCoordinate = toLatLng(ride.pickup);
-  const dropoffCoordinate = toLatLng(ride.dropoff);
+  const pickupLocation = resolveKnownRideLocation(ride.pickup);
+  const dropoffLocation = resolveKnownRideLocation(ride.dropoff);
+  const mapRide = {
+    ...ride,
+    pickup: pickupLocation,
+    dropoff: dropoffLocation
+  };
+  const previewLocation = usePreviewBikeLocation(mapRide, driverLocation);
+  const driverCoordinate = toLatLng(driverLocation ?? previewLocation ?? pickupLocation);
+  const pickupCoordinate = toLatLng(pickupLocation);
+  const dropoffCoordinate = toLatLng(dropoffLocation);
   const activeRoute = resolveActiveRoute(ride.lifecycleStatus, driverCoordinate, pickupCoordinate, dropoffCoordinate);
 
   return {
