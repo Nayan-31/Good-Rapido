@@ -4,6 +4,7 @@ import { ApiClientError } from "@good-rapido/api-client";
 import type { PricingQuote } from "@/features/pricing/pricing.types";
 import { DEFAULT_BOOKING_FORM, VEHICLE_OPTIONS } from "./booking.constants";
 import { bookingService } from "./booking.service";
+import { resolveKnownLocationPatch } from "./locationPresets";
 import { rideFlowStorage } from "./rideFlowStorage";
 import type { BookingHomeErrors, BookingHomeForm, BookingLocationForm, FareEstimate, VehicleType } from "./booking.types";
 import { hasBookingHomeErrors, validateBookingHomeForm } from "./booking.utils";
@@ -20,11 +21,18 @@ export function useBookingHome() {
   const [isLoadingVehicleQuotes, setIsLoadingVehicleQuotes] = useState(false);
 
   const updateLocation = useCallback((kind: "pickup" | "dropoff", patch: Partial<BookingLocationForm>) => {
+    const knownLocationPatch = patch.address !== undefined
+      && patch.latitude === undefined
+      && patch.longitude === undefined
+      ? resolveKnownLocationPatch(patch.address)
+      : null;
+
     setForm((currentForm) => ({
       ...currentForm,
       [kind]: {
         ...currentForm[kind],
-        ...patch
+        ...patch,
+        ...(knownLocationPatch ?? {})
       }
     }));
   }, []);

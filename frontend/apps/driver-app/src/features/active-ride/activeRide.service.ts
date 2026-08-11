@@ -89,7 +89,7 @@ export const activeRideService = {
     try {
       const response = await apiClient.private.rideOps.listRides({
         status: "active",
-        limit: 1
+        limit: 10
       }) as RideOpsQueueResponse;
       const backendRide = pickFirstRide(response.data);
 
