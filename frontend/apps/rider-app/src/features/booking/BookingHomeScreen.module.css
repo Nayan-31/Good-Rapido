@@ -50,24 +50,15 @@
   gap: var(--gr-space-3);
 }
 
-.coordinateDetails,
 .advancedFields {
   color: var(--gr-color-muted);
   font-size: 12px;
   font-weight: var(--gr-font-weight-bold);
 }
 
-.coordinateDetails summary,
 .advancedFields summary {
   width: max-content;
   cursor: pointer;
-}
-
-.coordinateGrid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--gr-space-2);
-  margin-top: var(--gr-space-2);
 }
 
 .sectionHeader,
@@ -415,7 +406,6 @@
 }
 
 @media (max-width: 520px) {
-  .coordinateGrid,
   .metrics {
     grid-template-columns: 1fr;
   }

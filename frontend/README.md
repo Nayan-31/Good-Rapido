@@ -30,7 +30,7 @@ frontend/apps/rider-app
 Current coverage:
 
 - Auth/session structure with restore, proactive refresh, retry-on-expired-token handling, and logout cleanup.
-- Booking home with pricing comparison backed vehicle cards.
+- Booking home with address-only pickup/dropoff fields, hidden internal coordinates, known-place demo resolution, and pricing comparison backed vehicle cards.
 - Fare estimate with breakdown, confidence, surge transparency, and quote-derived fare context.
 - Confirm ride flow.
 - Live ride status stream with periodic refresh fallback.

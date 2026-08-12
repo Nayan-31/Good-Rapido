@@ -67,10 +67,7 @@ const KNOWN_LOCATIONS: KnownLocation[] = [
 export const resolveKnownLocationPatch = (
   address: string
 ): Pick<BookingLocationForm, "latitude" | "longitude"> | null => {
-  const normalizedAddress = normalizeAddress(address);
-  const knownLocation = KNOWN_LOCATIONS.find((location) =>
-    location.aliases.some((alias) => normalizeAddress(alias) === normalizedAddress)
-  );
+  const knownLocation = findKnownLocation(address);
 
   if (!knownLocation) {
     return null;
@@ -80,6 +77,20 @@ export const resolveKnownLocationPatch = (
     latitude: knownLocation.latitude,
     longitude: knownLocation.longitude
   };
+};
+
+export const hasKnownLocation = (address: string) => Boolean(findKnownLocation(address));
+
+const findKnownLocation = (address: string) => {
+  const normalizedAddress = normalizeAddress(address);
+
+  if (!normalizedAddress) {
+    return null;
+  }
+
+  return KNOWN_LOCATIONS.find((location) =>
+    location.aliases.some((alias) => normalizeAddress(alias) === normalizedAddress)
+  ) ?? null;
 };
 
 const normalizeAddress = (value: string) => value.trim().toLowerCase().replace(/\s+/g, " ");

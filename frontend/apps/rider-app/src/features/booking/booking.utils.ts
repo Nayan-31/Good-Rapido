@@ -1,4 +1,5 @@
 import type { BookingHomeErrors, BookingHomeForm, BookingLocationForm, VehicleType } from "./booking.types";
+import { hasKnownLocation } from "./locationPresets";
 
 export const validateBookingHomeForm = (form: BookingHomeForm): BookingHomeErrors => {
   const errors: BookingHomeErrors = {};
@@ -25,8 +26,7 @@ export const validateBookingHomeForm = (form: BookingHomeForm): BookingHomeError
     Number(form.pickup.longitude) === Number(form.dropoff.longitude)
   ) {
     errors.dropoff = {
-      latitude: "Pickup and dropoff must be different",
-      longitude: "Pickup and dropoff must be different"
+      address: "Pickup and dropoff must be different"
     };
   }
 
@@ -64,12 +64,18 @@ const validateLocation = (location: BookingLocationForm) => {
   const latitude = Number(location.latitude);
   const longitude = Number(location.longitude);
 
+  if (!location.address.trim()) {
+    errors.address = "Enter a location";
+  } else if (!hasKnownLocation(location.address)) {
+    errors.address = "Please select a valid location";
+  }
+
   if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90) {
-    errors.latitude = "Enter latitude from -90 to 90";
+    errors.address = errors.address ?? "Please select a valid location";
   }
 
   if (!Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
-    errors.longitude = "Enter longitude from -180 to 180";
+    errors.address = errors.address ?? "Please select a valid location";
   }
 
   return errors;

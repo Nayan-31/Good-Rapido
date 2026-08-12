@@ -191,25 +191,9 @@ function LocationFields({ label, value, errors, onChange }: LocationFieldsProps)
       <TextField
         label={label}
         value={value.address}
+        error={errors?.address}
         onChange={(event) => onChange({ address: event.target.value })}
       />
-      <details className={styles.coordinateDetails}>
-        <summary>Coordinates</summary>
-        <div className={styles.coordinateGrid}>
-          <TextField
-            label="Latitude"
-            value={value.latitude}
-            error={errors?.latitude}
-            onChange={(event) => onChange({ latitude: event.target.value })}
-          />
-          <TextField
-            label="Longitude"
-            value={value.longitude}
-            error={errors?.longitude}
-            onChange={(event) => onChange({ longitude: event.target.value })}
-          />
-        </div>
-      </details>
     </div>
   );
 }
