@@ -63,10 +63,15 @@ public/auth
 
 ### booking
 
-- Pickup and dropoff inputs.
+- Address-only pickup and dropoff inputs.
+- Known-place resolver for MVP demo locations such as Muri, Silli, Ranchi, Howrah Bridge, Park Street, Noida, and Mumbai.
+- Clean unknown-location validation with "Please select a valid location".
+- Internal latitude/longitude payload generation for backend fare and booking APIs without exposing coordinates in the rider UI.
 - Ride type selection with backend-backed pricing comparison for visible fare and ETA cards.
 - Estimate CTA.
 - Local ride flow handoff.
+
+The backend still receives coordinates because fare, matching, route, and lifecycle services need exact locations. The rider experience hides those technical fields. A production geocoder such as Google Places, Mapbox, or another location provider should replace the current known-place resolver later.
 
 Backend modules:
 

@@ -21,10 +21,11 @@ export function useBookingHome() {
   const [isLoadingVehicleQuotes, setIsLoadingVehicleQuotes] = useState(false);
 
   const updateLocation = useCallback((kind: "pickup" | "dropoff", patch: Partial<BookingLocationForm>) => {
-    const knownLocationPatch = patch.address !== undefined
+    const isAddressOnlyPatch = patch.address !== undefined
       && patch.latitude === undefined
-      && patch.longitude === undefined
-      ? resolveKnownLocationPatch(patch.address)
+      && patch.longitude === undefined;
+    const knownLocationPatch = isAddressOnlyPatch
+      ? resolveKnownLocationPatch(patch.address ?? "")
       : null;
 
     setForm((currentForm) => ({
@@ -32,7 +33,7 @@ export function useBookingHome() {
       [kind]: {
         ...currentForm[kind],
         ...patch,
-        ...(knownLocationPatch ?? {})
+        ...(knownLocationPatch ?? (isAddressOnlyPatch ? { latitude: "", longitude: "" } : {}))
       }
     }));
   }, []);

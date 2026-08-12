@@ -95,7 +95,7 @@ frontend/
 Rider app current state:
 
 - Authentication/session structure with restore, refresh, stale-token cleanup, and logout.
-- Booking home screen with backend-backed vehicle pricing comparison.
+- Booking home screen with address-only pickup/dropoff fields, hidden internal coordinates, known-place demo resolution, and backend-backed vehicle pricing comparison.
 - Fare estimate screen with breakdown, confidence, surge transparency, and quote-derived fare context.
 - Confirm ride flow using pricing, matching, and lifecycle concepts.
 - Live ride status and driver GPS tracking stream with periodic refresh fallback.
@@ -141,6 +141,7 @@ Real backend data is currently active for:
 
 Partially integrated or UI-first areas:
 
+- Rider location search currently uses an MVP known-place resolver. Unknown locations show a clean validation message, and production Google Places, Mapbox, or another geocoder is still pending.
 - Support and provider-backed secondary cards still have a few UI-first placeholders until live support/provider records exist.
 - Real map provider, dedicated WebSocket transport, SMS/push/email delivery, production payment webhooks, and production deployment are pending.
 
