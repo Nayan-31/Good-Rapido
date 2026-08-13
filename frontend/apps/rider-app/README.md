@@ -71,7 +71,19 @@ public/auth
 - Estimate CTA.
 - Local ride flow handoff.
 
-The backend still receives coordinates because fare, matching, route, and lifecycle services need exact locations. The rider experience hides those technical fields. A production geocoder such as Google Places, Mapbox, or another location provider should replace the current known-place resolver later.
+Current MVP location behavior:
+
+- Suggestions come from the local known-place resolver in `src/features/booking/locationPresets.ts`.
+- This resolver is only for demo/dev locations, so known places such as Muri, Silli, Ranchi, Howrah Bridge, and Park Street can be selected quickly.
+- Riders see pickup/dropoff address fields and suggestions only. Latitude and longitude stay internal.
+- Unknown free-text locations show a clean validation message: "Please select a valid location".
+
+Future Rapido-like location search plan:
+
+- Replace the local resolver with provider-backed autocomplete, such as Google Places, Mapbox Search, Ola Maps, HERE, or OpenStreetMap/Nominatim.
+- As the rider types, show real ranked location suggestions with display name, city/area context, provider place id, and geocoded coordinates after selection.
+- Keep the backend contract the same because fare, matching, route, and lifecycle services still need normalized address plus latitude/longitude.
+- Keep the known-place resolver only as a local fallback when map/geocoder credentials are not configured.
 
 Backend modules:
 

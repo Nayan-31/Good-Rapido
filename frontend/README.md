@@ -41,6 +41,14 @@ Current coverage:
 - Ride history with auto-loaded receipt transparency.
 - Profile dashboard with authenticated rider and recent ride fallbacks.
 
+Location search plan:
+
+- Current pickup/dropoff suggestions use a local known-place resolver for MVP demos.
+- The production path is provider-backed autocomplete and geocoding, similar to Rapido-style search.
+- The rider should type an address, pick a suggestion, and never see raw coordinates.
+- The frontend will resolve the selected place to latitude/longitude internally before calling pricing, matching, booking, and route APIs.
+- Google Places, Mapbox Search, Ola Maps, HERE, or OpenStreetMap/Nominatim can replace the local resolver later.
+
 ### Driver App
 
 Location:
