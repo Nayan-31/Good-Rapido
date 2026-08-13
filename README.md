@@ -141,9 +141,22 @@ Real backend data is currently active for:
 
 Partially integrated or UI-first areas:
 
-- Rider location search currently uses an MVP known-place resolver. Unknown locations show a clean validation message, and production Google Places, Mapbox, or another geocoder is still pending.
+- Rider location search currently uses an MVP known-place resolver. Unknown locations show a clean validation message, and production provider-backed autocomplete/geocoding is still pending.
 - Support and provider-backed secondary cards still have a few UI-first placeholders until live support/provider records exist.
 - Real map provider, dedicated WebSocket transport, SMS/push/email delivery, production payment webhooks, and production deployment are pending.
+
+## Future Location Search Plan
+
+The current MVP keeps pickup and dropoff simple for demos. The rider sees address inputs and suggestions, while the frontend resolves known demo places into coordinates internally before calling backend APIs.
+
+Production behavior should work more like a real ride-booking app:
+
+- Rider types in pickup/dropoff.
+- App fetches ranked suggestions from Google Places, Mapbox Search, Ola Maps, HERE, or OpenStreetMap/Nominatim.
+- Rider selects a human-readable suggestion with area/city context.
+- Frontend stores the selected address and provider place id, then resolves latitude/longitude internally.
+- Backend contract stays unchanged because pricing, matching, route fairness, and ride lifecycle modules still need coordinates.
+- The current known-place resolver should remain only as a dev/demo fallback when provider credentials are not available.
 
 ## Local Setup
 

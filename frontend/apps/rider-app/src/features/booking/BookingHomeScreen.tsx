@@ -2,6 +2,7 @@ import { Alert, Badge, Button, Card, MetricCard, TextField } from "@good-rapido/
 
 import type { PricingQuote } from "@/features/pricing/pricing.types";
 import { VEHICLE_OPTIONS } from "./booking.constants";
+import { searchKnownLocations } from "./locationPresets";
 import type { BookingLocationForm, VehicleType } from "./booking.types";
 import { formatCurrency } from "./booking.utils";
 import { useBookingHome } from "./useBookingHome";
@@ -186,14 +187,36 @@ interface LocationFieldsProps {
 }
 
 function LocationFields({ label, value, errors, onChange }: LocationFieldsProps) {
+  const suggestions = searchKnownLocations(value.address);
+
   return (
     <div className={styles.locationGroup}>
       <TextField
         label={label}
         value={value.address}
         error={errors?.address}
+        autoComplete="off"
         onChange={(event) => onChange({ address: event.target.value })}
       />
+      {suggestions.length ? (
+        <div className={styles.suggestionList} role="listbox" aria-label={`${label} suggestions`}>
+          {suggestions.map((suggestion) => (
+            <button
+              className={styles.suggestionItem}
+              key={`${label}-${suggestion.address}`}
+              type="button"
+              onClick={() => onChange({
+                address: suggestion.address,
+                latitude: suggestion.latitude,
+                longitude: suggestion.longitude
+              })}
+            >
+              <strong>{suggestion.address}</strong>
+              <span>{suggestion.context}</span>
+            </button>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }

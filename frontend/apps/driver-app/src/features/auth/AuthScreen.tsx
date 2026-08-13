@@ -16,8 +16,8 @@ export interface AuthScreenProps {
 }
 
 const defaultLoginForm: DriverLoginForm = {
-  identifier: "+919111111111",
-  password: "password123"
+  identifier: "arjun.singh.driver@goodrapido.test",
+  password: "Password@123"
 };
 
 const defaultRegisterForm: DriverRegisterForm = {
@@ -70,7 +70,7 @@ export function AuthScreen({
       setMessage(nextMessage);
       onAuthenticated("login");
     } catch (restoreError) {
-      setError(restoreError instanceof Error ? restoreError.message : "Driver session restore failed");
+      setError(resolveRestoreErrorMessage(restoreError));
     }
   };
 
@@ -245,3 +245,15 @@ export function AuthScreen({
     </section>
   );
 }
+
+const resolveRestoreErrorMessage = (error: unknown) => {
+  if (!(error instanceof Error)) {
+    return "Saved driver session expired. Please login again.";
+  }
+
+  if (/refresh|restore|token|session/i.test(error.message)) {
+    return "Saved driver session expired. Please login again.";
+  }
+
+  return error.message;
+};

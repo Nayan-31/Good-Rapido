@@ -61,6 +61,49 @@
   cursor: pointer;
 }
 
+.suggestionList {
+  display: grid;
+  gap: var(--gr-space-2);
+  margin-top: calc(var(--gr-space-2) * -1);
+}
+
+.suggestionItem {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  padding: var(--gr-space-3);
+  border: 1px solid var(--gr-color-border);
+  border-radius: var(--gr-radius-control);
+  background: var(--gr-color-card);
+  color: var(--gr-color-ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.suggestionItem:hover,
+.suggestionItem:focus-visible {
+  border-color: var(--gr-color-deep-teal);
+  background: var(--gr-color-soft-mint);
+  outline: none;
+}
+
+.suggestionItem strong,
+.suggestionItem span {
+  overflow-wrap: anywhere;
+}
+
+.suggestionItem strong {
+  font-size: 14px;
+  line-height: 1.25;
+}
+
+.suggestionItem span {
+  color: var(--gr-color-muted);
+  font-size: 12px;
+  font-weight: var(--gr-font-weight-bold);
+  line-height: 1.3;
+}
+
 .sectionHeader,
 .estimateHeader {
   display: flex;
