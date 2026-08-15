@@ -45,6 +45,11 @@ export const createPublicApi = (http: HttpClient) => ({
     cancelBooking: (bookingId: string, payload: ApiPayload) =>
       http.post(pathWithParams("/api/v1/public/ride-booking/bookings/:bookingId/cancel", { bookingId }), payload)
   },
+  locationSearch: {
+    search: (query: ApiQuery) => http.get("/api/v1/public/location-search/search", { query }),
+    resolvePlace: (placeId: string, query?: ApiQuery) =>
+      http.get(pathWithParams("/api/v1/public/location-search/places/:placeId", { placeId }), { query })
+  },
   rides: {
     getCurrent: () => http.get("/api/v1/public/rides/current"),
     getHistory: (query?: ApiQuery) => http.get("/api/v1/public/rides/history", { query }),

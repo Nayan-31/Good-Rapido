@@ -1,4 +1,4 @@
-import type { BookingLocationForm } from "./booking.types";
+import type { BookingLocationForm, LocationSuggestion } from "./booking.types";
 
 interface KnownLocation {
   address: string;
@@ -74,13 +74,6 @@ const KNOWN_LOCATIONS: KnownLocation[] = [
   }
 ];
 
-export interface LocationSuggestion {
-  address: string;
-  context: string;
-  latitude: string;
-  longitude: string;
-}
-
 export const resolveKnownLocationPatch = (
   address: string
 ): Pick<BookingLocationForm, "latitude" | "longitude"> | null => {
@@ -113,10 +106,12 @@ export const searchKnownLocations = (query: string): LocationSuggestion[] => {
     )
     .slice(0, 5)
     .map((location) => ({
+      id: `local-${normalizeAddress(location.address).replace(/\s+/g, "-")}`,
       address: location.address,
       context: location.context,
       latitude: location.latitude,
-      longitude: location.longitude
+      longitude: location.longitude,
+      provider: "local"
     }));
 };
 

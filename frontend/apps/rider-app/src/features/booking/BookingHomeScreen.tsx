@@ -1,9 +1,11 @@
+import { useEffect, useMemo, useState } from "react";
 import { Alert, Badge, Button, Card, MetricCard, TextField } from "@good-rapido/ui";
 
 import type { PricingQuote } from "@/features/pricing/pricing.types";
 import { VEHICLE_OPTIONS } from "./booking.constants";
+import { bookingService } from "./booking.service";
 import { searchKnownLocations } from "./locationPresets";
-import type { BookingLocationForm, VehicleType } from "./booking.types";
+import type { BookingLocationForm, LocationSuggestion, VehicleType } from "./booking.types";
 import { formatCurrency } from "./booking.utils";
 import { useBookingHome } from "./useBookingHome";
 import styles from "./BookingHomeScreen.module.css";
@@ -187,7 +189,90 @@ interface LocationFieldsProps {
 }
 
 function LocationFields({ label, value, errors, onChange }: LocationFieldsProps) {
-  const suggestions = searchKnownLocations(value.address);
+  const localSuggestions = useMemo(() => searchKnownLocations(value.address), [value.address]);
+  const sessionToken = useMemo(() => createLocationSearchSessionToken(), []);
+  const [remoteSuggestions, setRemoteSuggestions] = useState<LocationSuggestion[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [resolvingId, setResolvingId] = useState<string | null>(null);
+  const [searchProvider, setSearchProvider] = useState<string | null>(null);
+  const normalizedAddress = value.address.trim();
+  const suggestions = remoteSuggestions.length ? remoteSuggestions : localSuggestions;
+
+  useEffect(() => {
+    if (normalizedAddress.length < 2) {
+      setRemoteSuggestions([]);
+      setSearchProvider(null);
+      setIsSearching(false);
+      return;
+    }
+
+    let isActive = true;
+    setIsSearching(true);
+
+    const timerId = window.setTimeout(() => {
+      void bookingService.searchLocations(normalizedAddress, sessionToken)
+        .then((response) => {
+          if (!isActive) {
+            return;
+          }
+
+          const locationSearch = response.data?.locationSearch;
+
+          setRemoteSuggestions(locationSearch?.suggestions ?? []);
+          setSearchProvider(locationSearch?.provider ?? null);
+        })
+        .catch(() => {
+          if (!isActive) {
+            return;
+          }
+
+          setRemoteSuggestions([]);
+          setSearchProvider("local");
+        })
+        .finally(() => {
+          if (isActive) {
+            setIsSearching(false);
+          }
+        });
+    }, 250);
+
+    return () => {
+      isActive = false;
+      window.clearTimeout(timerId);
+    };
+  }, [normalizedAddress, sessionToken]);
+
+  const selectSuggestion = async (suggestion: LocationSuggestion) => {
+    if (suggestion.latitude && suggestion.longitude) {
+      onChange({
+        address: suggestion.address,
+        latitude: suggestion.latitude,
+        longitude: suggestion.longitude
+      });
+      return;
+    }
+
+    setResolvingId(suggestion.id);
+
+    try {
+      const response = await bookingService.resolveLocation(suggestion.id, sessionToken);
+      const location = response.data?.location;
+
+      onChange({
+        address: location?.address ?? suggestion.address,
+        latitude: location?.latitude ?? "",
+        longitude: location?.longitude ?? ""
+      });
+    } catch {
+      onChange({
+        address: suggestion.address,
+        latitude: "",
+        longitude: ""
+      });
+    } finally {
+      setResolvingId(null);
+    }
+  };
 
   return (
     <div className={styles.locationGroup}>
@@ -198,21 +283,23 @@ function LocationFields({ label, value, errors, onChange }: LocationFieldsProps)
         autoComplete="off"
         onChange={(event) => onChange({ address: event.target.value })}
       />
+      {normalizedAddress.length >= 2 ? (
+        <p className={styles.suggestionStatus}>
+          {isSearching ? "Searching locations..." : searchProvider === "google" ? "Google location results" : "Demo location results"}
+        </p>
+      ) : null}
       {suggestions.length ? (
         <div className={styles.suggestionList} role="listbox" aria-label={`${label} suggestions`}>
           {suggestions.map((suggestion) => (
             <button
               className={styles.suggestionItem}
-              key={`${label}-${suggestion.address}`}
+              key={`${label}-${suggestion.provider}-${suggestion.id}`}
               type="button"
-              onClick={() => onChange({
-                address: suggestion.address,
-                latitude: suggestion.latitude,
-                longitude: suggestion.longitude
-              })}
+              disabled={resolvingId === suggestion.id}
+              onClick={() => void selectSuggestion(suggestion)}
             >
               <strong>{suggestion.address}</strong>
-              <span>{suggestion.context}</span>
+              <span>{resolvingId === suggestion.id ? "Resolving location..." : suggestion.context}</span>
             </button>
           ))}
         </div>
@@ -220,6 +307,14 @@ function LocationFields({ label, value, errors, onChange }: LocationFieldsProps)
     </div>
   );
 }
+
+const createLocationSearchSessionToken = () => {
+  if ("randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+
+  return `gr-location-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+};
 
 interface VehicleOptionProps {
   type: VehicleType;

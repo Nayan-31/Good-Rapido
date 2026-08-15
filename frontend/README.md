@@ -2,7 +2,7 @@
 
 This workspace contains the frontend apps and shared frontend packages for Good Rapido.
 
-Current status: demo-ready frontend MVP. Rider, driver, and ops apps are wired around the main booking lifecycle. The verified demo flow covers rider booking, driver request handling, live driver GPS tracking, payment API wiring, ride completion, driver earnings, and ops visibility. Some secondary cards still use planned/sample fallback values when no live records exist.
+Current status: demo-ready frontend MVP. Rider, driver, and ops apps are wired around the main booking lifecycle. The verified demo flow covers rider booking, backend location search with Google Places/local fallback, driver request handling, live driver GPS tracking, payment API wiring, ride completion, driver earnings, and ops visibility. Some secondary cards still use planned/sample fallback values when no live records exist.
 
 ## Workspace Structure
 
@@ -30,7 +30,7 @@ frontend/apps/rider-app
 Current coverage:
 
 - Auth/session structure with restore, proactive refresh, retry-on-expired-token handling, and logout cleanup.
-- Booking home with address-only pickup/dropoff fields, hidden internal coordinates, known-place demo resolution, and pricing comparison backed vehicle cards.
+- Booking home with address-only pickup/dropoff fields, hidden internal coordinates, backend location suggestions, and pricing comparison backed vehicle cards.
 - Fare estimate with breakdown, confidence, surge transparency, and quote-derived fare context.
 - Confirm ride flow.
 - Live ride status stream with periodic refresh fallback.
@@ -41,13 +41,13 @@ Current coverage:
 - Ride history with auto-loaded receipt transparency.
 - Profile dashboard with authenticated rider and recent ride fallbacks.
 
-Location search plan:
+Location search:
 
-- Current pickup/dropoff suggestions use a local known-place resolver for MVP demos.
-- The production path is provider-backed autocomplete and geocoding, similar to Rapido-style search.
-- The rider should type an address, pick a suggestion, and never see raw coordinates.
-- The frontend will resolve the selected place to latitude/longitude internally before calling pricing, matching, booking, and route APIs.
-- Google Places, Mapbox Search, Ola Maps, HERE, or OpenStreetMap/Nominatim can replace the local resolver later.
+- Pickup/dropoff suggestions call the backend `public/location-search` API.
+- Backend uses Google Places when `GOOGLE_MAPS_API_KEY` is configured.
+- Backend returns local known-place suggestions when Google is not configured or unavailable.
+- The rider types an address, picks a suggestion, and never sees raw coordinates.
+- The frontend stores the selected place latitude/longitude internally before calling pricing, matching, booking, and route APIs.
 
 ### Driver App
 

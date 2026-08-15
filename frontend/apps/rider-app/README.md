@@ -2,12 +2,13 @@
 
 The rider app is the customer-facing ride booking experience. It focuses on transparent pricing, booking confidence, driver trust, route fairness, safety, history, and profile transparency.
 
-Current status: demo-ready rider MVP. The main rider screens and services are implemented for booking, fare transparency, confirm ride, live ride status, live driver GPS tracking, safety, notifications, history, payments, and profile. Vehicle option prices on the home screen are backed by the pricing comparison API, the fare context chart is derived from quote values, ride history auto-loads the selected receipt, and profile fallbacks use authenticated rider/recent ride data where possible. The seeded demo flow verifies booking through completed ride history.
+Current status: demo-ready rider MVP. The main rider screens and services are implemented for booking, backend location search with Google Places/local fallback, fare transparency, confirm ride, live ride status, live driver GPS tracking, safety, notifications, history, payments, and profile. Vehicle option prices on the home screen are backed by the pricing comparison API, the fare context chart is derived from quote values, ride history auto-loads the selected receipt, and profile fallbacks use authenticated rider/recent ride data where possible. The seeded demo flow verifies booking through completed ride history.
 
 ## Current Screens And Flows
 
 - Auth/session structure.
 - Booking home.
+- Backend-powered pickup/dropoff suggestions.
 - Fare estimate.
 - Confirm ride.
 - Live ride status stream.
@@ -64,30 +65,33 @@ public/auth
 ### booking
 
 - Address-only pickup and dropoff inputs.
-- Known-place resolver for MVP demo locations such as Muri, Silli, Ranchi, Howrah Bridge, Park Street, Noida, and Mumbai.
+- Backend location-search suggestions with Google Places when `GOOGLE_MAPS_API_KEY` is configured.
+- Known-place resolver fallback for MVP demo locations such as Muri, Silli, Ranchi, Howrah Bridge, Park Street, Noida, and Mumbai.
 - Clean unknown-location validation with "Please select a valid location".
 - Internal latitude/longitude payload generation for backend fare and booking APIs without exposing coordinates in the rider UI.
 - Ride type selection with backend-backed pricing comparison for visible fare and ETA cards.
 - Estimate CTA.
 - Local ride flow handoff.
 
-Current MVP location behavior:
+Current location behavior:
 
-- Suggestions come from the local known-place resolver in `src/features/booking/locationPresets.ts`.
-- This resolver is only for demo/dev locations, so known places such as Muri, Silli, Ranchi, Howrah Bridge, and Park Street can be selected quickly.
+- Suggestions are requested from the backend `public/location-search` API.
+- Backend returns Google Places results when a Google Maps API key is configured.
+- Backend falls back to local demo/dev locations when a token is missing or provider search fails.
 - Riders see pickup/dropoff address fields and suggestions only. Latitude and longitude stay internal.
 - Unknown free-text locations show a clean validation message: "Please select a valid location".
 
-Future Rapido-like location search plan:
+Provider setup:
 
-- Replace the local resolver with provider-backed autocomplete, such as Google Places, Mapbox Search, Ola Maps, HERE, or OpenStreetMap/Nominatim.
-- As the rider types, show real ranked location suggestions with display name, city/area context, provider place id, and geocoded coordinates after selection.
+- Add `GOOGLE_MAPS_API_KEY` in the backend environment to enable live Google Places suggestions.
+- Keep the token on the backend, not in the browser.
 - Keep the backend contract the same because fare, matching, route, and lifecycle services still need normalized address plus latitude/longitude.
-- Keep the known-place resolver only as a local fallback when map/geocoder credentials are not configured.
+- Keep the known-place resolver as a local fallback when map/geocoder credentials are not configured.
 
 Backend modules:
 
 ```text
+public/location-search
 public/ride-booking
 core/pricing-engine
 core/matching-engine

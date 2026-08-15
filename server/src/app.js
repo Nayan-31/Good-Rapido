@@ -14,6 +14,7 @@ import ratingsRoutes from './modules/public/ratings/ratings.route.js';
 import disputesRoutes from './modules/public/disputes/disputes.route.js';
 import notificationsRoutes from './modules/public/notifications/notifications.route.js';
 import supportRoutes from './modules/public/support/support.route.js';
+import locationSearchRoutes from './modules/public/location-search/location-search.route.js';
 import identityRoutes from './modules/core/identity/identity.route.js';
 import rideLifecycleRoutes from './modules/core/ride-lifecycle/ride-lifecycle.route.js';
 import pricingEngineRoutes from './modules/core/pricing-engine/pricing-engine.route.js';
@@ -67,6 +68,7 @@ export default function createApp() {
     app.use('/api/v1/public/disputes', disputesRoutes);
     app.use('/api/v1/public/notifications', notificationsRoutes);
     app.use('/api/v1/public/support', supportRoutes);
+    app.use('/api/v1/public/location-search', locationSearchRoutes);
     app.use('/api/v1/core/identity', identityRoutes);
     app.use('/api/v1/core/ride-lifecycle', rideLifecycleRoutes);
     app.use('/api/v1/core/pricing-engine', pricingEngineRoutes);
