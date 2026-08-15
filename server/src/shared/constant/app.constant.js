@@ -14,5 +14,9 @@ export default {
     RAZORPAY_KEY_ID: '',
     RAZORPAY_KEY_SECRET: '',
     STRIPE_SECRET_KEY: '',
-    STRIPE_PUBLISHABLE_KEY: ''
+    STRIPE_PUBLISHABLE_KEY: '',
+    GOOGLE_MAPS_API_KEY: '',
+    GOOGLE_PLACES_AUTOCOMPLETE_ENDPOINT: 'https://places.googleapis.com/v1/places:autocomplete',
+    GOOGLE_PLACES_DETAILS_ENDPOINT: 'https://places.googleapis.com/v1/places',
+    GOOGLE_MAPS_SEARCH_COUNTRY: 'IN'
 }

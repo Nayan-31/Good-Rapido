@@ -17,6 +17,7 @@ Good Rapido can support the complete ride-booking journey:
 
 - User authentication and session handling.
 - Pickup and drop-off selection.
+- Backend-powered location suggestions with optional Google Places provider and local fallback.
 - Fare estimate with transparent price breakdown.
 - Surge pricing explanation.
 - Driver matching and ride confirmation flow.
@@ -35,6 +36,7 @@ Riders can:
 
 - Register, log in, and restore sessions.
 - Select pickup and drop-off locations.
+- Search pickup and drop-off suggestions through the backend location-search API.
 - Choose ride options such as bike, auto, economy cab, and premium cab with live pricing comparison values.
 - Get a fare estimate before booking.
 - View fare breakdown including base fare, distance fare, time fare, surge, fees, and tax.
@@ -282,6 +284,7 @@ MONGO_URL=mongodb://localhost:27017/rapido
 CORS_ORIGIN=http://localhost:5173,http://localhost:5174,http://localhost:5176
 ACCESS_SECRET_TOKEN=local-access-secret-change-me
 REFRESH_SECRET_TOKEN=local-refresh-secret-change-me
+GOOGLE_MAPS_API_KEY=
 ```
 
 Frontend app `.env.local` files should include:

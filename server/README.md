@@ -2,7 +2,7 @@
 
 The backend is a modular Express and MongoDB API for the Good Rapido ride-booking platform. It is built as a modular monolith with separate public, private, and core module layers.
 
-Current status: in progress. The backend has broad module coverage and route tests across public, private, and core domains. Ride lifecycle status streaming is available for live rider updates, assigned-driver GPS updates are stored on the ride document for rider tracking, and public payments now support mock, Razorpay, and Stripe gateway paths. Production integrations such as maps, SMS/push providers, dedicated WebSocket transport, and live payment webhook verification are still pending.
+Current status: in progress. The backend has broad module coverage and route tests across public, private, and core domains. Ride lifecycle status streaming is available for live rider updates, assigned-driver GPS updates are stored on the ride document for rider tracking, public location search supports Google Places with local fallback, and public payments now support mock, Razorpay, and Stripe gateway paths. Production integrations such as maps, SMS/push providers, dedicated WebSocket transport, and live payment webhook verification are still pending.
 
 ## Stack
 
@@ -128,6 +128,10 @@ RAZORPAY_KEY_ID=
 RAZORPAY_KEY_SECRET=
 STRIPE_SECRET_KEY=
 STRIPE_PUBLISHABLE_KEY=
+GOOGLE_MAPS_API_KEY=
+GOOGLE_PLACES_AUTOCOMPLETE_ENDPOINT=https://places.googleapis.com/v1/places:autocomplete
+GOOGLE_PLACES_DETAILS_ENDPOINT=https://places.googleapis.com/v1/places
+GOOGLE_MAPS_SEARCH_COUNTRY=IN
 ```
 
 Copy `server/.env.example` when preparing a new local or deployment environment.
@@ -283,6 +287,7 @@ Full deployment notes are in:
 - Public payments create gateway sessions for UPI/card methods, support success/failure callbacks, store provider metadata, and route refunds through the configured provider when available.
 - Frontend apps attach short-lived access tokens, use refresh tokens to recover expired sessions, and clear browser session state when refresh/logout fails.
 - Core engines expose reusable logic for pricing, matching, ride lifecycle, route fairness, trust, fraud, payment, notification, and identity workflows.
+- Public location search calls Google Places when `GOOGLE_MAPS_API_KEY` is configured and safely falls back to known demo locations when provider credentials are missing.
 - Some business flows use deterministic engine outputs and mock-like defaults until live providers and production data sources are added.
 
 ## Next Work

@@ -2,7 +2,7 @@
 
 Good Rapido is a full-stack capstone project for a transparent ride-booking platform. The product idea is simple: riders should understand why a fare changed, why a route was selected, why a driver was matched, and how trust or safety decisions are made.
 
-Current status: demo-ready full-stack MVP. The backend modular foundation is strong, the rider, driver, and ops frontend apps are wired around the main booking lifecycle, and the core demo flow is verified from rider booking to driver completion. Rider live ride status and driver GPS movement can auto-update through the ride lifecycle realtime stream with polling fallback. Frontend auth now uses session-scoped storage, proactive access-token refresh, retry-on-expired-token handling, stale token cleanup, and route guards across rider, driver, and ops apps. Real payment gateway code is ready with mock, Razorpay, and Stripe provider paths; live credentials and webhook deployment verification are still pending. Ops final admin-action QA is verified for pricing, surge, fraud, disputes, notifications, and admin users. Production integrations such as real map provider, dedicated WebSocket transport, and SMS/push/email providers are still pending.
+Current status: demo-ready full-stack MVP. The backend modular foundation is strong, the rider, driver, and ops frontend apps are wired around the main booking lifecycle, and the core demo flow is verified from rider booking to driver completion. Rider live ride status and driver GPS movement can auto-update through the ride lifecycle realtime stream with polling fallback. Rider pickup/dropoff search now uses a backend location-search endpoint with optional Google Places autocomplete/details and local fallback when no API key is configured. Frontend auth now uses session-scoped storage, proactive access-token refresh, retry-on-expired-token handling, stale token cleanup, and route guards across rider, driver, and ops apps. Real payment gateway code is ready with mock, Razorpay, and Stripe provider paths; live credentials and webhook deployment verification are still pending. Ops final admin-action QA is verified for pricing, surge, fraud, disputes, notifications, and admin users. Production integrations such as real map provider, dedicated WebSocket transport, and SMS/push/email providers are still pending.
 
 ## Tech Stack
 
@@ -128,6 +128,7 @@ Real backend data is currently active for:
 - Public and private auth APIs.
 - Session refresh and logout APIs for rider, driver, admin, and ops sessions.
 - MongoDB-backed rider, driver, admin, and ops users.
+- Public location search API with optional Google Places provider and local known-place fallback.
 - Rider pricing comparison, fare estimate, driver search, booking creation, live status stream, current ride status, ride history, receipt transparency, and profile data in the verified demo flow.
 - Public payments can create provider-backed UPI/card payment sessions, confirm success, mark failures, and process provider-aware refund requests.
 - Driver login, request visibility, accept ride, arrived, start ride, complete ride, and earnings update in the verified demo flow.
@@ -141,22 +142,24 @@ Real backend data is currently active for:
 
 Partially integrated or UI-first areas:
 
-- Rider location search currently uses an MVP known-place resolver. Unknown locations show a clean validation message, and production provider-backed autocomplete/geocoding is still pending.
+- Rider location search supports Google Places when `GOOGLE_MAPS_API_KEY` is configured. Without it, the app uses the MVP known-place resolver and clean unknown-location validation.
 - Support and provider-backed secondary cards still have a few UI-first placeholders until live support/provider records exist.
 - Real map provider, dedicated WebSocket transport, SMS/push/email delivery, production payment webhooks, and production deployment are pending.
 
-## Future Location Search Plan
+## Location Search Plan
 
-The current MVP keeps pickup and dropoff simple for demos. The rider sees address inputs and suggestions, while the frontend resolves known demo places into coordinates internally before calling backend APIs.
+The rider sees pickup/dropoff address inputs and suggestions, while the frontend resolves selected places into coordinates internally before calling backend APIs.
 
-Production behavior should work more like a real ride-booking app:
+Current behavior:
 
 - Rider types in pickup/dropoff.
-- App fetches ranked suggestions from Google Places, Mapbox Search, Ola Maps, HERE, or OpenStreetMap/Nominatim.
+- Frontend calls `GET /api/v1/public/location-search/search`.
+- Backend calls Google Places Autocomplete when `GOOGLE_MAPS_API_KEY` is configured.
+- Backend resolves selected Google suggestions through Place Details to get latitude/longitude.
+- Backend returns local known-place suggestions when Google is not configured or unavailable.
 - Rider selects a human-readable suggestion with area/city context.
-- Frontend stores the selected address and provider place id, then resolves latitude/longitude internally.
+- Frontend stores the selected address plus internal latitude/longitude.
 - Backend contract stays unchanged because pricing, matching, route fairness, and ride lifecycle modules still need coordinates.
-- The current known-place resolver should remain only as a dev/demo fallback when provider credentials are not available.
 
 ## Local Setup
 
@@ -234,6 +237,7 @@ MONGO_URL=mongodb://localhost:27017/rapido
 CORS_ORIGIN=http://localhost:5173,http://localhost:5174,http://localhost:5176
 ACCESS_SECRET_TOKEN=local-access-secret-change-me
 REFRESH_SECRET_TOKEN=local-refresh-secret-change-me
+GOOGLE_MAPS_API_KEY=
 VITE_API_BASE_URL=http://localhost:3000
 ```
 
@@ -296,6 +300,6 @@ route -> validator/middleware -> controller -> service -> dao -> model
 - Polish remaining fallback/sample cards with live data where needed.
 - Add live support records behind remaining driver support preview cards.
 - Add deeper browser E2E tests for rider, driver, and ops auth flows.
-- Add production-grade maps, live tracking, production payment webhooks, and notification provider.
+- Add production-grade maps, WebSocket live tracking, production payment webhooks, and notification provider.
 - Move production auth from session-scoped browser storage to secure httpOnly cookie sessions when deployed publicly.
 - Improve README screenshots and deployment notes after provider integrations are stable.

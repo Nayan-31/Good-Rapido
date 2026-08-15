@@ -6,6 +6,15 @@ export interface BookingLocationForm {
   longitude: string;
 }
 
+export interface LocationSuggestion {
+  id: string;
+  address: string;
+  context: string;
+  latitude: string;
+  longitude: string;
+  provider: "local" | "google" | string;
+}
+
 export interface BookingHomeForm {
   pickup: BookingLocationForm;
   dropoff: BookingLocationForm;

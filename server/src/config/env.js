@@ -29,6 +29,10 @@ const envSchema = z.object({
     RAZORPAY_KEY_SECRET: z.string().default(appConstant.RAZORPAY_KEY_SECRET),
     STRIPE_SECRET_KEY: z.string().default(appConstant.STRIPE_SECRET_KEY),
     STRIPE_PUBLISHABLE_KEY: z.string().default(appConstant.STRIPE_PUBLISHABLE_KEY),
+    GOOGLE_MAPS_API_KEY: z.string().default(appConstant.GOOGLE_MAPS_API_KEY),
+    GOOGLE_PLACES_AUTOCOMPLETE_ENDPOINT: z.string().default(appConstant.GOOGLE_PLACES_AUTOCOMPLETE_ENDPOINT),
+    GOOGLE_PLACES_DETAILS_ENDPOINT: z.string().default(appConstant.GOOGLE_PLACES_DETAILS_ENDPOINT),
+    GOOGLE_MAPS_SEARCH_COUNTRY: z.string().default(appConstant.GOOGLE_MAPS_SEARCH_COUNTRY),
 })
 
 const parsed = envSchema.safeParse(process.env)
