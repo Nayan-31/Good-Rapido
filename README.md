@@ -2,7 +2,7 @@
 
 Good Rapido is a full-stack capstone project for a transparent ride-booking platform. The product idea is simple: riders should understand why a fare changed, why a route was selected, why a driver was matched, and how trust or safety decisions are made.
 
-Current status: demo-ready full-stack MVP. The backend modular foundation is strong, the rider, driver, and ops frontend apps are wired around the main booking lifecycle, and the core demo flow is verified from rider booking to driver completion. Rider live ride status and driver GPS movement can auto-update through the ride lifecycle realtime stream with polling fallback. Rider pickup/dropoff search now uses a backend location-search endpoint with optional Google Places autocomplete/details and local fallback when no API key is configured. Frontend auth now uses session-scoped storage, proactive access-token refresh, retry-on-expired-token handling, stale token cleanup, and route guards across rider, driver, and ops apps. Real payment gateway code is ready with mock, Razorpay, and Stripe provider paths; live credentials and webhook deployment verification are still pending. Ops final admin-action QA is verified for pricing, surge, fraud, disputes, notifications, and admin users. Production integrations such as real map provider, dedicated WebSocket transport, and SMS/push/email providers are still pending.
+Current status: demo-ready full-stack MVP. The backend modular foundation is strong, the rider, driver, and ops frontend apps are wired around the main booking lifecycle, and the core demo flow is verified from rider booking to driver completion. Demo seed data is now deterministic for users, known locations, assigned ride requests, completed rides, payments, fraud/dispute examples, notifications, support tickets, and driver earnings visibility. Rider live ride status and driver GPS movement can auto-update through the ride lifecycle realtime stream with polling fallback. Rider pickup/dropoff search uses a backend location-search endpoint with optional Google Places autocomplete/details and local fallback when no API key is configured. Frontend auth uses session-scoped storage, proactive access-token refresh, retry-on-expired-token handling, stale token cleanup, and route guards across rider, driver, and ops apps. Real payment gateway code is ready with mock, Razorpay, and Stripe provider paths; live credentials and webhook deployment verification are still pending. Production integrations such as real Google Maps billing setup, dedicated WebSocket transport, and SMS/push/email providers are still pending.
 
 ## Tech Stack
 
@@ -138,13 +138,14 @@ Real backend data is currently active for:
 - Driver notifications support private driver-scoped list/detail/mark-read access.
 - Ops private auth, ride queue visibility, dashboard data, pricing/surge, trust-safety, fraud-dispute, communications, admin users, and analytics module structure.
 - Ops admin-action flows verified through frontend typecheck, shared API client typecheck, and focused backend route tests for pricing, surge, fraud, disputes, notifications, and admin users.
+- Stable demo seed data for rider, driver, admin, ops, known locations, pending ride request, completed rides, payments, fraud/dispute cases, notifications, support tickets, and earnings-ready ride history.
 - Backend API modules, Jest tests, and full smoke demo.
 
 Partially integrated or UI-first areas:
 
 - Rider location search supports Google Places when `GOOGLE_MAPS_API_KEY` is configured. Without it, the app uses the MVP known-place resolver and clean unknown-location validation.
-- Support and provider-backed secondary cards still have a few UI-first placeholders until live support/provider records exist.
-- Real map provider, dedicated WebSocket transport, SMS/push/email delivery, production payment webhooks, and production deployment are pending.
+- Demo fallback cards only appear when explicit frontend demo flags are enabled.
+- Real Google Maps billing/API activation, dedicated WebSocket transport, SMS/push/email delivery, production payment webhooks, and production deployment are pending.
 
 ## Location Search Plan
 
@@ -186,6 +187,16 @@ Seed local demo data:
 
 ```bash
 npm run seed:demo
+```
+
+The seed is designed to be predictable on every run. It cleans previous demo operational records for seeded demo users, then creates:
+
+```text
+Known locations: Muri, Silli, Ranchi, Howrah Bridge, Park Street, Connaught Place, India Gate, Noida, Mumbai
+Pending request: GR-DEMO-PENDING-MURI-SILLI, Muri -> Silli, assigned to Arjun Singh
+Completed ride: GR-DEMO-COMPLETE-KOL-001, Howrah Bridge -> Park Street, assigned to Imran Ali
+Dispute ride: GR-DEMO-DISPUTE-NCR-001, Connaught Place -> Noida, assigned to Rajesh Kumar
+Operational examples: 2 payments, 1 dispute, 1 fraud case, 4 notifications, 1 support ticket
 ```
 
 Default local credentials:
@@ -239,7 +250,11 @@ ACCESS_SECRET_TOKEN=local-access-secret-change-me
 REFRESH_SECRET_TOKEN=local-refresh-secret-change-me
 GOOGLE_MAPS_API_KEY=
 VITE_API_BASE_URL=http://localhost:3000
+VITE_USE_DEMO_RIDE_REQUESTS=false
+VITE_USE_DEMO_DRIVER_DATA=false
 ```
+
+Only set `VITE_USE_DEMO_RIDE_REQUESTS=true` or `VITE_USE_DEMO_DRIVER_DATA=true` when you intentionally want screenshot/demo fallback cards. Normal testing should keep both disabled so rider, driver, and ops screens use backend data or honest empty states.
 
 ## Verification
 
@@ -297,8 +312,7 @@ route -> validator/middleware -> controller -> service -> dao -> model
 
 ## Next Work
 
-- Polish remaining fallback/sample cards with live data where needed.
-- Add live support records behind remaining driver support preview cards.
+- Polish remaining provider-backed preview cards with live data where needed.
 - Add deeper browser E2E tests for rider, driver, and ops auth flows.
 - Add production-grade maps, WebSocket live tracking, production payment webhooks, and notification provider.
 - Move production auth from session-scoped browser storage to secure httpOnly cookie sessions when deployed publicly.

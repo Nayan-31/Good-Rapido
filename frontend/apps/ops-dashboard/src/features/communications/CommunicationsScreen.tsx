@@ -44,7 +44,7 @@ const emptySupportSummary: SupportSummary = {
 
 const initialForm: CommunicationFormState = {
   audienceMode: "single",
-  authUserId: "ops-demo-rider",
+  authUserId: "",
   role: "rider",
   type: "safety_alert",
   category: "safety",
@@ -55,8 +55,8 @@ const initialForm: CommunicationFormState = {
   actionLabel: "Open Safety",
   actionUrl: "/safety",
   relatedEntityType: "ride",
-  relatedEntityId: "ride-demo-001",
-  relatedEntityCode: "RD-DEMO-001"
+  relatedEntityId: "",
+  relatedEntityCode: "GR-DEMO-PENDING-MURI-SILLI"
 };
 
 export function CommunicationsScreen() {
@@ -342,12 +342,16 @@ function NotificationForm({
         <span>Audience</span>
         <select value={form.audienceMode} onChange={(event) => onChange("audienceMode", event.target.value)}>
           <option value="single">Single recipient</option>
-          <option value="broadcast">Broadcast sample</option>
+          <option value="broadcast">Broadcast to IDs</option>
         </select>
       </label>
       <label className={styles.field}>
         <span>Auth User Id</span>
-        <input value={form.authUserId} onChange={(event) => onChange("authUserId", event.target.value)} />
+        <input
+          value={form.authUserId}
+          placeholder={form.audienceMode === "broadcast" ? "id1, id2, id3" : "Paste seeded auth user id"}
+          onChange={(event) => onChange("authUserId", event.target.value)}
+        />
       </label>
       <label className={styles.field}>
         <span>Role</span>
