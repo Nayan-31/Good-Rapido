@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { defaultSupportForm, demoSupportView, driverSupportService } from "./support.service";
+import { defaultSupportForm, driverSupportService, emptySupportView } from "./support.service";
 import type { DriverSupportForm, DriverSupportView } from "./support.types";
 
 export function useDriverSupport() {
-  const [view, setView] = useState<DriverSupportView>(demoSupportView);
+  const [view, setView] = useState<DriverSupportView>(emptySupportView);
   const [form, setForm] = useState<DriverSupportForm>(defaultSupportForm);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);

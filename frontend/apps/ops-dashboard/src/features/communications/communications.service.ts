@@ -70,10 +70,7 @@ export const communicationsService = {
 
   async broadcastIncident(form: CommunicationFormState) {
     const response = await apiClient.private.notifications.create({
-      recipients: [
-        { authUserId: "incident-rider-east", role: "rider" },
-        { authUserId: "incident-passenger-west", role: "passenger" }
-      ],
+      recipients: buildRecipients(form),
       type: "safety_alert",
       category: "safety",
       priority: "urgent",
@@ -123,18 +120,38 @@ const buildNotificationPayload = (form: CommunicationFormState) => {
   if (form.audienceMode === "broadcast") {
     return {
       ...commonPayload,
-      recipients: [
-        { authUserId: "ops-demo-rider", role: "rider" },
-        { authUserId: "ops-demo-passenger", role: "passenger" }
-      ]
+      recipients: buildRecipients(form)
     };
+  }
+
+  const authUserId = form.authUserId.trim();
+
+  if (!authUserId) {
+    throw new Error("Auth User Id is required for single recipient notifications.");
   }
 
   return {
     ...commonPayload,
     recipient: {
-      authUserId: form.authUserId,
+      authUserId,
       role: form.role
     }
   };
+};
+
+const buildRecipients = (form: CommunicationFormState) => {
+  const recipients = form.authUserId
+    .split(",")
+    .map((authUserId) => authUserId.trim())
+    .filter(Boolean)
+    .map((authUserId) => ({
+      authUserId,
+      role: form.role
+    }));
+
+  if (!recipients.length) {
+    throw new Error("Add one or more comma-separated Auth User Ids before broadcasting.");
+  }
+
+  return recipients;
 };

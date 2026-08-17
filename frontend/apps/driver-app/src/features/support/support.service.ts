@@ -74,10 +74,21 @@ export const demoSupportView: DriverSupportView = {
   backendNote: null
 };
 
+export const emptySupportView: DriverSupportView = {
+  tickets: [],
+  summary: {
+    open: 0,
+    resolved: 0,
+    urgent: 0,
+    disputes: 0
+  },
+  backendNote: null
+};
+
 export const driverSupportService = {
   async loadSupport(): Promise<DriverSupportView> {
     const notes: string[] = [];
-    let view = demoSupportView;
+    let view = emptySupportView;
 
     try {
       const [ticketsResponse, disputesResponse] = await Promise.all([
@@ -87,17 +98,22 @@ export const driverSupportService = {
       const tickets = ticketsResponse.data?.tickets ?? [];
 
       view = {
-        tickets: tickets.length ? tickets.map(mapTicket) : demoSupportView.tickets,
+        tickets: tickets.map(mapTicket),
         summary: {
-          open: safeNumber(ticketsResponse.data?.summary?.openCount, demoSupportView.summary.open),
-          resolved: safeNumber(ticketsResponse.data?.summary?.resolvedCount, demoSupportView.summary.resolved),
-          urgent: safeNumber(ticketsResponse.data?.summary?.urgentCount, demoSupportView.summary.urgent),
-          disputes: safeNumber(disputesResponse.data?.summary?.openCount, disputesResponse.data?.summary?.totalDisputes, demoSupportView.summary.disputes)
+          open: safeNumber(ticketsResponse.data?.summary?.openCount, emptySupportView.summary.open),
+          resolved: safeNumber(ticketsResponse.data?.summary?.resolvedCount, emptySupportView.summary.resolved),
+          urgent: safeNumber(ticketsResponse.data?.summary?.urgentCount, emptySupportView.summary.urgent),
+          disputes: safeNumber(disputesResponse.data?.summary?.openCount, disputesResponse.data?.summary?.totalDisputes, emptySupportView.summary.disputes)
         },
         backendNote: null
       };
     } catch (error) {
       notes.push(resolveBackendNote(error, "Support/disputes APIs are wired, but current driver token may not match public support scope."));
+
+      if (shouldUseDemoDriverSupportFallback()) {
+        view = demoSupportView;
+        notes.push("Demo support fallback is enabled through VITE_USE_DEMO_DRIVER_DATA.");
+      }
     }
 
     return {
@@ -127,6 +143,10 @@ export const driverSupportService = {
         backendNote: null
       };
     } catch (error) {
+      if (!shouldUseDemoDriverSupportFallback()) {
+        throw new Error(resolveBackendNote(error, "Support ticket create is unavailable for this session."));
+      }
+
       return {
         ticket: {
           id: `local-ticket-${Date.now()}`,
@@ -183,3 +203,5 @@ const uniqueNotes = (notes: string[]) => {
   const joinedNotes = Array.from(new Set(notes.filter(Boolean))).join(" ");
   return joinedNotes || null;
 };
+
+const shouldUseDemoDriverSupportFallback = () => import.meta.env.VITE_USE_DEMO_DRIVER_DATA === "true";

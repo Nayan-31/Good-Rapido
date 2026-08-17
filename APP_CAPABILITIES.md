@@ -28,6 +28,62 @@ Good Rapido can support the complete ride-booking journey:
 - Driver onboarding, availability, ride handling, earnings, trust, and profile workflows.
 - Admin and ops dashboard for monitoring rides, pricing, surge, fraud, disputes, notifications, trust, and platform health.
 
+## Stable Demo Data
+
+The local demo seed gives the app a predictable story every time `npm --prefix server run seed:demo` runs. It cleans previous demo operational records for seeded users, then recreates the same demo accounts and records.
+
+Seeded login data:
+
+```text
+Rider: rider@goodrapido.test / Password@123
+Admin: admin@goodrapido.test / Password@123
+Ops: ops@goodrapido.test / Password@123
+
+Drivers:
+arjun.singh.driver@goodrapido.test / Password@123
+sahil.khan.driver@goodrapido.test / Password@123
+imran.ali.driver@goodrapido.test / Password@123
+rajesh.kumar.driver@goodrapido.test / Password@123
+neha.das.driver@goodrapido.test / Password@123
+amit.das.driver@goodrapido.test / Password@123
+```
+
+Seeded ride data:
+
+```text
+GR-DEMO-PENDING-MURI-SILLI
+Muri -> Silli
+Assigned to Arjun Singh
+Used for rider booking handoff and driver request demo
+
+GR-DEMO-COMPLETE-KOL-001
+Howrah Bridge -> Park Street
+Assigned to Imran Ali
+Used for rider history, payment receipt, and driver earnings demo
+
+GR-DEMO-DISPUTE-NCR-001
+Connaught Place -> Noida
+Assigned to Rajesh Kumar
+Used for fraud, dispute, support, and ops review demo
+```
+
+Seeded operational examples:
+
+- Known locations for local resolver: Muri, Silli, Ranchi, Howrah Bridge, Park Street, Connaught Place, India Gate, Noida, and Mumbai.
+- Payments: completed payment and refund-review payment records.
+- Fraud/dispute: one suspicious fare/payment review case and one rider dispute with evidence.
+- Notifications: rider booking, rider payment, driver request, and ops dispute notifications.
+- Support: one support ticket linked to the seeded fare dispute.
+
+Demo fallback rule:
+
+```text
+VITE_USE_DEMO_RIDE_REQUESTS=false
+VITE_USE_DEMO_DRIVER_DATA=false
+```
+
+Keep these flags disabled for normal testing. Fake/sample data should only appear when you explicitly enable these flags for screenshots or UI-only demos.
+
 ## Rider App
 
 The rider app is for passengers who want to book and track rides.
@@ -127,8 +183,8 @@ Ops/admin users can:
 - Send, retry, fail, or cancel notifications.
 - View support ticket summary.
 - Prepare incident broadcast messages.
-
-Admin user management and advanced analytics are implemented in separate feature branches and should be merged into `develop` when ready.
+- Manage admin users, profile details, account status, permissions, and permission matrix.
+- Review analytics summaries, forecasts, charts, filters, and export-ready cards.
 
 ## Backend Capabilities
 
@@ -232,11 +288,11 @@ Current stable status:
 
 Still pending for production readiness:
 
-- Live map provider integration.
-- Payment gateway integration.
+- Google Maps billing/API activation for production-grade map tiles, directions, and geocoding.
+- Live payment credentials and production webhook verification.
 - Real SMS, push, and email providers.
-- Production GPS movement tracking with WebSocket/map provider integration.
-- Final real-data binding for remaining support/provider-backed preview cards.
+- Dedicated WebSocket infrastructure for production GPS movement tracking.
+- Final real-data binding for remaining provider-backed preview cards.
 - Deployment setup and production environment hardening.
 
 ## How To Test The Whole App
@@ -335,6 +391,7 @@ npm --prefix server run seed:demo
 Default local credentials:
 
 ```text
+Rider: rider@goodrapido.test / Password@123
 Admin: admin@goodrapido.test / Password@123
 Ops: ops@goodrapido.test / Password@123
 
@@ -354,6 +411,15 @@ Bike: Arjun Singh, Sahil Khan
 Auto: Imran Ali
 Economy Cab: Rajesh Kumar, Neha Das
 Premium Cab: Amit Das
+```
+
+Seeded deterministic records:
+
+```text
+Pending request: GR-DEMO-PENDING-MURI-SILLI, Muri -> Silli, Arjun Singh
+Completed ride: GR-DEMO-COMPLETE-KOL-001, Howrah Bridge -> Park Street, Imran Ali
+Fraud/dispute ride: GR-DEMO-DISPUTE-NCR-001, Connaught Place -> Noida, Rajesh Kumar
+Operational data: 2 payments, 1 dispute, 1 fraud case, 4 notifications, 1 support ticket
 ```
 
 ### 6. Start Frontend Apps
@@ -563,6 +629,6 @@ Latest local checks passed:
 Backend test coverage currently passes with:
 
 ```text
-36 test suites
-359 tests
+37 test suites
+373 tests
 ```

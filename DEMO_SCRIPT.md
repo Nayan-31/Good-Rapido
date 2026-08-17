@@ -85,7 +85,7 @@ npm --prefix server run seed:demo
 
 Why:
 
-This creates known demo accounts and ready drivers.
+This cleans previous demo operational records, then creates known demo accounts, approved online drivers, known locations, ride records, payments, notifications, fraud/dispute examples, support tickets, and earnings-ready completed rides.
 
 Without this, you may face:
 
@@ -93,7 +93,8 @@ Without this, you may face:
 - Unknown passwords.
 - Drivers not approved.
 - Drivers not online.
-- Driver request screen showing fallback/demo locations.
+- Driver request screen showing empty data because no stable assigned ride exists.
+- Rider, driver, and ops screens depending on random/manual data.
 
 Seeded password:
 
@@ -114,6 +115,58 @@ Driver: rajesh.kumar.driver@goodrapido.test
 Driver: neha.das.driver@goodrapido.test
 Driver: amit.das.driver@goodrapido.test
 ```
+
+Seeded known locations:
+
+```text
+Muri
+Silli
+Ranchi
+Howrah Bridge
+Park Street
+Connaught Place
+India Gate
+Noida
+Mumbai
+```
+
+Seeded rides:
+
+```text
+GR-DEMO-PENDING-MURI-SILLI
+Muri -> Silli
+Assigned driver: Arjun Singh
+Use this for rider-to-driver request handoff.
+
+GR-DEMO-COMPLETE-KOL-001
+Howrah Bridge -> Park Street
+Assigned driver: Imran Ali
+Use this for rider history, payment receipt, and driver earnings.
+
+GR-DEMO-DISPUTE-NCR-001
+Connaught Place -> Noida
+Assigned driver: Rajesh Kumar
+Use this for fraud, dispute, support, and ops review.
+```
+
+Seeded operational records:
+
+```text
+Payments: 2
+Disputes: 1
+Fraud cases: 1
+Notifications: 4
+Support tickets: 1
+```
+
+Important demo flags:
+
+```text
+VITE_USE_DEMO_RIDE_REQUESTS=false
+VITE_USE_DEMO_DRIVER_DATA=false
+```
+
+Keep both disabled for the real backend demo. Enable them only when you intentionally want screenshot fallback data.
 
 ### Start backend
 
@@ -406,6 +459,8 @@ arjun.singh.driver@goodrapido.test
 Password@123
 ```
 
+If the rider selected Bike and used Muri -> Silli, Arjun Singh is the expected seeded driver.
+
 What to say:
 
 ```text
@@ -414,7 +469,7 @@ This is the driver app. The driver can see assigned incoming ride requests, fare
 
 Why this matters:
 
-The driver should see real rider booking data, not fake fallback data.
+The driver should see real rider booking data or the seeded pending Muri -> Silli request, not fake fallback data.
 
 Expected:
 
@@ -734,7 +789,7 @@ The core backend modules, authentication, fare estimate, booking, driver request
 Then say:
 
 ```text
-For production, real payment gateway, GPS/WebSocket movement tracking, production map provider, push/SMS/email providers, and final deployment hardening are still pending.
+For production, live payment credentials and webhook verification, Google Maps billing/API activation, dedicated WebSocket infrastructure, push/SMS/email providers, and final deployment hardening are still pending.
 ```
 
 This answer is honest and professional.
@@ -806,7 +861,7 @@ One issue was driver identity mismatch. Rider booking stored driver ids like drv
 Answer:
 
 ```text
-Production integrations are pending: real payment gateway, GPS/WebSocket movement tracking, production map provider, push/SMS/email providers, deployment hardening, and deeper browser E2E tests.
+Production integrations are pending: live payment credentials and webhook verification, Google Maps billing/API activation, dedicated WebSocket infrastructure, push/SMS/email providers, deployment hardening, and deeper browser E2E tests.
 ```
 
 ## 11. Final Demo Checklist
