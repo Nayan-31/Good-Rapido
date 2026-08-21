@@ -2,7 +2,7 @@
 
 Good Rapido is a full-stack capstone project for a transparent ride-booking platform. The product idea is simple: riders should understand why a fare changed, why a route was selected, why a driver was matched, and how trust or safety decisions are made.
 
-Current status: demo-ready full-stack MVP. The backend modular foundation is strong, the rider, driver, and ops frontend apps are wired around the main booking lifecycle, and the core demo flow is verified from rider booking to driver completion. Demo seed data is now deterministic for users, known locations, assigned ride requests, completed rides, payments, fraud/dispute examples, notifications, support tickets, and driver earnings visibility. Rider live ride status and driver GPS movement can auto-update through the ride lifecycle realtime stream with polling fallback. Rider pickup/dropoff search uses a backend location-search endpoint with optional Google Places autocomplete/details and local fallback when no API key is configured. Frontend auth uses session-scoped storage, proactive access-token refresh, retry-on-expired-token handling, stale token cleanup, and route guards across rider, driver, and ops apps. Real payment gateway code is ready with mock, Razorpay, and Stripe provider paths; live credentials and webhook deployment verification are still pending. Production integrations such as real Google Maps billing setup, dedicated WebSocket transport, and SMS/push/email providers are still pending.
+Current status: demo-ready full-stack MVP. The backend modular foundation is strong, the rider, driver, and ops frontend apps are wired around the main booking lifecycle, and the core demo flow is verified from rider booking to driver completion. Demo seed data is now deterministic for users, known locations, assigned ride requests, completed rides, payments, fraud/dispute examples, notifications, support tickets, and driver earnings visibility. Rider live ride status and driver GPS movement can auto-update through the ride lifecycle realtime stream with polling fallback. Rider pickup/dropoff search uses a backend location-search endpoint with optional Google Places autocomplete/details and polished local supported-location fallback when no API key is configured. Frontend auth uses session-scoped storage, proactive access-token refresh, retry-on-expired-token handling, stale token cleanup, and route guards across rider, driver, and ops apps. Real payment gateway code is ready with mock, Razorpay, and Stripe provider paths; live credentials and webhook deployment verification are still pending. Production integrations such as real Google Maps billing setup, dedicated WebSocket transport, and SMS/push/email providers are still pending.
 
 ## Tech Stack
 
@@ -95,7 +95,7 @@ frontend/
 Rider app current state:
 
 - Authentication/session structure with restore, refresh, stale-token cleanup, and logout.
-- Booking home screen with address-only pickup/dropoff fields, hidden internal coordinates, known-place demo resolution, and backend-backed vehicle pricing comparison.
+- Booking home screen with address-only pickup/dropoff fields, hidden internal coordinates, professional fallback location suggestions, clean unknown-location validation, disabled estimate state until both locations are resolved, and backend-backed vehicle pricing comparison.
 - Fare estimate screen with breakdown, confidence, surge transparency, and quote-derived fare context.
 - Confirm ride flow using pricing, matching, and lifecycle concepts.
 - Live ride status and driver GPS tracking stream with periodic refresh fallback.
@@ -158,8 +158,11 @@ Current behavior:
 - Backend calls Google Places Autocomplete when `GOOGLE_MAPS_API_KEY` is configured.
 - Backend resolves selected Google suggestions through Place Details to get latitude/longitude.
 - Backend returns local known-place suggestions when Google is not configured or unavailable.
+- Rider sees professional fallback copy such as "Local supported locations" instead of demo wording when Google is unavailable.
 - Rider selects a human-readable suggestion with area/city context.
 - Frontend stores the selected address plus internal latitude/longitude.
+- Unknown typed locations show a clear "Please select a valid location" validation message.
+- Fare estimate stays disabled until pickup and dropoff are resolved to valid internal coordinates.
 - Backend contract stays unchanged because pricing, matching, route fairness, and ride lifecycle modules still need coordinates.
 
 ## Local Setup

@@ -1,5 +1,4 @@
 import type { BookingHomeErrors, BookingHomeForm, BookingLocationForm, VehicleType } from "./booking.types";
-import { hasKnownLocation } from "./locationPresets";
 
 export const validateBookingHomeForm = (form: BookingHomeForm): BookingHomeErrors => {
   const errors: BookingHomeErrors = {};
@@ -66,7 +65,7 @@ const validateLocation = (location: BookingLocationForm) => {
 
   if (!location.address.trim()) {
     errors.address = "Enter a location";
-  } else if (!hasKnownLocation(location.address)) {
+  } else if (!hasResolvedCoordinates(location)) {
     errors.address = "Please select a valid location";
   }
 
@@ -86,3 +85,15 @@ const toLocationPayload = (location: BookingLocationForm) => ({
   latitude: Number(location.latitude),
   longitude: Number(location.longitude)
 });
+
+export const hasResolvedCoordinates = (location: BookingLocationForm) => {
+  const latitude = Number(location.latitude);
+  const longitude = Number(location.longitude);
+
+  return Number.isFinite(latitude)
+    && latitude >= -90
+    && latitude <= 90
+    && Number.isFinite(longitude)
+    && longitude >= -180
+    && longitude <= 180;
+};
