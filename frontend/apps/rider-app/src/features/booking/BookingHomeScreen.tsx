@@ -6,7 +6,7 @@ import { VEHICLE_OPTIONS } from "./booking.constants";
 import { bookingService } from "./booking.service";
 import { searchKnownLocations } from "./locationPresets";
 import type { BookingLocationForm, LocationSuggestion, VehicleType } from "./booking.types";
-import { formatCurrency } from "./booking.utils";
+import { formatCurrency, hasResolvedCoordinates } from "./booking.utils";
 import { useBookingHome } from "./useBookingHome";
 import styles from "./BookingHomeScreen.module.css";
 
@@ -19,6 +19,8 @@ export function BookingHomeScreen() {
     message,
     isEstimating,
     isLoadingVehicleQuotes,
+    canEstimate,
+    estimateDisabledReason,
     updateLocation,
     selectVehicle,
     updatePassengers,
@@ -48,7 +50,7 @@ export function BookingHomeScreen() {
             onChange={(patch) => updateLocation("pickup", patch)}
           />
           <LocationFields
-            label="Dropoff"
+            label="Drop-off"
             value={form.dropoff}
             errors={errors.dropoff}
             onChange={(patch) => updateLocation("dropoff", patch)}
@@ -113,9 +115,17 @@ export function BookingHomeScreen() {
         </Card>
 
         <div className={styles.panelFooter}>
-          <Button fullWidth isLoading={isEstimating} onClick={() => void createEstimate()}>
+          <Button
+            fullWidth
+            disabled={!canEstimate}
+            isLoading={isEstimating}
+            onClick={() => void createEstimate()}
+          >
             Estimate Fare
           </Button>
+          {!canEstimate && estimateDisabledReason ? (
+            <p className={styles.disabledHint}>{estimateDisabledReason}</p>
+          ) : null}
           {message ? (
             <Alert tone={estimate ? "trust" : "danger"} title={estimate ? "Estimate Ready" : "Estimate Failed"}>
               {message}
@@ -195,19 +205,27 @@ function LocationFields({ label, value, errors, onChange }: LocationFieldsProps)
   const [isSearching, setIsSearching] = useState(false);
   const [resolvingId, setResolvingId] = useState<string | null>(null);
   const [searchProvider, setSearchProvider] = useState<string | null>(null);
+  const [fallbackReason, setFallbackReason] = useState<string | null>(null);
+  const [searchError, setSearchError] = useState<string | null>(null);
   const normalizedAddress = value.address.trim();
+  const isSelectedLocation = hasResolvedCoordinates(value);
+  const shouldSearch = normalizedAddress.length >= 2 && !isSelectedLocation;
   const suggestions = remoteSuggestions.length ? remoteSuggestions : localSuggestions;
+  const hasNoResults = shouldSearch && !isSearching && !suggestions.length;
 
   useEffect(() => {
-    if (normalizedAddress.length < 2) {
+    if (!shouldSearch) {
       setRemoteSuggestions([]);
       setSearchProvider(null);
+      setFallbackReason(null);
+      setSearchError(null);
       setIsSearching(false);
       return;
     }
 
     let isActive = true;
     setIsSearching(true);
+    setSearchError(null);
 
     const timerId = window.setTimeout(() => {
       void bookingService.searchLocations(normalizedAddress, sessionToken)
@@ -220,6 +238,7 @@ function LocationFields({ label, value, errors, onChange }: LocationFieldsProps)
 
           setRemoteSuggestions(locationSearch?.suggestions ?? []);
           setSearchProvider(locationSearch?.provider ?? null);
+          setFallbackReason(locationSearch?.fallbackReason ?? null);
         })
         .catch(() => {
           if (!isActive) {
@@ -228,6 +247,8 @@ function LocationFields({ label, value, errors, onChange }: LocationFieldsProps)
 
           setRemoteSuggestions([]);
           setSearchProvider("local");
+          setFallbackReason("client_search_failed");
+          setSearchError("Search is temporarily unavailable. Showing supported local locations.");
         })
         .finally(() => {
           if (isActive) {
@@ -240,7 +261,7 @@ function LocationFields({ label, value, errors, onChange }: LocationFieldsProps)
       isActive = false;
       window.clearTimeout(timerId);
     };
-  }, [normalizedAddress, sessionToken]);
+  }, [normalizedAddress, sessionToken, shouldSearch]);
 
   const selectSuggestion = async (suggestion: LocationSuggestion) => {
     if (suggestion.latitude && suggestion.longitude) {
@@ -249,6 +270,10 @@ function LocationFields({ label, value, errors, onChange }: LocationFieldsProps)
         latitude: suggestion.latitude,
         longitude: suggestion.longitude
       });
+      setRemoteSuggestions([]);
+      setSearchProvider(suggestion.provider);
+      setFallbackReason(null);
+      setSearchError(null);
       return;
     }
 
@@ -263,16 +288,27 @@ function LocationFields({ label, value, errors, onChange }: LocationFieldsProps)
         latitude: location?.latitude ?? "",
         longitude: location?.longitude ?? ""
       });
+      setRemoteSuggestions([]);
+      setSearchProvider(location?.provider ?? suggestion.provider);
+      setFallbackReason(null);
+      setSearchError(null);
     } catch {
       onChange({
         address: suggestion.address,
         latitude: "",
         longitude: ""
       });
+      setSearchError("Please select a valid location");
     } finally {
       setResolvingId(null);
     }
   };
+
+  const statusMessage = resolveLocationStatusMessage({
+    fallbackReason,
+    isSearching,
+    searchProvider
+  });
 
   return (
     <div className={styles.locationGroup}>
@@ -280,13 +316,27 @@ function LocationFields({ label, value, errors, onChange }: LocationFieldsProps)
         label={label}
         value={value.address}
         error={errors?.address}
+        helperText={isSelectedLocation ? `${label} selected for fare estimate` : "Type a location and choose a suggestion"}
         autoComplete="off"
-        onChange={(event) => onChange({ address: event.target.value })}
+        onChange={(event) => {
+          setSearchError(null);
+          onChange({ address: event.target.value });
+        }}
       />
-      {normalizedAddress.length >= 2 ? (
-        <p className={styles.suggestionStatus}>
-          {isSearching ? "Searching locations..." : searchProvider === "google" ? "Google location results" : "Demo location results"}
+      {isSelectedLocation ? (
+        <div className={styles.selectionSummary}>
+          <span>Selected</span>
+          <strong>{value.address}</strong>
+        </div>
+      ) : null}
+      {shouldSearch ? (
+        <p className={styles.suggestionStatus} aria-live="polite">
+          {statusMessage}
         </p>
+      ) : null}
+      {searchError ? <p className={styles.locationNotice}>{searchError}</p> : null}
+      {hasNoResults ? (
+        <p className={styles.locationNotice}>Please select a valid location</p>
       ) : null}
       {suggestions.length ? (
         <div className={styles.suggestionList} role="listbox" aria-label={`${label} suggestions`}>
@@ -307,6 +357,42 @@ function LocationFields({ label, value, errors, onChange }: LocationFieldsProps)
     </div>
   );
 }
+
+const resolveLocationStatusMessage = ({
+  fallbackReason,
+  isSearching,
+  searchProvider
+}: {
+  fallbackReason: string | null;
+  isSearching: boolean;
+  searchProvider: string | null;
+}) => {
+  if (isSearching) {
+    return "Searching supported locations...";
+  }
+
+  if (searchProvider === "google") {
+    return "Google Places results";
+  }
+
+  if (fallbackReason === "missing_provider_token") {
+    return "Local supported locations";
+  }
+
+  if (fallbackReason === "provider_unavailable") {
+    return "Google Places is unavailable. Showing local supported locations.";
+  }
+
+  if (fallbackReason === "no_provider_results") {
+    return "No Google match found. Showing local supported locations.";
+  }
+
+  if (fallbackReason === "client_search_failed") {
+    return "Showing local supported locations";
+  }
+
+  return "Supported location results";
+};
 
 const createLocationSearchSessionToken = () => {
   if ("randomUUID" in crypto) {

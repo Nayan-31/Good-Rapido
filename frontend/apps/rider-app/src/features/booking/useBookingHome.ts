@@ -19,6 +19,9 @@ export function useBookingHome() {
   const [message, setMessage] = useState<string | null>(null);
   const [isEstimating, setIsEstimating] = useState(false);
   const [isLoadingVehicleQuotes, setIsLoadingVehicleQuotes] = useState(false);
+  const formValidation = useMemo(() => validateBookingHomeForm(form), [form]);
+  const canEstimate = !hasBookingHomeErrors(formValidation);
+  const estimateDisabledReason = resolveEstimateDisabledReason(formValidation);
 
   const updateLocation = useCallback((kind: "pickup" | "dropoff", patch: Partial<BookingLocationForm>) => {
     const isAddressOnlyPatch = patch.address !== undefined
@@ -132,6 +135,8 @@ export function useBookingHome() {
     message,
     isEstimating,
     isLoadingVehicleQuotes,
+    canEstimate,
+    estimateDisabledReason,
     updateLocation,
     selectVehicle,
     updatePassengers,
@@ -145,4 +150,20 @@ const resolveErrorMessage = (error: unknown) => {
   }
 
   return "Fare estimate request failed";
+};
+
+const resolveEstimateDisabledReason = (errors: BookingHomeErrors) => {
+  if (errors.pickup?.address) {
+    return "Select a valid pickup location to continue.";
+  }
+
+  if (errors.dropoff?.address) {
+    return "Select a valid drop-off location to continue.";
+  }
+
+  if (errors.passengers) {
+    return errors.passengers;
+  }
+
+  return null;
 };
