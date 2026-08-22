@@ -64,6 +64,7 @@ Implemented private modules:
 - `earnings`
 - `disputes`
 - `notifications`
+- `support`
 
 Implemented core modules:
 
@@ -101,6 +102,8 @@ Rider app current state:
 - Live ride status and driver GPS tracking stream with periodic refresh fallback.
 - Ride history with auto-loaded receipt transparency and profile transparency screens.
 - Safety and notification screens.
+- Safety/help creates backend support tickets and shows support ticket history.
+- Dispute center creates completed-ride disputes, adds evidence notes, tracks status, and can cancel open disputes.
 - API-facing services for rider flows.
 
 Driver app current state:
@@ -136,7 +139,9 @@ Real backend data is currently active for:
 - Driver dashboard real-data summaries for earnings, trust, profile/document readiness, notifications, and assigned request status.
 - Driver active ride state resolves backend assigned active rides first and only uses demo ride fallback when explicitly enabled.
 - Driver notifications support private driver-scoped list/detail/mark-read access.
+- Driver support creates private support tickets and shows driver-scoped ticket history.
 - Ops private auth, ride queue visibility, dashboard data, pricing/surge, trust-safety, fraud-dispute, communications, admin users, and analytics module structure.
+- Ops communications uses private support summary and ticket records, while fraud-disputes shows dispute evidence, refund, evidence-request, resolve, and reject states from backend records.
 - Ops admin-action flows verified through frontend typecheck, shared API client typecheck, and focused backend route tests for pricing, surge, fraud, disputes, notifications, and admin users.
 - Stable demo seed data for rider, driver, admin, ops, known locations, pending ride request, completed rides, payments, fraud/dispute cases, notifications, support tickets, and earnings-ready ride history.
 - Backend API modules, Jest tests, and full smoke demo.

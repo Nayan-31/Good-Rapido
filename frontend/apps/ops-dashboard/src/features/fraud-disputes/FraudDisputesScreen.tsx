@@ -5,6 +5,7 @@ import { findOpsRouteById } from "@/routes";
 import { fraudDisputesService } from "./fraudDisputes.service";
 import type {
   DisputeItem,
+  DisputeDetail,
   DisputeSummary,
   FraudCase,
   FraudCaseItem,
@@ -47,7 +48,7 @@ export function FraudDisputesScreen() {
   const [fraudCases, setFraudCases] = useState<FraudCaseItem[]>([]);
   const [disputes, setDisputes] = useState<DisputeItem[]>([]);
   const [selectedFraudCase, setSelectedFraudCase] = useState<FraudCase | null>(null);
-  const [selectedDispute, setSelectedDispute] = useState<DisputeItem | null>(null);
+  const [selectedDispute, setSelectedDispute] = useState<DisputeItem | DisputeDetail | null>(null);
   const [simulation, setSimulation] = useState<FraudSimulation | null>(null);
   const [reviewerId, setReviewerId] = useState("ops-reviewer");
   const [note, setNote] = useState("Ops reviewed evidence and risk signals");
@@ -210,6 +211,13 @@ export function FraudDisputesScreen() {
             </div>
             <Badge tone={selectedDispute?.priority === "urgent" ? "danger" : "warning"}>{formatLabel(selectedDispute?.status)}</Badge>
           </div>
+          {selectedDispute ? (
+            <DisputeDetailCard dispute={selectedDispute} />
+          ) : (
+            <div className={styles.emptyDetail}>
+              Select a dispute from the queue to review evidence request, refund, and resolution status.
+            </div>
+          )}
           <ActionFields reviewerId={reviewerId} note={note} onReviewerChange={setReviewerId} onNoteChange={setNote} />
           <label className={styles.field}>
             <span>Refund Amount</span>
@@ -224,6 +232,42 @@ export function FraudDisputesScreen() {
         </Card>
       </section>
     </section>
+  );
+}
+
+function DisputeDetailCard({ dispute }: { dispute: DisputeItem | DisputeDetail }) {
+  const detail = "description" in dispute ? dispute : null;
+  const resolution = detail?.resolution;
+  const resolutionType = typeof resolution?.resolutionType === "string" ? resolution.resolutionType : "not decided";
+  const resolutionNote = typeof resolution?.note === "string" ? resolution.note : null;
+
+  return (
+    <div className={styles.detailCard}>
+      <div>
+        <span className={styles.eyebrow}>Issue</span>
+        <strong>{dispute.title || formatLabel(dispute.reason)}</strong>
+        <p>{detail?.description || "No detailed rider description available yet."}</p>
+      </div>
+      <div className={styles.detailGrid}>
+        <span>
+          <small>Evidence</small>
+          <strong>{detail?.evidence?.length ?? dispute.evidenceCount} items</strong>
+        </span>
+        <span>
+          <small>Requested Refund</small>
+          <strong>{formatCurrency(dispute.requestedRefundAmount ?? 0)}</strong>
+        </span>
+        <span>
+          <small>Next Action</small>
+          <strong>{dispute.guidance.nextAction}</strong>
+        </span>
+        <span>
+          <small>Resolution</small>
+          <strong>{formatLabel(resolutionType)}</strong>
+        </span>
+      </div>
+      {resolutionNote ? <p className={styles.resolutionNote}>{resolutionNote}</p> : null}
+    </div>
   );
 }
 

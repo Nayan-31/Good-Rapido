@@ -1,9 +1,14 @@
 import type { ApiResponse } from "@good-rapido/api-client";
 
 import { apiClient } from "@/services/apiClient";
-import type { SafetyContactResponse, SupportSummary } from "./safety.types";
+import type { SafetyContactResponse, SafetyTicket, SupportSummary } from "./safety.types";
 
 type SupportSummaryResponse = ApiResponse<{
+  summary: SupportSummary;
+}>;
+
+type SupportTicketListResponse = ApiResponse<{
+  tickets: SafetyTicket[];
   summary: SupportSummary;
 }>;
 
@@ -16,6 +21,9 @@ type SafetySupportResponse = ApiResponse<SafetyContactResponse>;
 export const safetyService = {
   getSupportSummary() {
     return apiClient.public.support.getSummary() as Promise<SupportSummaryResponse>;
+  },
+  listSupportTickets() {
+    return apiClient.public.support.listTickets({ limit: 6 }) as Promise<SupportTicketListResponse>;
   },
   getCurrentRide() {
     return apiClient.public.rides.getCurrent() as Promise<CurrentRideResponse>;

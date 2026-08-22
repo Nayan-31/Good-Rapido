@@ -30,7 +30,7 @@ export function SupportScreen() {
         <div>
           <Badge tone="danger">Step 10</Badge>
           <h1>Driver support</h1>
-          <p>Create support tickets, track ticket history, and review dispute/support health for fare, route, payout, safety, and account issues.</p>
+          <p>Create support tickets, track ticket history, and review support health for fare, route, payout, safety, and account issues.</p>
         </div>
         <Button type="button" variant="secondary" isLoading={support.isLoading} onClick={() => void support.reload()}>
           Refresh support
@@ -57,7 +57,7 @@ export function SupportScreen() {
         <SummaryCard label="Open tickets" value={view.summary.open} />
         <SummaryCard label="Resolved" value={view.summary.resolved} />
         <SummaryCard label="Urgent" value={view.summary.urgent} />
-        <SummaryCard label="Disputes" value={view.summary.disputes} />
+        <SummaryCard label="Total tickets" value={view.summary.total} />
       </section>
 
       <section className={styles.layout}>
@@ -119,6 +119,12 @@ export function SupportScreen() {
             {view.tickets.map((ticket) => (
               <TicketCard key={ticket.id} ticket={ticket} />
             ))}
+            {!view.tickets.length ? (
+              <div className={styles.emptyState}>
+                <strong>No support tickets yet.</strong>
+                <span>Create a ticket above when payout, route, safety, or account help is needed.</span>
+              </div>
+            ) : null}
           </div>
         </article>
       </section>

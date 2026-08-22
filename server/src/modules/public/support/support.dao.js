@@ -33,12 +33,42 @@ export default class SupportDao {
         return this.model.find(filter).sort({ latestActivityAt: -1 }).limit(limit);
     }
 
+    findAll({ status, category, priority, role, limit = 20 } = {}) {
+        const filter = {};
+
+        if (status) {
+            filter.status = status;
+        }
+
+        if (category) {
+            filter.category = category;
+        }
+
+        if (priority) {
+            filter.priority = priority;
+        }
+
+        if (role) {
+            filter.role = role;
+        }
+
+        return this.model.find(filter).sort({ latestActivityAt: -1 }).limit(limit);
+    }
+
     findByIdForUser(ticketId, authUserId, role) {
         if (!mongoose.isValidObjectId(ticketId)) {
             return null;
         }
 
         return this.model.findOne({ _id: ticketId, authUserId, role });
+    }
+
+    findById(ticketId) {
+        if (!mongoose.isValidObjectId(ticketId)) {
+            return null;
+        }
+
+        return this.model.findById(ticketId);
     }
 
     addMessage(ticketId, authUserId, role, { message, status, latestActivityAt }) {
@@ -81,6 +111,54 @@ export default class SupportDao {
                     authUserId: normalizeObjectId(authUserId),
                     role
                 }
+            },
+            {
+                $facet: {
+                    totals: [
+                        {
+                            $group: {
+                                _id: null,
+                                totalTickets: { $sum: 1 },
+                                openCount: {
+                                    $sum: {
+                                        $cond: [{ $in: ['$status', SUPPORT_OPEN_STATUSES] }, 1, 0]
+                                    }
+                                },
+                                resolvedCount: countStatus(SUPPORT_STATUSES.RESOLVED),
+                                closedCount: countStatus(SUPPORT_STATUSES.CLOSED),
+                                urgentCount: countPriority(SUPPORT_PRIORITIES.URGENT),
+                                latestActivityAt: { $max: '$latestActivityAt' }
+                            }
+                        }
+                    ],
+                    statuses: [
+                        {
+                            $group: {
+                                _id: '$status',
+                                count: { $sum: 1 }
+                            }
+                        }
+                    ],
+                    categories: [
+                        {
+                            $group: {
+                                _id: '$category',
+                                count: { $sum: 1 }
+                            }
+                        }
+                    ]
+                }
+            }
+        ]);
+
+        return summary || { totals: [], statuses: [], categories: [] };
+    }
+
+    async findSummary({ role } = {}) {
+        const match = role ? { role } : {};
+        const [summary] = await this.model.aggregate([
+            {
+                $match: match
             },
             {
                 $facet: {

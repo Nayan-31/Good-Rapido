@@ -158,6 +158,20 @@
   gap: var(--gr-space-3);
 }
 
+.emptyState {
+  display: grid;
+  gap: var(--gr-space-1);
+  padding: var(--gr-space-4);
+  border: 1px dashed var(--gr-color-border);
+  border-radius: var(--gr-radius-control);
+  background: var(--gr-color-soft-gray);
+  color: var(--gr-color-muted);
+}
+
+.emptyState strong {
+  color: var(--gr-color-ink);
+}
+
 .ticketCard small {
   color: var(--gr-color-muted);
 }

@@ -5,7 +5,7 @@ import { getRideIdFromDraft } from "./safety.utils";
 import styles from "./SafetyScreen.module.css";
 
 export function SafetyScreen() {
-  const { draft, supportSummary, currentRide, isLoading, isSending, message, loadSafety, sendSafetySignal } = useSafetyCenter();
+  const { draft, supportSummary, supportTickets, currentRide, isLoading, isSending, message, loadSafety, sendSafetySignal } = useSafetyCenter();
   const activeRideId = getRideIdFromDraft(draft) ?? currentRide?.id ?? null;
 
   return (
@@ -112,9 +112,42 @@ export function SafetyScreen() {
         </div>
       </Card>
 
+      <Card className={styles.section}>
+        <div className={styles.sectionHeader}>
+          <div>
+            <p className={styles.eyebrow}>Ticket History</p>
+            <h3>Support cases from backend</h3>
+          </div>
+          <Badge tone={supportTickets.length ? "info" : "neutral"}>{supportTickets.length} records</Badge>
+        </div>
+        <div className={styles.ticketList}>
+          {supportTickets.map((ticket) => (
+            <article className={styles.ticketItem} key={ticket.id}>
+              <span>
+                <strong>{ticket.subject ?? ticket.ticketCode}</strong>
+                <small>{formatLabel(ticket.category ?? "support")} - {ticket.messageCount ?? 0} messages</small>
+              </span>
+              <span className={styles.ticketMeta}>
+                <Badge tone={ticket.priority === "urgent" ? "danger" : "warning"}>{formatLabel(ticket.status)}</Badge>
+                <small>{formatDateTime(ticket.latestActivityAt)}</small>
+              </span>
+            </article>
+          ))}
+          {!supportTickets.length ? (
+            <div className={styles.emptyState}>
+              <strong>No support tickets yet.</strong>
+              <span>Safety and help requests will appear here after you create a ticket.</span>
+            </div>
+          ) : null}
+        </div>
+      </Card>
+
       <div className={styles.actions}>
         <Button variant="secondary" onClick={() => { window.location.hash = "/"; }}>
           Home
+        </Button>
+        <Button variant="secondary" onClick={() => { window.location.hash = "/disputes"; }}>
+          Open Disputes
         </Button>
         <Button
           isLoading={isSending}
@@ -130,3 +163,18 @@ export function SafetyScreen() {
     </section>
   );
 }
+
+const formatLabel = (value: string) => value.replace(/_/g, " ");
+
+const formatDateTime = (value: string | null) => {
+  if (!value) {
+    return "No activity yet";
+  }
+
+  return new Intl.DateTimeFormat("en-IN", {
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit"
+  }).format(new Date(value));
+};

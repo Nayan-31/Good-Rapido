@@ -36,6 +36,7 @@ import privateFraudRoutes from './modules/private/fraud/fraud.route.js';
 import privateNotificationsRoutes from './modules/private/notifications/notifications.route.js';
 import privatePricingRoutes from './modules/private/pricing/pricing.route.js';
 import privateRideOpsRoutes from './modules/private/ride-ops/ride-ops.route.js';
+import privateSupportRoutes from './modules/private/support/support.route.js';
 import privateSurgeRoutes from './modules/private/surge/surge.route.js';
 import privateTrustRoutes from './modules/private/trust/trust.route.js';
 import privateVehicleRoutes from './modules/private/vehicle/vehicle.route.js';
@@ -90,6 +91,7 @@ export default function createApp() {
     app.use('/api/v1/private/notifications', privateNotificationsRoutes);
     app.use('/api/v1/private/pricing', privatePricingRoutes);
     app.use('/api/v1/private/ride-ops', privateRideOpsRoutes);
+    app.use('/api/v1/private/support', privateSupportRoutes);
     app.use('/api/v1/private/surge', privateSurgeRoutes);
     app.use('/api/v1/private/trust', privateTrustRoutes);
     app.use('/api/v1/private/vehicle', privateVehicleRoutes);

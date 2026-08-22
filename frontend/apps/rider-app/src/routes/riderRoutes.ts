@@ -5,6 +5,7 @@ export type RiderRouteId =
   | "ride"
   | "history"
   | "safety"
+  | "disputes"
   | "notifications"
   | "profile"
   | "identity";
@@ -58,6 +59,13 @@ export const riderRoutes = [
     path: "/safety",
     title: "Safety & Help",
     navLabel: "Safety",
+    showInBottomNav: false
+  },
+  {
+    id: "disputes",
+    path: "/disputes",
+    title: "Disputes",
+    navLabel: "Disputes",
     showInBottomNav: false
   },
   {

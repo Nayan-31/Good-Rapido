@@ -70,6 +70,7 @@ Driver, admin, ops, and internal APIs:
 - `earnings`
 - `disputes`
 - `notifications`
+- `support`
 
 ### Core Modules
 
@@ -218,6 +219,7 @@ The smoke command checks health, rider login, fare estimate, driver search, book
 - Rider and driver accounts can register through their auth routes.
 - Admin and ops accounts do not self-register; seed them or create them through controlled admin flows.
 - Private driver tokens can read and mark their own notifications through `private/notifications`; admin/ops notification dashboard, create, send, retry, fail, and cancel actions remain ops-permission protected.
+- Private support exposes driver-scoped ticket create/history/detail actions and admin/ops global support summary/list/detail actions.
 - Frontend apps should attach access tokens to protected routes, refresh before expiry, retry one protected request after a 401, and clear browser session state when refresh/logout fails.
 - Public production deployment should eventually move refresh/session handling to secure httpOnly cookies.
 
@@ -259,6 +261,12 @@ Ops admin-action route checks:
 npm test -- pricing.route.test.js surge.route.test.js fraud.route.test.js disputes.route.test.js notifications.route.test.js admin.route.test.js
 ```
 
+Support and dispute route checks:
+
+```bash
+npm test -- support.route.test.js disputes.route.test.js
+```
+
 ## Docker And Deployment
 
 Run local API + MongoDB through Docker Compose:
@@ -282,6 +290,7 @@ Full deployment notes are in:
 - Private driver auth supports registration, login, refresh, logout, permissions, and session profile.
 - Private admin and ops auth support login, refresh, logout, permissions, and session profile. Self-registration is disabled for these roles.
 - Private notifications support driver-scoped list/detail/mark-read access for driver apps, while ops/admin delivery management remains protected.
+- Private support supports driver ticket creation/history plus admin/ops global support summary and ticket list/detail.
 - Ops admin-action APIs cover pricing create/update/activate/archive/simulate, surge create/update/activate/pause/end/archive/simulate, fraud assign/confirm/dismiss/resolve/simulate, dispute assign/evidence/resolve/reject, notification create/send/retry/fail/cancel, and admin user create/update/status/permissions.
 - Core ride lifecycle stores assigned-driver GPS updates on the ride document and exposes `tracking.lastDriverLocation` through the rider lifecycle stream.
 - Public payments create gateway sessions for UPI/card methods, support success/failure callbacks, store provider metadata, and route refunds through the configured provider when available.
@@ -296,4 +305,4 @@ Full deployment notes are in:
 - Add live payment webhook verification after production Razorpay/Stripe credentials are configured.
 - Add dedicated WebSocket transport if the lifecycle stream needs to move beyond SSE/polling fallback.
 - Add production notification providers.
-- Complete frontend-to-backend binding for remaining secondary support/demo preview screens.
+- Add production support staffing workflows such as internal support replies and SLA dashboards.

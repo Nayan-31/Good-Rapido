@@ -11,7 +11,7 @@ Current status: ops foundation ready. The app has React, Vite, TypeScript, routi
 - Manages pricing rules, surge rules, and fare simulations.
 - Reviews trust, safety, driver documents, and vehicle compliance.
 - Investigates fraud cases and dispute escalations.
-- Operates notifications, retries, cancellations, and support handoffs.
+- Operates notifications, retries, cancellations, and support handoffs from private support records.
 - Manages admin and ops users, statuses, and permissions.
 - Exposes analytics for rides, revenue, drivers, trust-safety, and forecasts.
 
@@ -29,6 +29,7 @@ private/trust
 private/fraud
 private/disputes
 private/notifications
+private/support
 private/driver-documents
 private/vehicle
 core/ride-lifecycle
@@ -37,7 +38,6 @@ core/pricing-engine
 core/trust-engine
 core/fraud-engine
 core/notification-engine
-public/support
 ```
 
 ## Current Screens
@@ -80,9 +80,10 @@ ops-dashboard/
 - Fraud case queue with risk simulation, reviewer assignment, confirm, dismiss, and resolve actions.
 - Dispute dashboard connected to `private/disputes`.
 - Dispute queue with assign owner, request evidence, resolve, and reject actions.
-- Communications dashboard connected to `private/notifications` and `public/support`.
+- Dispute detail review with rider description, evidence count, requested refund amount, next action, and resolution state.
+- Communications dashboard connected to `private/notifications` and `private/support`.
 - Notification list, detail review, create notification, send, retry, fail, and cancel actions.
-- Support ticket summary with open, resolved, closed, urgent, and recent ticket context.
+- Support ticket summary with open, resolved, closed, urgent, and recent ticket context from backend support records.
 - Incident broadcast UI using multi-recipient urgent safety notification payloads.
 - Admin users dashboard connected to `private/admin`.
 - Admin user directory with role, status, search filters, create user, and profile update actions.
