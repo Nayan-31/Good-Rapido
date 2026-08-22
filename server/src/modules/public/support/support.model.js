@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import { AUTH_ROLES } from '../auth/auth.constants.js';
+import { PRIVATE_AUTH_ROLES } from '../../private/auth/auth.constants.js';
 import {
     SUPPORT_ATTACHMENT_TYPES,
     SUPPORT_CATEGORIES,
@@ -165,7 +166,10 @@ const supportTicketSchema = new mongoose.Schema(
         },
         role: {
             type: String,
-            enum: Object.values(AUTH_ROLES),
+            enum: [
+                ...Object.values(AUTH_ROLES),
+                ...Object.values(PRIVATE_AUTH_ROLES)
+            ],
             required: true,
             index: true
         },

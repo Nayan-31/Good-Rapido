@@ -16,9 +16,11 @@ export interface CurrentRide {
 export interface SafetyTicket {
   id: string;
   ticketCode: string;
+  category?: string | null;
   status: string;
   priority: string;
   subject: string | null;
+  messageCount?: number;
   latestActivityAt: string | null;
 }
 

@@ -39,7 +39,7 @@ server/src/modules/private/ride-ops
 server/src/modules/private/earnings
 server/src/modules/private/trust
 server/src/modules/private/notifications
-server/src/modules/public/support
+server/src/modules/private/support
 server/src/modules/core/ride-lifecycle
 ```
 
@@ -48,13 +48,14 @@ MongoDB collection used now:
 ```text
 private_auth_users
 public_notifications
+public_support_tickets
 ```
 
 ## What Still Uses Fallbacks When No Live Records Exist
 
 - Some empty-state helper cards.
 - Demo-only driver ride, earnings, trust, profile, and notification data can be enabled for screenshots with explicit demo environment flags.
-- Support preview text still stays partially UI-first until live support ticket records exist.
+- Support ticket creation and history use private support APIs and show clean empty states when no records exist.
 
 These fallbacks keep the demo readable only when intentionally enabled. The main auth, booking handoff, active ride lifecycle, driver notifications, and earnings smoke flow are backend-verified.
 
@@ -248,12 +249,13 @@ private/driver-documents
 - Driver help center.
 - Create support request.
 - Track support tickets.
+- Backend-backed ticket history for the logged-in driver.
+- Explicit empty state when no support tickets exist.
 
 Backend modules to connect:
 
 ```text
-public/support
-private/disputes
+private/support
 ```
 
 ## Run Locally
@@ -305,5 +307,4 @@ npm run build:driver
 
 - Add deeper browser E2E coverage for auth to completed ride.
 - Add production map/GPS provider keys for real deployment.
-- Add live support ticket records for all support preview cards.
 - Add production SMS/push/email provider integrations for notification delivery.

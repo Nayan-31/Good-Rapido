@@ -65,7 +65,7 @@ export const opsRoutes = [
     path: "/communications",
     title: "Communications",
     navLabel: "Comms",
-    backendModules: ["private/notifications", "core/notification-engine", "public/support"]
+    backendModules: ["private/notifications", "core/notification-engine", "private/support"]
   },
   {
     id: "adminUsers",

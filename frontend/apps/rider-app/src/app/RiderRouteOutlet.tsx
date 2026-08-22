@@ -1,4 +1,5 @@
 import { BookingHomeScreen } from "@/features/booking";
+import { DisputesScreen } from "@/features/disputes";
 import { RideHistoryScreen } from "@/features/history";
 import { IdentityFlow } from "@/features/identity";
 import { NotificationScreen } from "@/features/notifications";
@@ -43,6 +44,10 @@ export function RiderRouteOutlet({ route }: RiderRouteOutletProps) {
 
   if (route.id === "safety") {
     return <SafetyScreen />;
+  }
+
+  if (route.id === "disputes") {
+    return <DisputesScreen />;
   }
 
   if (route.id === "profile") {

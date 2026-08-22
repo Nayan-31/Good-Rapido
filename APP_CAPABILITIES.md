@@ -23,6 +23,8 @@ Good Rapido can support the complete ride-booking journey:
 - Driver matching and ride confirmation flow.
 - Live ride and route fairness flow.
 - Safety, help, fraud reporting, and dispute handling.
+- Backend-backed support ticket creation and ticket history for rider safety/help and driver support.
+- Backend-backed dispute history, evidence request, refund, resolve, reject, and cancellation status.
 - Payment and refund workflow structure.
 - Rider history and profile transparency.
 - Driver onboarding, availability, ride handling, earnings, trust, and profile workflows.
@@ -104,7 +106,9 @@ Riders can:
 - Review driver trust signals before booking.
 - View route fairness and route accuracy information.
 - Access safety and help flows.
-- Report ride issues or suspicious activity.
+- Create support tickets from safety/help flows and see backend ticket history.
+- Report ride issues, suspicious activity, fare problems, route problems, refund concerns, or safety concerns through disputes.
+- Add dispute evidence notes, track dispute status, and cancel open disputes.
 - View ride history with fare transparency cards and auto-loaded receipt details.
 - Manage rider profile, saved addresses, emergency contacts, and preferences using authenticated rider/recent ride context where possible.
 
@@ -140,6 +144,7 @@ Drivers can:
 - View backend earnings summary, ride earnings, incentives, penalties, and payout status.
 - View trust score, reliability score, cancellation score, and improvement tips with honest pending state when trust records do not exist yet.
 - View driver-scoped notifications and mark them as read.
+- Create private support tickets and view driver-scoped support ticket history.
 - Manage profile, vehicle info, document status, account settings, and logout using private driver/profile/document/vehicle APIs.
 
 ## Ops Dashboard
@@ -178,6 +183,7 @@ Ops/admin users can:
 - Review disputes.
 - Request evidence.
 - Resolve or reject disputes.
+- Review dispute details with rider description, evidence count, requested refund amount, next action, and resolution state.
 - Operate notification list and detail views.
 - Create notifications.
 - Send, retry, fail, or cancel notifications.
@@ -273,6 +279,8 @@ It supports:
 - Safety and help center flow.
 - Emergency contact structure.
 - Support ticket flow.
+- Rider and driver support ticket history backed by MongoDB support records.
+- Ops support summary backed by private support records.
 - Notification and incident broadcast structure.
 
 ## Current Status
@@ -283,6 +291,7 @@ Current stable status:
 - Backend tests are passing.
 - Rider app has MVP booking, fare, ride, safety, history, and profile flows.
 - Driver app has real authentication, real booking handoff, backend-first active ride lifecycle actions, driver-scoped notifications, backend earnings/profile summaries, and complete workflow screens.
+- Rider safety/help, rider disputes, driver support, and ops support/dispute review use backend support/dispute records with clear empty states when no records exist.
 - Ops dashboard has auth, overview, ride operations, pricing/surge, trust-safety, fraud-disputes, communications, admin users, and analytics connected.
 - Shared API client and UI package are available.
 
@@ -476,6 +485,8 @@ Open the rider app and test:
 - Review fare breakdown and surge transparency.
 - Continue to confirm ride flow.
 - Check route fairness, safety, history, notification, and profile screens.
+- In safety/help, create a support ticket and confirm it appears in ticket history.
+- In disputes, select a completed ride, submit a dispute, add evidence, and verify status updates.
 
 Expected result:
 
@@ -520,6 +531,7 @@ Open the driver app and test:
 - Open onboarding, availability, ride requests, active ride, earnings, trust, alerts, profile, and support routes.
 - To see actual incoming requests, create a rider booking for a ride type, then log in as the matched seeded driver shown on the rider confirm screen.
 - In notifications, verify the inbox loads only notifications scoped to the logged-in driver and mark-read changes the unread count.
+- In support, create a support ticket and confirm the new ticket appears in driver ticket history.
 - In earnings, verify completed rides appear after the driver completes the ride lifecycle.
 - In profile, verify new accounts show pending/missing onboarding data instead of fake approved records.
 
@@ -539,6 +551,8 @@ Open the ops dashboard and test:
 - Check ride operations queue and ride detail flow.
 - Test pricing and surge screens.
 - Review trust-safety, fraud-disputes, and communications screens.
+- In fraud-disputes, open a dispute and verify evidence request, resolve with refund amount, and reject actions show backend status updates.
+- In communications, verify support summary and ticket records load from private support data.
 - Log out.
 
 Expected result:
@@ -625,10 +639,11 @@ Latest local checks passed:
 - Driver frontend production build.
 - Ops dashboard production build.
 - Full backend Jest test suite.
+- Focused private support route tests.
 
 Backend test coverage currently passes with:
 
 ```text
-37 test suites
-373 tests
+38 test suites
+378 tests
 ```

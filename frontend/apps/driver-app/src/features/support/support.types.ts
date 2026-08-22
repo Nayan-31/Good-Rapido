@@ -22,7 +22,7 @@ export interface DriverSupportView {
     open: number;
     resolved: number;
     urgent: number;
-    disputes: number;
+    total: number;
   };
   backendNote: string | null;
 }

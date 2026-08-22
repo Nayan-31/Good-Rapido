@@ -6,6 +6,7 @@ import type { DriverSupportForm, DriverSupportTicket, DriverSupportView } from "
 type SupportListResponse = ApiResponse<{
   tickets?: BackendSupportTicket[];
   summary?: {
+    totalTickets?: number;
     openCount?: number;
     resolvedCount?: number;
     urgentCount?: number;
@@ -14,13 +15,6 @@ type SupportListResponse = ApiResponse<{
 
 type SupportCreateResponse = ApiResponse<{
   ticket?: BackendSupportTicket;
-}>;
-
-type DisputeSummaryResponse = ApiResponse<{
-  summary?: {
-    openCount?: number;
-    totalDisputes?: number;
-  };
 }>;
 
 interface BackendSupportTicket {
@@ -69,7 +63,7 @@ export const demoSupportView: DriverSupportView = {
     open: 1,
     resolved: 12,
     urgent: 0,
-    disputes: 1
+    total: 13
   },
   backendNote: null
 };
@@ -80,7 +74,7 @@ export const emptySupportView: DriverSupportView = {
     open: 0,
     resolved: 0,
     urgent: 0,
-    disputes: 0
+    total: 0
   },
   backendNote: null
 };
@@ -91,10 +85,7 @@ export const driverSupportService = {
     let view = emptySupportView;
 
     try {
-      const [ticketsResponse, disputesResponse] = await Promise.all([
-        apiClient.public.support.listTickets({ limit: 10 }) as Promise<SupportListResponse>,
-        apiClient.public.disputes.getSummary() as Promise<DisputeSummaryResponse>
-      ]);
+      const ticketsResponse = await apiClient.private.support.listTickets({ limit: 10 }) as SupportListResponse;
       const tickets = ticketsResponse.data?.tickets ?? [];
 
       view = {
@@ -103,12 +94,12 @@ export const driverSupportService = {
           open: safeNumber(ticketsResponse.data?.summary?.openCount, emptySupportView.summary.open),
           resolved: safeNumber(ticketsResponse.data?.summary?.resolvedCount, emptySupportView.summary.resolved),
           urgent: safeNumber(ticketsResponse.data?.summary?.urgentCount, emptySupportView.summary.urgent),
-          disputes: safeNumber(disputesResponse.data?.summary?.openCount, disputesResponse.data?.summary?.totalDisputes, emptySupportView.summary.disputes)
+          total: safeNumber(ticketsResponse.data?.summary?.totalTickets, tickets.length, emptySupportView.summary.total)
         },
         backendNote: null
       };
     } catch (error) {
-      notes.push(resolveBackendNote(error, "Support/disputes APIs are wired, but current driver token may not match public support scope."));
+      notes.push(resolveBackendNote(error, "Private support API is wired, but current driver session could not load support records."));
 
       if (shouldUseDemoDriverSupportFallback()) {
         view = demoSupportView;
@@ -124,7 +115,7 @@ export const driverSupportService = {
 
   async createTicket(form: DriverSupportForm): Promise<{ ticket: DriverSupportTicket; backendNote: string | null }> {
     try {
-      const response = await apiClient.public.support.createTicket({
+      const response = await apiClient.private.support.createTicket({
         category: form.category,
         subject: form.subject,
         description: form.description,
@@ -158,7 +149,7 @@ export const driverSupportService = {
           latestActivityAt: "Just now",
           messageCount: 1
         },
-        backendNote: resolveBackendNote(error, "Support ticket was created locally because backend ticket create is not available for this token.")
+        backendNote: resolveBackendNote(error, "Support ticket was created locally because private support ticket create is not available for this token.")
       };
     }
   }
@@ -171,7 +162,9 @@ const mapTicket = (ticket: BackendSupportTicket): DriverSupportTicket => ({
   subject: ticket.subject || "Support ticket",
   status: ticket.status || "open",
   priority: ticket.priority || "medium",
-  latestActivityAt: ticket.latestActivityAt || ticket.createdAt ? formatDateTime(ticket.latestActivityAt || ticket.createdAt || "") : "Recently",
+  latestActivityAt: ticket.latestActivityAt || ticket.createdAt
+    ? formatDateTime(ticket.latestActivityAt || ticket.createdAt || "")
+    : "Recently",
   messageCount: safeNumber(ticket.messageCount)
 });
 

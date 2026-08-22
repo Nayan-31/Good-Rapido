@@ -1,20 +1,21 @@
 .root {
   display: grid;
   gap: var(--gr-space-4);
-  width: min(100%, 820px);
+  width: min(100%, 980px);
   margin: 0 auto;
 }
 
 .hero,
-.section,
-.emergency {
+.section {
   display: grid;
   gap: var(--gr-space-4);
 }
 
 .heroHeader,
 .sectionHeader,
-.actions {
+.disputeHeader,
+.disputeMeta,
+.disputeActions {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -29,11 +30,30 @@
   line-height: 1;
 }
 
+.metrics,
+.layout,
+.formGrid {
+  display: grid;
+  gap: var(--gr-space-3);
+}
+
+.metrics {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.layout {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
+}
+
+.formGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .sectionHeader h3 {
   margin: var(--gr-space-1) 0 0;
   color: inherit;
   font-size: var(--gr-text-section-title);
-  letter-spacing: 0;
   line-height: var(--gr-line-height-tight);
 }
 
@@ -47,76 +67,77 @@
   text-transform: uppercase;
 }
 
-.metrics,
-.issueGrid,
-.ticketList {
+.field {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--gr-space-3);
+  gap: var(--gr-space-2);
 }
 
-.issueGrid,
-.ticketList {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+.field span {
+  color: var(--gr-color-muted);
+  font-size: var(--gr-text-label);
+  font-weight: var(--gr-font-weight-bold);
+  text-transform: uppercase;
 }
 
-.issueGrid button {
-  display: grid;
-  gap: var(--gr-space-1);
-  min-height: 84px;
-  padding: var(--gr-space-3);
+.field select,
+.field textarea {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 var(--gr-space-3);
   border: 1px solid var(--gr-color-border);
   border-radius: var(--gr-radius-control);
   background: var(--gr-color-card);
   color: var(--gr-color-ink);
   font: inherit;
-  text-align: left;
 }
 
-.issueGrid button:focus-visible {
+.field textarea {
+  min-height: 112px;
+  padding-top: var(--gr-space-3);
+  resize: vertical;
+}
+
+.field select:focus-visible,
+.field textarea:focus-visible {
   outline: none;
   box-shadow: var(--gr-shadow-focus-ring);
 }
 
-.issueGrid small {
-  color: var(--gr-color-muted);
-  line-height: var(--gr-line-height-body);
+.disputeList {
+  display: grid;
+  gap: var(--gr-space-3);
 }
 
-.ticketItem,
+.disputeCard,
 .emptyState {
-  min-height: 88px;
+  display: grid;
+  gap: var(--gr-space-3);
   padding: var(--gr-space-3);
   border: 1px solid var(--gr-color-border);
   border-radius: var(--gr-radius-control);
   background: var(--gr-color-card);
 }
 
-.ticketItem,
-.ticketItem span,
-.emptyState {
+.disputeHeader span {
   display: grid;
   gap: var(--gr-space-1);
 }
 
-.ticketItem {
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: start;
-}
-
-.ticketItem strong,
-.emptyState strong {
-  color: var(--gr-color-ink);
-}
-
-.ticketItem small,
+.disputeHeader small,
+.disputeMeta,
 .emptyState span {
   color: var(--gr-color-muted);
-  line-height: var(--gr-line-height-body);
 }
 
-.ticketMeta {
-  justify-items: end;
+.disputeMeta {
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  font-size: var(--gr-text-body-sm);
+}
+
+.disputeActions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .emptyState {
@@ -124,31 +145,28 @@
   background: var(--gr-color-soft-gray);
 }
 
-.actions {
-  flex-wrap: wrap;
-  justify-content: flex-end;
+.emptyState strong {
+  color: var(--gr-color-ink);
 }
 
-@media (max-width: 720px) {
+@media (max-width: 860px) {
+  .layout,
+  .metrics,
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 620px) {
   .heroHeader,
   .sectionHeader,
-  .actions {
+  .disputeHeader,
+  .disputeActions {
     align-items: stretch;
     flex-direction: column;
   }
 
-  .metrics,
-  .issueGrid,
-  .ticketList,
-  .ticketItem {
-    grid-template-columns: 1fr;
-  }
-
-  .ticketMeta {
-    justify-items: start;
-  }
-
-  .actions > * {
+  .disputeActions > * {
     width: 100%;
   }
 }

@@ -36,7 +36,8 @@ Current coverage:
 - Live ride status stream with periodic refresh fallback.
 - Live GPS tracking panel that moves the driver marker from backend `tracking.lastDriverLocation` updates.
 - Payment API client methods for provider payment success, failure, refunds, history, and detail flows.
-- Safety center.
+- Safety center with backend support ticket creation and ticket history.
+- Rider dispute center with backend dispute history, evidence notes, status tracking, and cancellation.
 - Notifications.
 - Ride history with auto-loaded receipt transparency.
 - Profile dashboard with authenticated rider and recent ride fallbacks.
@@ -64,13 +65,14 @@ Current coverage:
 - Session-storage based auth session.
 - Session restore, proactive token refresh, retry-on-expired-token handling, and logout cleanup.
 - Protected route guard based on auth state.
-- Onboarding, availability, ride requests, active ride, earnings, trust, alerts, profile, and support flows.
+- Onboarding, availability, ride requests, active ride, earnings, trust, alerts, profile, and backend-backed support flows.
 - Real rider-to-driver booking handoff in the seeded demo flow.
 - Active ride lifecycle actions for accept, arrived, start, and complete.
 - Active ride browser GPS watch publishes ride-specific driver movement to the backend tracking endpoint.
 - Driver home dashboard summary cards now use real earnings, trust, profile/document, notification, and request services.
 - Driver active ride reads backend assigned active rides before local continuity storage and does not invent demo rides unless demo mode is enabled.
 - Driver notifications use private driver-scoped list/detail/read endpoints.
+- Driver support uses private driver-scoped support ticket create/history APIs and clean empty states.
 - Driver earnings, trust, profile, and notifications show clean empty states when the database has no matching records.
 
 ### Ops Dashboard
@@ -252,4 +254,5 @@ Deployment notes are in:
 - Rider history auto-loads the first selected receipt so fare/trust details appear from real ride data.
 - The seeded demo flow verifies rider booking, driver accept/complete actions, rider history, driver earnings, and ops dashboard visibility.
 - Driver dashboard and detail screens avoid planned/sample values by default; demo fallbacks require explicit demo env flags.
-- Some support preview cards may still stay UI-first until live support ticket records exist.
+- Rider safety/help and disputes show backend data or explicit empty states instead of UI-only placeholder records.
+- Ops communications reads support summary and tickets from private support APIs, and ops fraud-disputes shows dispute evidence/refund/resolution detail.

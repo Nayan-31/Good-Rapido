@@ -208,6 +208,18 @@ export const createPrivateApi = (http: HttpClient) => ({
     cancel: (notificationId: string, payload?: ApiPayload) =>
       http.post(pathWithParams("/api/v1/private/notifications/notifications/:notificationId/cancel", { notificationId }), payload)
   },
+  support: {
+    getOptions: () => http.get("/api/v1/private/support/options"),
+    getSummary: () => http.get("/api/v1/private/support/summary"),
+    listTickets: (query?: ApiQuery) => http.get("/api/v1/private/support/tickets", { query }),
+    createTicket: (payload: ApiPayload) => http.post("/api/v1/private/support/tickets", payload),
+    getTicket: (ticketId: string) =>
+      http.get(pathWithParams("/api/v1/private/support/tickets/:ticketId", { ticketId })),
+    addMessage: (ticketId: string, payload: ApiPayload) =>
+      http.post(pathWithParams("/api/v1/private/support/tickets/:ticketId/messages", { ticketId }), payload),
+    closeTicket: (ticketId: string, payload?: ApiPayload) =>
+      http.post(pathWithParams("/api/v1/private/support/tickets/:ticketId/close", { ticketId }), payload)
+  },
   disputes: {
     getOptions: () => http.get("/api/v1/private/disputes/options"),
     getDashboard: () => http.get("/api/v1/private/disputes/dashboard"),

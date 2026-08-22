@@ -5,11 +5,12 @@ import { rideFlowStorage } from "@/features/booking/rideFlowStorage";
 import type { RideFlowDraft } from "@/features/booking/rideFlowStorage";
 import { safetyService } from "./safety.service";
 import { getRideIdFromDraft } from "./safety.utils";
-import type { CurrentRide, SupportSummary } from "./safety.types";
+import type { CurrentRide, SafetyTicket, SupportSummary } from "./safety.types";
 
 export function useSafetyCenter() {
   const [draft, setDraft] = useState<RideFlowDraft | null>(() => rideFlowStorage.read());
   const [supportSummary, setSupportSummary] = useState<SupportSummary | null>(null);
+  const [supportTickets, setSupportTickets] = useState<SafetyTicket[]>([]);
   const [currentRide, setCurrentRide] = useState<CurrentRide | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
@@ -20,8 +21,9 @@ export function useSafetyCenter() {
     setDraft(rideFlowStorage.read());
     setMessage(null);
 
-    const [summaryResult, rideResult] = await Promise.allSettled([
+    const [summaryResult, ticketResult, rideResult] = await Promise.allSettled([
       safetyService.getSupportSummary(),
+      safetyService.listSupportTickets(),
       safetyService.getCurrentRide()
     ]);
 
@@ -29,11 +31,16 @@ export function useSafetyCenter() {
       setSupportSummary(summaryResult.value.data?.summary ?? null);
     }
 
+    if (ticketResult.status === "fulfilled") {
+      setSupportTickets(ticketResult.value.data?.tickets ?? []);
+      setSupportSummary((current) => ticketResult.value.data?.summary ?? current);
+    }
+
     if (rideResult.status === "fulfilled") {
       setCurrentRide((rideResult.value.data?.ride as CurrentRide | undefined) ?? null);
     }
 
-    if (summaryResult.status === "rejected" && rideResult.status === "rejected") {
+    if (summaryResult.status === "rejected" && ticketResult.status === "rejected" && rideResult.status === "rejected") {
       setMessage(resolveErrorMessage(summaryResult.reason));
     }
 
@@ -69,6 +76,7 @@ export function useSafetyCenter() {
   return {
     draft,
     supportSummary,
+    supportTickets,
     currentRide,
     isLoading,
     isSending,

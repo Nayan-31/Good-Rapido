@@ -13,7 +13,8 @@ Current status: demo-ready rider MVP. The main rider screens and services are im
 - Confirm ride.
 - Live ride status stream.
 - Live driver GPS tracking panel.
-- Safety center.
+- Safety center with support ticket creation and backend ticket history.
+- Dispute center with completed-ride dispute creation, evidence notes, status tracking, and cancellation.
 - Notifications.
 - Payment gateway API methods for pay, success, failure, refund, history, and detail flows.
 - Ride history.
@@ -34,6 +35,7 @@ rider-app/
     |   +-- matching/
     |   +-- ride-lifecycle/
     |   +-- safety/
+    |   +-- disputes/
     |   +-- notifications/
     |   +-- history/
     |   +-- profile/
@@ -136,7 +138,8 @@ core/matching-engine
 - Safety center.
 - Safety status.
 - Emergency and support entry points.
-- Fraud/reporting placeholders.
+- Support ticket creation for SOS, wrong route/fake trip, offline payment, refund/payment, and safety alert reviews.
+- Backend ticket history with clear empty state when no support records exist.
 
 Backend modules:
 
@@ -144,6 +147,22 @@ Backend modules:
 public/support
 public/disputes
 core/fraud-engine
+```
+
+### disputes
+
+- Completed ride dispute creation.
+- Fare, route, fake trip, payment, refund, and safety issue categories.
+- Evidence note submission.
+- Dispute history and status tracking.
+- Cancel open dispute flow.
+- Clear empty state when no completed rides or disputes exist.
+
+Backend modules:
+
+```text
+public/disputes
+public/rides
 ```
 
 ### notifications
@@ -233,8 +252,6 @@ npm run build:rider
 
 ## Next Work
 
-- Complete end-to-end persisted ride booking.
 - Connect live route and route fairness data.
 - Add provider checkout UI once Razorpay/Stripe frontend credentials are configured.
-- Connect fraud report submission.
 - Polish loading, empty, and error states.

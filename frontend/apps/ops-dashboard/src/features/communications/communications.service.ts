@@ -15,22 +15,22 @@ type NotificationListResponse = ApiResponse<{ notifications: NotificationList }>
 type NotificationDetailResponse = ApiResponse<{ notification: NotificationDetail }>;
 type NotificationCreateResponse = ApiResponse<{ createdCount: number; notifications: NotificationDetail[] }>;
 type SupportSummaryResponse = ApiResponse<{ summary: SupportSummary }>;
-type SupportTicketListResponse = ApiResponse<{ tickets: SupportTicketList }>;
+type SupportTicketListResponse = ApiResponse<SupportTicketList>;
 
 export const communicationsService = {
   async load() {
     const [notificationDashboard, notificationList, supportSummary, supportTickets] = await Promise.all([
       apiClient.private.notifications.getDashboard() as Promise<NotificationDashboardResponse>,
       apiClient.private.notifications.list({ limit: 50 }) as Promise<NotificationListResponse>,
-      apiClient.public.support.getSummary() as Promise<SupportSummaryResponse>,
-      apiClient.public.support.listTickets({ limit: 8 }) as Promise<SupportTicketListResponse>
+      apiClient.private.support.getSummary() as Promise<SupportSummaryResponse>,
+      apiClient.private.support.listTickets({ limit: 8 }) as Promise<SupportTicketListResponse>
     ]);
 
     return {
       notificationDashboard: notificationDashboard.data?.dashboard,
       notificationList: notificationList.data?.notifications,
       supportSummary: supportSummary.data?.summary,
-      supportTickets: supportTickets.data?.tickets
+      supportTickets: supportTickets.data
     };
   },
 
