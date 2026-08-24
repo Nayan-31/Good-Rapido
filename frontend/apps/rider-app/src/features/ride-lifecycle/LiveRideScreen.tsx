@@ -162,7 +162,7 @@ export function LiveRideScreen() {
         <div className={styles.heroHeader}>
           <div>
             <p className={styles.eyebrow}>{rideStateLabel}</p>
-            <strong>{booking.bookingCode}</strong>
+            <strong data-testid="rider-live-booking-code">{booking.bookingCode}</strong>
           </div>
           <Badge tone="success">{lifecycleStatus}</Badge>
         </div>

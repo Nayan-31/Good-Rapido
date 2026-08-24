@@ -73,7 +73,7 @@ export function ActiveRideScreen() {
                   <span className={styles.eyebrow}>Lifecycle status</span>
                   <h2>{statusLabel(ride.lifecycleStatus)}</h2>
                 </div>
-                <span className={styles.rideCode}>{ride.bookingCode}</span>
+                <span className={styles.rideCode} data-testid="driver-active-booking-code">{ride.bookingCode}</span>
               </div>
 
               <div className={styles.locationList}>

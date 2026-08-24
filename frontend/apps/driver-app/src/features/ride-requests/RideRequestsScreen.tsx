@@ -54,7 +54,7 @@ export function RideRequestsScreen({ onRideAccepted }: RideRequestsScreenProps) 
                   <span className={styles.eyebrow}>New request</span>
                   <h2>{hasActiveRide ? "Current active ride" : request.rider.riderName}</h2>
                 </div>
-                <span className={styles.requestCode}>{request.bookingCode}</span>
+                <span className={styles.requestCode} data-testid="driver-request-booking-code">{request.bookingCode}</span>
               </div>
 
               <div className={styles.locationList}>
@@ -62,14 +62,14 @@ export function RideRequestsScreen({ onRideAccepted }: RideRequestsScreenProps) 
                   <span className={styles.marker}>P</span>
                   <div>
                     <span>Pickup</span>
-                    <strong>{request.pickup.address}</strong>
+                    <strong data-testid="driver-request-pickup">{request.pickup.address}</strong>
                   </div>
                 </div>
                 <div className={styles.routeStep} data-stop="dropoff">
                   <span className={styles.marker}>D</span>
                   <div>
                     <span>Dropoff</span>
-                    <strong>{request.dropoff.address}</strong>
+                    <strong data-testid="driver-request-dropoff">{request.dropoff.address}</strong>
                   </div>
                 </div>
               </div>
