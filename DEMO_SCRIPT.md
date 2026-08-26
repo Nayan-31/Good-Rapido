@@ -245,7 +245,7 @@ http://localhost:5176
 
 ## 4. Automated Demo Check
 
-Before manual demo, run:
+Before manual demo, run the backend API smoke flow:
 
 ```bash
 npm --prefix server run smoke:demo
@@ -276,6 +276,52 @@ ops completed ride visibility
 ```
 
 If this passes, your core demo story is working.
+
+Then run the browser E2E demo smoke flow:
+
+```bash
+npm --prefix frontend run e2e:demo
+```
+
+Why:
+
+This checks the same story through real browser screens, not only direct API calls.
+
+It uses Playwright to start isolated local demo servers:
+
+```text
+API: http://127.0.0.1:3100
+Rider app: http://127.0.0.1:5273
+Driver app: http://127.0.0.1:5274
+Ops dashboard: http://127.0.0.1:5275
+```
+
+It verifies:
+
+```text
+rider register screen is reachable
+rider seeded login works
+rider selects pickup Muri
+rider selects dropoff Silli
+rider gets fare estimate
+rider confirms booking with Arjun Singh
+driver seeded login works
+driver sees the same booking code and same Muri -> Silli request
+driver accepts request
+rider live status changes to driver_en_route
+driver marks arrived
+driver starts ride
+driver completes ride
+rider history shows Muri to Silli as completed
+driver earnings show the completed booking
+ops ride operations shows the completed ride
+```
+
+If you want to watch the browser while it runs:
+
+```bash
+npm --prefix frontend run e2e:demo:headed
+```
 
 ## 5. Manual Demo Flow
 
@@ -845,7 +891,7 @@ The strongest verified flow is rider booking to completed ride. It covers rider 
 Answer:
 
 ```text
-I added an API smoke test that runs the complete flow through real backend HTTP endpoints. It passes from health check to completed ride visibility.
+I added two smoke checks. The backend API smoke test verifies the complete journey through real HTTP APIs. The Playwright browser smoke test verifies the same journey through actual rider, driver, and ops screens.
 ```
 
 ### What was a bug you fixed?
@@ -861,7 +907,7 @@ One issue was driver identity mismatch. Rider booking stored driver ids like drv
 Answer:
 
 ```text
-Production integrations are pending: live payment credentials and webhook verification, Google Maps billing/API activation, dedicated WebSocket infrastructure, push/SMS/email providers, deployment hardening, and deeper browser E2E tests.
+Production integrations are pending: live payment credentials and webhook verification, Google Maps billing/API activation, dedicated WebSocket infrastructure, push/SMS/email providers, deployment hardening, and broader browser E2E coverage for edge cases.
 ```
 
 ## 11. Final Demo Checklist
@@ -890,12 +936,14 @@ Then run smoke:
 
 ```bash
 npm --prefix server run smoke:demo
+npm --prefix frontend run e2e:demo
 ```
 
 Expected:
 
 ```text
 Demo smoke flow passed.
+1 browser demo smoke test passed.
 ```
 
 Then start frontend apps:

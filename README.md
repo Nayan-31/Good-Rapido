@@ -2,7 +2,7 @@
 
 Good Rapido is a full-stack capstone project for a transparent ride-booking platform. The product idea is simple: riders should understand why a fare changed, why a route was selected, why a driver was matched, and how trust or safety decisions are made.
 
-Current status: demo-ready full-stack MVP. The backend modular foundation is strong, the rider, driver, and ops frontend apps are wired around the main booking lifecycle, and the core demo flow is verified from rider booking to driver completion. Demo seed data is now deterministic for users, known locations, assigned ride requests, completed rides, payments, fraud/dispute examples, notifications, support tickets, and driver earnings visibility. Rider live ride status and driver GPS movement can auto-update through the ride lifecycle realtime stream with polling fallback. Rider pickup/dropoff search uses a backend location-search endpoint with optional Google Places autocomplete/details and polished local supported-location fallback when no API key is configured. Frontend auth uses session-scoped storage, proactive access-token refresh, retry-on-expired-token handling, stale token cleanup, and route guards across rider, driver, and ops apps. Real payment gateway code is ready with mock, Razorpay, and Stripe provider paths; live credentials and webhook deployment verification are still pending. Production integrations such as real Google Maps billing setup, dedicated WebSocket transport, and SMS/push/email providers are still pending.
+Current status: demo-ready full-stack MVP. The backend modular foundation is strong, the rider, driver, and ops frontend apps are wired around the main booking lifecycle, and the core demo flow is verified from rider booking to driver completion through API smoke testing and a Playwright browser E2E smoke flow. Demo seed data is now deterministic for users, known locations, assigned ride requests, completed rides, payments, fraud/dispute examples, notifications, support tickets, and driver earnings visibility. Rider live ride status and driver GPS movement can auto-update through the ride lifecycle realtime stream with polling fallback. Rider pickup/dropoff search uses a backend location-search endpoint with optional Google Places autocomplete/details and polished local supported-location fallback when no API key is configured. Frontend auth uses session-scoped storage, proactive access-token refresh, retry-on-expired-token handling, stale token cleanup, and route guards across rider, driver, and ops apps. Real payment gateway code is ready with mock, Razorpay, and Stripe provider paths; live credentials and webhook deployment verification are still pending. Production integrations such as real Google Maps billing setup, dedicated WebSocket transport, and SMS/push/email providers are still pending.
 
 ## Tech Stack
 
@@ -144,7 +144,7 @@ Real backend data is currently active for:
 - Ops communications uses private support summary and ticket records, while fraud-disputes shows dispute evidence, refund, evidence-request, resolve, and reject states from backend records.
 - Ops admin-action flows verified through frontend typecheck, shared API client typecheck, and focused backend route tests for pricing, surge, fraud, disputes, notifications, and admin users.
 - Stable demo seed data for rider, driver, admin, ops, known locations, pending ride request, completed rides, payments, fraud/dispute cases, notifications, support tickets, and earnings-ready ride history.
-- Backend API modules, Jest tests, and full smoke demo.
+- Backend API modules, Jest tests, API smoke demo, and Playwright browser E2E demo smoke flow.
 
 Partially integrated or UI-first areas:
 
@@ -278,6 +278,29 @@ Full demo smoke flow:
 npm --prefix server run smoke:demo
 ```
 
+Browser E2E demo smoke flow:
+
+```bash
+npm --prefix frontend run e2e:demo
+```
+
+Headed browser mode:
+
+```bash
+npm --prefix frontend run e2e:demo:headed
+```
+
+The Playwright smoke flow reseeds demo data, starts isolated local servers, and verifies the complete browser journey:
+
+```text
+API: http://127.0.0.1:3100
+Rider: http://127.0.0.1:5273
+Driver: http://127.0.0.1:5274
+Ops: http://127.0.0.1:5275
+```
+
+It checks rider login/register UI, pickup/dropoff suggestion selection, fare estimate, booking confirmation, driver request acceptance, arrived/start/complete lifecycle actions, rider live status update, rider history, driver earnings, and ops completed ride visibility.
+
 Frontend checks:
 
 ```bash
@@ -321,7 +344,7 @@ route -> validator/middleware -> controller -> service -> dao -> model
 ## Next Work
 
 - Polish remaining provider-backed preview cards with live data where needed.
-- Add deeper browser E2E tests for rider, driver, and ops auth flows.
+- Expand browser E2E coverage beyond the main demo smoke path, including edge cases and responsive checks.
 - Add production-grade maps, WebSocket live tracking, production payment webhooks, and notification provider.
 - Move production auth from session-scoped browser storage to secure httpOnly cookie sessions when deployed publicly.
 - Improve README screenshots and deployment notes after provider integrations are stable.

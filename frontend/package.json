@@ -15,9 +15,14 @@
     "build:rider": "npm --workspace @good-rapido/rider-app run build",
     "build:driver": "npm --workspace @good-rapido/driver-app run build",
     "build:ops": "npm --workspace @good-rapido/ops-dashboard run build",
+    "e2e:demo": "playwright test --config playwright.config.ts",
+    "e2e:demo:headed": "playwright test --config playwright.config.ts --headed",
     "typecheck:rider": "npm --workspace @good-rapido/rider-app run typecheck",
     "typecheck:driver": "npm --workspace @good-rapido/driver-app run typecheck",
     "typecheck:ops": "npm --workspace @good-rapido/ops-dashboard run typecheck",
     "typecheck:api-client": "npm --workspace @good-rapido/api-client run typecheck"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1"
   }
 }
