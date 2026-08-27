@@ -1,0 +1,126 @@
+.banner {
+  display: grid;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 1px solid #dfe6ee;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #071f35;
+}
+
+.banner strong {
+  font-size: 14px;
+}
+
+.banner p {
+  margin: 0;
+  color: #64748b;
+  line-height: 1.45;
+}
+
+.success {
+  border-color: #a7f3d0;
+  background: #ecfdf5;
+}
+
+.success strong {
+  color: #047857;
+}
+
+.danger {
+  border-color: #fecaca;
+  background: #fff1f1;
+}
+
+.danger strong {
+  color: #c81e1e;
+}
+
+.info {
+  border-color: #c7d2fe;
+  background: #eef2ff;
+}
+
+.info strong {
+  color: #2563eb;
+}
+
+.warning {
+  border-color: #fed7aa;
+  background: #fff7ed;
+}
+
+.warning strong {
+  color: #c2410c;
+}
+
+.neutral {
+  border-color: #dfe6ee;
+  background: #f8fafc;
+}
+
+.emptyState {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-height: 96px;
+  padding: 16px;
+  border: 1px dashed #cad5e2;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #071f35;
+}
+
+.emptyState strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.emptyState p {
+  margin: 0;
+  color: #718096;
+  line-height: 1.5;
+}
+
+.loadingRows {
+  display: grid;
+  gap: 10px;
+}
+
+.loadingRow {
+  display: grid;
+  gap: 10px;
+}
+
+.loadingCell {
+  min-height: 46px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #eef2f6 0%, #f8fafc 45%, #eef2f6 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.2s ease-in-out infinite;
+}
+
+.confirmAction {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+@media (max-width: 720px) {
+  .emptyState {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

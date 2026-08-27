@@ -1,0 +1,275 @@
+.screen {
+  display: grid;
+  gap: 20px;
+}
+
+.hero {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 24px;
+  border-radius: 8px;
+  background: #071f35;
+  color: #ffffff;
+}
+
+.hero h1 {
+  max-width: 860px;
+  margin: 6px 0 8px;
+  font-size: 34px;
+  line-height: 1.1;
+}
+
+.hero p {
+  max-width: 920px;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.74);
+  line-height: 1.55;
+}
+
+.heroActions,
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.heroActions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.eyebrow {
+  color: #718096;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.hero .eyebrow {
+  color: #63e6d1;
+}
+
+.filterPanel,
+.panel,
+.forecastPanel {
+  min-width: 0;
+}
+
+.panelHeader {
+  margin-bottom: 18px;
+}
+
+.panelHeader h2 {
+  margin: 4px 0 0;
+  color: #071f35;
+  font-size: 22px;
+}
+
+.metrics,
+.filters,
+.workspace,
+.forecastGrid,
+.formGrid,
+.previewCards,
+.riskGrid {
+  display: grid;
+  gap: 14px;
+}
+
+.metrics {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.filters {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  align-items: end;
+}
+
+.workspace,
+.forecastGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.formGrid,
+.previewCards,
+.riskGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.field {
+  display: grid;
+  gap: 7px;
+  color: #718096;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.field input,
+.field select {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid #dfe6ee;
+  border-radius: 8px;
+  background: #f7f9fb;
+  color: #071f35;
+  font: inherit;
+  font-weight: 800;
+  text-transform: none;
+}
+
+.barChart {
+  display: grid;
+  grid-template-columns: repeat(10, minmax(28px, 1fr));
+  gap: 10px;
+  min-height: 220px;
+  padding: 14px;
+  border: 1px solid #edf1f5;
+  border-radius: 8px;
+  background: #f7f9fb;
+}
+
+.barItem {
+  display: grid;
+  grid-template-rows: 1fr auto auto;
+  gap: 6px;
+  align-items: end;
+  min-width: 0;
+  text-align: center;
+}
+
+.barItem span {
+  display: block;
+  width: 100%;
+  min-height: 10px;
+  border-radius: 8px 8px 0 0;
+  background: #04937f;
+}
+
+.barItem small,
+.topList small {
+  color: #718096;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.barItem strong {
+  color: #071f35;
+  font-size: 12px;
+}
+
+.breakdownList,
+.topList,
+.riskPanel,
+.preview {
+  display: grid;
+  gap: 12px;
+}
+
+.breakdownList article,
+.topList article,
+.riskGrid span {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid #dfe6ee;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.breakdownList article > div,
+.previewHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.breakdownList span,
+.previewHeader span,
+.previewCards span {
+  color: #718096;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.topList p {
+  margin: 0;
+  color: #718096;
+  font-weight: 800;
+}
+
+.riskGrid strong {
+  color: #071f35;
+  font-size: 26px;
+}
+
+.preview {
+  padding: 18px;
+  border-radius: 8px;
+  background: #071f35;
+  color: #ffffff;
+}
+
+.previewHeader strong {
+  font-size: 34px;
+}
+
+.previewCards div {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.previewCards strong {
+  color: #ffffff;
+  font-size: 22px;
+}
+
+@media (max-width: 1180px) {
+  .metrics,
+  .workspace,
+  .forecastGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .filters {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .hero,
+  .panelHeader,
+  .previewHeader {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .metrics,
+  .filters,
+  .workspace,
+  .forecastGrid,
+  .formGrid,
+  .previewCards,
+  .riskGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .barChart {
+    grid-template-columns: repeat(5, minmax(28px, 1fr));
+  }
+
+  .hero h1,
+  .previewHeader strong {
+    font-size: 28px;
+  }
+}

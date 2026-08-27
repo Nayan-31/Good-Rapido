@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Badge, Button, Card, MetricCard, ProgressBar } from "@good-rapido/ui";
 
+import { ConfirmAction, EmptyState, LoadingRows, StatusBanner } from "@/components";
 import { findOpsRouteById } from "@/routes";
 import { fraudDisputesService } from "./fraudDisputes.service";
 import type {
@@ -53,6 +54,8 @@ export function FraudDisputesScreen() {
   const [reviewerId, setReviewerId] = useState("ops-reviewer");
   const [note, setNote] = useState("Ops reviewed evidence and risk signals");
   const [refundAmount, setRefundAmount] = useState("80");
+  const [fraudFilters, setFraudFilters] = useState({ status: "all", severity: "all", query: "" });
+  const [disputeFilters, setDisputeFilters] = useState({ status: "all", priority: "all", query: "" });
   const [isLoading, setIsLoading] = useState(true);
   const [pendingAction, setPendingAction] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -82,6 +85,49 @@ export function FraudDisputesScreen() {
   useEffect(() => {
     void loadFraudDisputes();
   }, [loadFraudDisputes]);
+
+  const filteredFraudCases = useMemo(() => {
+    const query = fraudFilters.query.trim().toLowerCase();
+
+    return fraudCases.filter((fraudCase) => {
+      const matchesStatus = fraudFilters.status === "all" || fraudCase.status === fraudFilters.status;
+      const matchesSeverity = fraudFilters.severity === "all" || fraudCase.severity === fraudFilters.severity;
+      const searchable = [
+        fraudCase.caseCode,
+        fraudCase.caseType,
+        fraudCase.subjectType,
+        fraudCase.subjectId,
+        fraudCase.subjectLabel,
+        fraudCase.guidance.nextAction
+      ].filter(Boolean).join(" ").toLowerCase();
+      const matchesQuery = !query || searchable.includes(query);
+
+      return matchesStatus && matchesSeverity && matchesQuery;
+    });
+  }, [fraudCases, fraudFilters.query, fraudFilters.severity, fraudFilters.status]);
+
+  const filteredDisputes = useMemo(() => {
+    const query = disputeFilters.query.trim().toLowerCase();
+
+    return disputes.filter((dispute) => {
+      const matchesStatus = disputeFilters.status === "all" || dispute.status === disputeFilters.status;
+      const matchesPriority = disputeFilters.priority === "all" || dispute.priority === disputeFilters.priority;
+      const searchable = [
+        dispute.disputeCode,
+        dispute.bookingCode,
+        dispute.type,
+        dispute.reason,
+        dispute.title,
+        dispute.guidance.nextAction
+      ].filter(Boolean).join(" ").toLowerCase();
+      const matchesQuery = !query || searchable.includes(query);
+
+      return matchesStatus && matchesPriority && matchesQuery;
+    });
+  }, [disputeFilters.priority, disputeFilters.query, disputeFilters.status, disputes]);
+
+  const hasFraudFilters = fraudFilters.status !== "all" || fraudFilters.severity !== "all" || Boolean(fraudFilters.query.trim());
+  const hasDisputeFilters = disputeFilters.status !== "all" || disputeFilters.priority !== "all" || Boolean(disputeFilters.query.trim());
 
   const runAction = async (actionName: string, action: () => Promise<unknown>, successMessage: string) => {
     setPendingAction(actionName);
@@ -134,8 +180,8 @@ export function FraudDisputesScreen() {
         <MetricCard label="Refund Exposure" value={formatCurrency(disputeSummary.requestedRefundAmount)} meta="requested" tone="trust" />
       </section>
 
-      {error ? <div className={styles.errorBanner}>{error}</div> : null}
-      {message ? <div className={styles.successBanner}>{message}</div> : null}
+      {error ? <StatusBanner tone="danger" title="Fraud and dispute request failed">{error}</StatusBanner> : null}
+      {message ? <StatusBanner tone="success" title="Ops action completed">{message}</StatusBanner> : null}
 
       <section className={styles.workspace}>
         <Card padding="lg" className={styles.panel}>
@@ -144,18 +190,47 @@ export function FraudDisputesScreen() {
               <span className={styles.eyebrow}>Fraud Case Queue</span>
               <h2>Risk investigations</h2>
             </div>
-            <Badge tone="danger">{fraudCases.length} cases</Badge>
+            <Badge tone="danger">{filteredFraudCases.length} cases</Badge>
+          </div>
+          <div className={styles.compactFilters} aria-label="Fraud case filters">
+            <SelectField
+              label="Status"
+              value={fraudFilters.status}
+              options={["all", "open", "under_review", "confirmed", "dismissed", "resolved"]}
+              onChange={(status) => setFraudFilters((current) => ({ ...current, status }))}
+            />
+            <SelectField
+              label="Severity"
+              value={fraudFilters.severity}
+              options={["all", "low", "medium", "high", "critical"]}
+              onChange={(severity) => setFraudFilters((current) => ({ ...current, severity }))}
+            />
+            <label className={styles.field}>
+              <span>Search</span>
+              <input value={fraudFilters.query} placeholder="Case, rider, signal" onChange={(event) => setFraudFilters((current) => ({ ...current, query: event.target.value }))} />
+            </label>
+            <Button type="button" size="sm" variant="secondary" disabled={!hasFraudFilters} onClick={() => setFraudFilters({ status: "all", severity: "all", query: "" })}>
+              Clear
+            </Button>
           </div>
           <div className={styles.queue}>
-            {fraudCases.map((fraudCase) => (
+            {isLoading ? <LoadingRows rows={3} columns={3} /> : null}
+            {!isLoading ? filteredFraudCases.map((fraudCase) => (
               <button type="button" className={styles.queueItem} key={fraudCase.id} onClick={() => void openFraudCase(fraudCase)}>
                 <span>{fraudCase.caseCode || formatLabel(fraudCase.caseType)}</span>
                 <strong>{fraudCase.subjectLabel || fraudCase.subjectId}</strong>
                 <small>{fraudCase.guidance.nextAction}</small>
                 <Badge tone={toneForSeverity(fraudCase.severity)}>{fraudCase.riskScore}% risk</Badge>
               </button>
-            ))}
-            {!fraudCases.length ? <p>No fraud cases found.</p> : null}
+            )) : null}
+            {!isLoading && !filteredFraudCases.length ? (
+              <EmptyState
+                title={fraudCases.length ? "No fraud cases match these filters" : "No fraud cases found"}
+                description={fraudCases.length ? "Clear filters or search with another case, rider, or signal." : "Fraud queue is clean for the selected backend data window."}
+                actionLabel={fraudCases.length ? "Clear Filters" : undefined}
+                onAction={fraudCases.length ? () => setFraudFilters({ status: "all", severity: "all", query: "" }) : undefined}
+              />
+            ) : null}
           </div>
         </Card>
 
@@ -165,18 +240,47 @@ export function FraudDisputesScreen() {
               <span className={styles.eyebrow}>Dispute Queue</span>
               <h2>Evidence and refunds</h2>
             </div>
-            <Badge tone="warning">{disputes.length} disputes</Badge>
+            <Badge tone="warning">{filteredDisputes.length} disputes</Badge>
+          </div>
+          <div className={styles.compactFilters} aria-label="Dispute filters">
+            <SelectField
+              label="Status"
+              value={disputeFilters.status}
+              options={["all", "submitted", "under_review", "evidence_requested", "resolved", "rejected"]}
+              onChange={(status) => setDisputeFilters((current) => ({ ...current, status }))}
+            />
+            <SelectField
+              label="Priority"
+              value={disputeFilters.priority}
+              options={["all", "low", "medium", "high", "urgent"]}
+              onChange={(priority) => setDisputeFilters((current) => ({ ...current, priority }))}
+            />
+            <label className={styles.field}>
+              <span>Search</span>
+              <input value={disputeFilters.query} placeholder="Dispute, booking, reason" onChange={(event) => setDisputeFilters((current) => ({ ...current, query: event.target.value }))} />
+            </label>
+            <Button type="button" size="sm" variant="secondary" disabled={!hasDisputeFilters} onClick={() => setDisputeFilters({ status: "all", priority: "all", query: "" })}>
+              Clear
+            </Button>
           </div>
           <div className={styles.queue}>
-            {disputes.map((dispute) => (
+            {isLoading ? <LoadingRows rows={3} columns={3} /> : null}
+            {!isLoading ? filteredDisputes.map((dispute) => (
               <button type="button" className={styles.queueItem} key={dispute.id} onClick={() => void openDispute(dispute)}>
                 <span>{dispute.disputeCode || formatLabel(dispute.type)}</span>
                 <strong>{dispute.title || dispute.bookingCode || dispute.id}</strong>
                 <small>{dispute.guidance.nextAction}</small>
                 <Badge tone={dispute.priority === "urgent" ? "danger" : "warning"}>{formatLabel(dispute.status)}</Badge>
               </button>
-            ))}
-            {!disputes.length ? <p>No disputes found.</p> : null}
+            )) : null}
+            {!isLoading && !filteredDisputes.length ? (
+              <EmptyState
+                title={disputes.length ? "No disputes match these filters" : "No disputes found"}
+                description={disputes.length ? "Clear filters or search with another dispute, booking, or reason." : "Dispute queue has no active backend records right now."}
+                actionLabel={disputes.length ? "Clear Filters" : undefined}
+                onAction={disputes.length ? () => setDisputeFilters({ status: "all", priority: "all", query: "" }) : undefined}
+              />
+            ) : null}
           </div>
         </Card>
       </section>
@@ -192,10 +296,10 @@ export function FraudDisputesScreen() {
           </div>
           <ActionFields reviewerId={reviewerId} note={note} onReviewerChange={setReviewerId} onNoteChange={setNote} />
           <div className={styles.actions}>
-            <Button type="button" disabled={!selectedFraudCase?.guidance.canAssign} onClick={() => selectedFraudCase && void runAction("fraud-assign", () => fraudDisputesService.assignFraudCase(selectedFraudCase.id, reviewerId, note), "Fraud reviewer assigned")}>Assign</Button>
-            <Button type="button" disabled={!selectedFraudCase?.guidance.canConfirm} onClick={() => selectedFraudCase && void runAction("fraud-confirm", () => fraudDisputesService.confirmFraudCase(selectedFraudCase.id, note), "Fraud case confirmed")}>Confirm</Button>
-            <Button type="button" variant="secondary" disabled={!selectedFraudCase?.guidance.canDismiss} onClick={() => selectedFraudCase && void runAction("fraud-dismiss", () => fraudDisputesService.dismissFraudCase(selectedFraudCase.id, note), "Fraud case dismissed")}>Dismiss</Button>
-            <Button type="button" variant="danger" disabled={!selectedFraudCase?.guidance.canResolve} onClick={() => selectedFraudCase && void runAction("fraud-resolve", () => fraudDisputesService.resolveFraudCase(selectedFraudCase.id, note), "Fraud case resolved")}>Resolve</Button>
+            <Button type="button" disabled={!selectedFraudCase?.guidance.canAssign} isLoading={pendingAction === "fraud-assign"} onClick={() => selectedFraudCase && void runAction("fraud-assign", () => fraudDisputesService.assignFraudCase(selectedFraudCase.id, reviewerId, note), "Fraud reviewer assigned")}>Assign</Button>
+            <ConfirmAction label="Confirm" confirmLabel="Confirm Case" disabled={!selectedFraudCase?.guidance.canConfirm} isLoading={pendingAction === "fraud-confirm"} onConfirm={() => selectedFraudCase && void runAction("fraud-confirm", () => fraudDisputesService.confirmFraudCase(selectedFraudCase.id, note), "Fraud case confirmed")} />
+            <ConfirmAction label="Dismiss" confirmLabel="Confirm Dismiss" variant="secondary" disabled={!selectedFraudCase?.guidance.canDismiss} isLoading={pendingAction === "fraud-dismiss"} onConfirm={() => selectedFraudCase && void runAction("fraud-dismiss", () => fraudDisputesService.dismissFraudCase(selectedFraudCase.id, note), "Fraud case dismissed")} />
+            <ConfirmAction label="Resolve" confirmLabel="Confirm Resolve" variant="danger" disabled={!selectedFraudCase?.guidance.canResolve} isLoading={pendingAction === "fraud-resolve"} onConfirm={() => selectedFraudCase && void runAction("fraud-resolve", () => fraudDisputesService.resolveFraudCase(selectedFraudCase.id, note), "Fraud case resolved")} />
           </div>
           <div className={styles.simulation}>
             <Button type="button" variant="mint" isLoading={pendingAction === "simulate"} onClick={() => void runAction("simulate", async () => setSimulation(await fraudDisputesService.simulateRisk() ?? null), "Fraud risk simulation completed")}>Run Risk Simulation</Button>
@@ -224,14 +328,27 @@ export function FraudDisputesScreen() {
             <input value={refundAmount} onChange={(event) => setRefundAmount(event.target.value)} />
           </label>
           <div className={styles.actions}>
-            <Button type="button" disabled={!selectedDispute?.guidance.canAssign} onClick={() => selectedDispute && void runAction("dispute-assign", () => fraudDisputesService.assignDispute(selectedDispute.id, reviewerId, note), "Dispute assigned")}>Assign</Button>
-            <Button type="button" variant="secondary" disabled={!selectedDispute?.guidance.canRequestEvidence} onClick={() => selectedDispute && void runAction("dispute-evidence", () => fraudDisputesService.requestEvidence(selectedDispute.id, note), "Evidence requested")}>Request Evidence</Button>
-            <Button type="button" variant="mint" disabled={!selectedDispute?.guidance.canResolve} onClick={() => selectedDispute && void runAction("dispute-resolve", () => fraudDisputesService.resolveDispute(selectedDispute.id, note, Number(refundAmount) || 0), "Dispute resolved")}>Resolve</Button>
-            <Button type="button" variant="danger" disabled={!selectedDispute?.guidance.canReject} onClick={() => selectedDispute && void runAction("dispute-reject", () => fraudDisputesService.rejectDispute(selectedDispute.id, note), "Dispute rejected")}>Reject</Button>
+            <Button type="button" disabled={!selectedDispute?.guidance.canAssign} isLoading={pendingAction === "dispute-assign"} onClick={() => selectedDispute && void runAction("dispute-assign", () => fraudDisputesService.assignDispute(selectedDispute.id, reviewerId, note), "Dispute assigned")}>Assign</Button>
+            <ConfirmAction label="Request Evidence" confirmLabel="Confirm Request" variant="secondary" disabled={!selectedDispute?.guidance.canRequestEvidence} isLoading={pendingAction === "dispute-evidence"} onConfirm={() => selectedDispute && void runAction("dispute-evidence", () => fraudDisputesService.requestEvidence(selectedDispute.id, note), "Evidence requested")} />
+            <ConfirmAction label="Resolve" confirmLabel="Confirm Resolve" variant="mint" disabled={!selectedDispute?.guidance.canResolve} isLoading={pendingAction === "dispute-resolve"} onConfirm={() => selectedDispute && void runAction("dispute-resolve", () => fraudDisputesService.resolveDispute(selectedDispute.id, note, Number(refundAmount) || 0), "Dispute resolved")} />
+            <ConfirmAction label="Reject" confirmLabel="Confirm Reject" variant="danger" disabled={!selectedDispute?.guidance.canReject} isLoading={pendingAction === "dispute-reject"} onConfirm={() => selectedDispute && void runAction("dispute-reject", () => fraudDisputesService.rejectDispute(selectedDispute.id, note), "Dispute rejected")} />
           </div>
         </Card>
       </section>
     </section>
+  );
+}
+
+function SelectField({ label, value, options, onChange }: { label: string; value: string; options: string[]; onChange: (value: string) => void }) {
+  return (
+    <label className={styles.field}>
+      <span>{label}</span>
+      <select value={value} onChange={(event) => onChange(event.target.value)}>
+        {options.map((option) => (
+          <option key={option} value={option}>{formatLabel(option)}</option>
+        ))}
+      </select>
+    </label>
   );
 }
 

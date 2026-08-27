@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Badge, Button, Card, MetricCard, ProgressBar } from "@good-rapido/ui";
 
+import { ConfirmAction, EmptyState, LoadingRows, StatusBanner } from "@/components";
 import { findOpsRouteById } from "@/routes";
 import { communicationsService } from "./communications.service";
 import type {
@@ -66,6 +67,8 @@ export function CommunicationsScreen() {
   const [supportTickets, setSupportTickets] = useState<SupportTicket[]>([]);
   const [selectedNotification, setSelectedNotification] = useState<NotificationDetail | null>(null);
   const [form, setForm] = useState<CommunicationFormState>(initialForm);
+  const [notificationFilters, setNotificationFilters] = useState({ deliveryStatus: "all", role: "all", query: "" });
+  const [supportFilters, setSupportFilters] = useState({ status: "all", priority: "all", query: "" });
   const [isLoading, setIsLoading] = useState(true);
   const [pendingAction, setPendingAction] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -110,6 +113,43 @@ export function CommunicationsScreen() {
   const deliveryHealth = summary.totalNotifications
     ? Math.round((summary.sentCount / summary.totalNotifications) * 100)
     : 0;
+
+  const filteredNotifications = useMemo(() => {
+    const query = notificationFilters.query.trim().toLowerCase();
+
+    return notifications.filter((notification) => {
+      const matchesDelivery = notificationFilters.deliveryStatus === "all" || notification.deliveryStatus === notificationFilters.deliveryStatus;
+      const matchesRole = notificationFilters.role === "all" || notification.role === notificationFilters.role;
+      const searchable = [
+        notification.notificationCode,
+        notification.type,
+        notification.category,
+        notification.title,
+        notification.relatedEntity?.code,
+        notification.guidance.nextAction
+      ].filter(Boolean).join(" ").toLowerCase();
+      const matchesQuery = !query || searchable.includes(query);
+
+      return matchesDelivery && matchesRole && matchesQuery;
+    });
+  }, [notificationFilters.deliveryStatus, notificationFilters.query, notificationFilters.role, notifications]);
+
+  const filteredSupportTickets = useMemo(() => {
+    const query = supportFilters.query.trim().toLowerCase();
+
+    return supportTickets.filter((ticket) => {
+      const matchesStatus = supportFilters.status === "all" || ticket.status === supportFilters.status;
+      const matchesPriority = supportFilters.priority === "all" || ticket.priority === supportFilters.priority;
+      const searchable = [ticket.ticketCode, ticket.category, ticket.subject, ticket.channel].filter(Boolean).join(" ").toLowerCase();
+      const matchesQuery = !query || searchable.includes(query);
+
+      return matchesStatus && matchesPriority && matchesQuery;
+    });
+  }, [supportFilters.priority, supportFilters.query, supportFilters.status, supportTickets]);
+
+  const hasNotificationFilters = notificationFilters.deliveryStatus !== "all" || notificationFilters.role !== "all" || Boolean(notificationFilters.query.trim());
+  const hasSupportFilters = supportFilters.status !== "all" || supportFilters.priority !== "all" || Boolean(supportFilters.query.trim());
+  const canCreateNotification = Boolean(form.title.trim() && form.message.trim() && (form.audienceMode === "broadcast" || form.authUserId.trim()));
 
   const runAction = async (actionName: string, action: () => Promise<unknown>, successMessage: string) => {
     setPendingAction(actionName);
@@ -162,8 +202,8 @@ export function CommunicationsScreen() {
         <MetricCard label="Support Open" value={String(supportSummary.openCount)} meta={`${supportSummary.urgentCount} urgent`} tone="warning" />
       </section>
 
-      {error ? <div className={styles.errorBanner}>{error}</div> : null}
-      {message ? <div className={styles.successBanner}>{message}</div> : null}
+      {error ? <StatusBanner tone="danger" title="Communications request failed">{error}</StatusBanner> : null}
+      {message ? <StatusBanner tone="success" title="Communication action completed">{message}</StatusBanner> : null}
 
       <section className={styles.workspace}>
         <Card padding="lg" className={styles.panel}>
@@ -172,11 +212,34 @@ export function CommunicationsScreen() {
               <span className={styles.eyebrow}>Notification List</span>
               <h2>Delivery operations</h2>
             </div>
-            <Badge tone="navy">{notifications.length} messages</Badge>
+            <Badge tone="navy">{filteredNotifications.length} messages</Badge>
+          </div>
+
+          <div className={styles.compactFilters} aria-label="Notification filters">
+            <SelectField
+              label="Delivery"
+              value={notificationFilters.deliveryStatus}
+              options={["all", "pending", "scheduled", "sent", "read", "failed", "cancelled"]}
+              onChange={(deliveryStatus) => setNotificationFilters((current) => ({ ...current, deliveryStatus }))}
+            />
+            <SelectField
+              label="Role"
+              value={notificationFilters.role}
+              options={["all", "rider", "passenger", "driver", "admin", "ops"]}
+              onChange={(role) => setNotificationFilters((current) => ({ ...current, role }))}
+            />
+            <label className={styles.field}>
+              <span>Search</span>
+              <input value={notificationFilters.query} placeholder="Message, code, entity" onChange={(event) => setNotificationFilters((current) => ({ ...current, query: event.target.value }))} />
+            </label>
+            <Button type="button" size="sm" variant="secondary" disabled={!hasNotificationFilters} onClick={() => setNotificationFilters({ deliveryStatus: "all", role: "all", query: "" })}>
+              Clear
+            </Button>
           </div>
 
           <div className={styles.queue}>
-            {notifications.map((notification) => (
+            {isLoading ? <LoadingRows rows={3} columns={3} /> : null}
+            {!isLoading ? filteredNotifications.map((notification) => (
               <button type="button" className={styles.queueItem} key={notification.id} onClick={() => void openNotification(notification)}>
                 <span>{notification.notificationCode || formatLabel(notification.type)}</span>
                 <strong>{notification.title || notification.id}</strong>
@@ -186,8 +249,15 @@ export function CommunicationsScreen() {
                   <Badge tone={toneForDelivery(notification.deliveryStatus)}>{formatLabel(notification.deliveryStatus)}</Badge>
                 </div>
               </button>
-            ))}
-            {!notifications.length ? <p>No notifications found.</p> : null}
+            )) : null}
+            {!isLoading && !filteredNotifications.length ? (
+              <EmptyState
+                title={notifications.length ? "No notifications match these filters" : "No notifications found"}
+                description={notifications.length ? "Clear filters or search with another title, code, or related entity." : "The notification queue has no backend records for this account yet."}
+                actionLabel={notifications.length ? "Clear Filters" : undefined}
+                onAction={notifications.length ? () => setNotificationFilters({ deliveryStatus: "all", role: "all", query: "" }) : undefined}
+              />
+            ) : null}
           </div>
         </Card>
 
@@ -207,15 +277,45 @@ export function CommunicationsScreen() {
             <div><span>Urgent</span><strong>{supportSummary.urgentCount}</strong></div>
           </div>
 
+          <div className={styles.compactFilters} aria-label="Support ticket filters">
+            <SelectField
+              label="Status"
+              value={supportFilters.status}
+              options={["all", "open", "pending", "resolved", "closed"]}
+              onChange={(status) => setSupportFilters((current) => ({ ...current, status }))}
+            />
+            <SelectField
+              label="Priority"
+              value={supportFilters.priority}
+              options={["all", "low", "medium", "high", "urgent"]}
+              onChange={(priority) => setSupportFilters((current) => ({ ...current, priority }))}
+            />
+            <label className={styles.field}>
+              <span>Search</span>
+              <input value={supportFilters.query} placeholder="Ticket, subject, channel" onChange={(event) => setSupportFilters((current) => ({ ...current, query: event.target.value }))} />
+            </label>
+            <Button type="button" size="sm" variant="secondary" disabled={!hasSupportFilters} onClick={() => setSupportFilters({ status: "all", priority: "all", query: "" })}>
+              Clear
+            </Button>
+          </div>
+
           <div className={styles.queue}>
-            {supportTickets.map((ticket) => (
+            {isLoading ? <LoadingRows rows={3} columns={3} /> : null}
+            {!isLoading ? filteredSupportTickets.map((ticket) => (
               <article className={styles.ticketItem} key={ticket.id}>
                 <span>{ticket.ticketCode || formatLabel(ticket.category)}</span>
                 <strong>{ticket.subject || ticket.id}</strong>
                 <small>{formatLabel(ticket.status)} - {ticket.messageCount} messages - {ticket.attachmentCount} files</small>
               </article>
-            ))}
-            {!supportTickets.length ? <p>No support tickets found.</p> : null}
+            )) : null}
+            {!isLoading && !filteredSupportTickets.length ? (
+              <EmptyState
+                title={supportTickets.length ? "No support tickets match these filters" : "No support tickets found"}
+                description={supportTickets.length ? "Clear filters or search with another ticket code, subject, or channel." : "Support has no backend tickets for this account yet."}
+                actionLabel={supportTickets.length ? "Clear Filters" : undefined}
+                onAction={supportTickets.length ? () => setSupportFilters({ status: "all", priority: "all", query: "" }) : undefined}
+              />
+            ) : null}
           </div>
         </Card>
       </section>
@@ -235,20 +335,27 @@ export function CommunicationsScreen() {
           <div className={styles.actions}>
             <Button
               type="button"
+              disabled={!canCreateNotification}
               isLoading={pendingAction === "create"}
               onClick={() => void runAction("create", () => communicationsService.createNotification(form), "Notification created")}
             >
               Create Notification
             </Button>
-            <Button
-              type="button"
+            <ConfirmAction
+              label="Incident Broadcast"
+              confirmLabel="Confirm Broadcast"
               variant="mint"
+              size="md"
+              disabled={!canCreateNotification}
               isLoading={pendingAction === "broadcast"}
-              onClick={() => void runAction("broadcast", () => communicationsService.broadcastIncident(form), "Incident broadcast created")}
-            >
-              Incident Broadcast
-            </Button>
+              onConfirm={() => void runAction("broadcast", () => communicationsService.broadcastIncident(form), "Incident broadcast created")}
+            />
           </div>
+          {!canCreateNotification ? (
+            <StatusBanner tone="warning" title="Form needs a recipient">
+              Add a title, message, and recipient id before creating a targeted notification.
+            </StatusBanner>
+          ) : null}
         </Card>
 
         <Card padding="lg" className={styles.panel}>
@@ -269,40 +376,31 @@ export function CommunicationsScreen() {
               </div>
 
               <div className={styles.actions}>
-                <Button
-                  type="button"
-                  disabled={!selectedNotification.guidance.canSend}
-                  isLoading={pendingAction === "send"}
-                  onClick={() => void runAction("send", () => communicationsService.sendNotification(selectedNotification.id), "Notification sent")}
-                >
-                  Send
-                </Button>
-                <Button
-                  type="button"
+                <ConfirmAction label="Send" confirmLabel="Confirm Send" disabled={!selectedNotification.guidance.canSend} isLoading={pendingAction === "send"} onConfirm={() => void runAction("send", () => communicationsService.sendNotification(selectedNotification.id), "Notification sent")} />
+                <ConfirmAction
+                  label="Retry"
+                  confirmLabel="Confirm Retry"
                   variant="secondary"
                   disabled={!selectedNotification.guidance.canRetry}
                   isLoading={pendingAction === "retry"}
-                  onClick={() => void runAction("retry", () => communicationsService.retryNotification(selectedNotification.id), "Notification retry queued")}
-                >
-                  Retry
-                </Button>
-                <Button
-                  type="button"
+                  onConfirm={() => void runAction("retry", () => communicationsService.retryNotification(selectedNotification.id), "Notification retry queued")}
+                />
+                <ConfirmAction
+                  label="Fail"
+                  confirmLabel="Confirm Fail"
                   variant="danger"
+                  disabled={selectedNotification.deliveryStatus === "failed" || selectedNotification.deliveryStatus === "cancelled"}
                   isLoading={pendingAction === "fail"}
-                  onClick={() => void runAction("fail", () => communicationsService.failNotification(selectedNotification.id), "Notification marked failed")}
-                >
-                  Fail
-                </Button>
-                <Button
-                  type="button"
+                  onConfirm={() => void runAction("fail", () => communicationsService.failNotification(selectedNotification.id), "Notification marked failed")}
+                />
+                <ConfirmAction
+                  label="Cancel"
+                  confirmLabel="Confirm Cancel"
                   variant="secondary"
                   disabled={!selectedNotification.guidance.canCancel}
                   isLoading={pendingAction === "cancel"}
-                  onClick={() => void runAction("cancel", () => communicationsService.cancelNotification(selectedNotification.id), "Notification cancelled")}
-                >
-                  Cancel
-                </Button>
+                  onConfirm={() => void runAction("cancel", () => communicationsService.cancelNotification(selectedNotification.id), "Notification cancelled")}
+                />
               </div>
             </>
           ) : (
@@ -326,6 +424,19 @@ export function CommunicationsScreen() {
         </div>
       </Card>
     </section>
+  );
+}
+
+function SelectField({ label, value, options, onChange }: { label: string; value: string; options: string[]; onChange: (value: string) => void }) {
+  return (
+    <label className={styles.field}>
+      <span>{label}</span>
+      <select value={value} onChange={(event) => onChange(event.target.value)}>
+        {options.map((option) => (
+          <option key={option} value={option}>{formatLabel(option)}</option>
+        ))}
+      </select>
+    </label>
   );
 }
 
