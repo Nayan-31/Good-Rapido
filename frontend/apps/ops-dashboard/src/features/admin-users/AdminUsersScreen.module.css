@@ -30,6 +30,7 @@
 
 .heroActions,
 .panelHeader,
+.panelActions,
 .actions,
 .permissionSummary {
   display: flex;
@@ -45,6 +46,11 @@
 
 .actions {
   flex-wrap: wrap;
+}
+
+.panelActions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .eyebrow {
@@ -278,6 +284,7 @@
 @media (max-width: 760px) {
   .hero,
   .panelHeader,
+  .panelActions,
   .permissionSummary {
     align-items: flex-start;
     flex-direction: column;

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Badge, Button, Card, MetricCard, ProgressBar } from "@good-rapido/ui";
 
+import { ConfirmAction, EmptyState, LoadingRows, StatusBanner } from "@/components";
 import { findOpsRouteById } from "@/routes";
 import { adminUsersService } from "./adminUsers.service";
 import type {
@@ -113,6 +114,8 @@ export function AdminUsersScreen() {
   const coverage = options?.permissions?.length
     ? Math.round((selectedPermissions.length / options.permissions.length) * 100)
     : 0;
+  const hasFilters = Boolean(filters.role || filters.accountStatus || filters.q.trim());
+  const canSubmitUser = Boolean(form.role && form.fullName.trim() && form.email.trim() && form.password.trim() && selectedPermissions.length);
 
   const runAction = async (actionName: string, action: () => Promise<unknown>, successMessage: string) => {
     setPendingAction(actionName);
@@ -189,8 +192,8 @@ export function AdminUsersScreen() {
         <MetricCard label="Blocked/Suspended" value={String(summary.blockedCount + summary.suspendedCount)} meta="security hold" tone="warning" />
       </section>
 
-      {error ? <div className={styles.errorBanner}>{error}</div> : null}
-      {message ? <div className={styles.successBanner}>{message}</div> : null}
+      {error ? <StatusBanner tone="danger" title="Admin users request failed">{error}</StatusBanner> : null}
+      {message ? <StatusBanner tone="success" title="Admin action completed">{message}</StatusBanner> : null}
 
       <Card padding="lg" className={styles.filterPanel}>
         <div className={styles.panelHeader}>
@@ -198,7 +201,12 @@ export function AdminUsersScreen() {
             <span className={styles.eyebrow}>User Directory</span>
             <h2>Filters and internal accounts</h2>
           </div>
-          <Badge tone="navy">{users.length} visible</Badge>
+          <div className={styles.panelActions}>
+            <Badge tone="navy">{users.length} visible</Badge>
+            <Button type="button" size="sm" variant="secondary" disabled={!hasFilters} onClick={() => setFilters(initialFilters)}>
+              Clear Filters
+            </Button>
+          </div>
         </div>
         <div className={styles.filters}>
           <label className={styles.field}>
@@ -228,7 +236,8 @@ export function AdminUsersScreen() {
             <span>Status</span>
             <span>Permissions</span>
           </div>
-          {users.map((user) => (
+          {isLoading ? <LoadingRows rows={4} columns={4} /> : null}
+          {!isLoading ? users.map((user) => (
             <button type="button" className={styles.tableRow} key={user.id} onClick={() => void openUser(user)}>
               <span>
                 <strong>{user.fullName || user.email || user.id}</strong>
@@ -238,8 +247,15 @@ export function AdminUsersScreen() {
               <Badge tone={toneForStatus(user.accountStatus)}>{formatLabel(user.accountStatus)}</Badge>
               <strong>{user.permissionCount}</strong>
             </button>
-          ))}
-          {!users.length ? <p>No users found for this filter.</p> : null}
+          )) : null}
+          {!isLoading && !users.length ? (
+            <EmptyState
+              title={hasFilters ? "No users match these filters" : "No admin users found"}
+              description={hasFilters ? "Clear filters or search another name, email, or phone number." : "Create an internal admin or ops user to begin account management."}
+              actionLabel={hasFilters ? "Clear Filters" : undefined}
+              onAction={hasFilters ? () => setFilters(initialFilters) : undefined}
+            />
+          ) : null}
         </div>
       </Card>
 
@@ -258,6 +274,7 @@ export function AdminUsersScreen() {
           <div className={styles.actions}>
             <Button
               type="button"
+              disabled={!canSubmitUser}
               isLoading={pendingAction === "create"}
               onClick={() => void runAction("create", () => adminUsersService.createUser(form, selectedPermissions), "Admin user created")}
             >
@@ -286,16 +303,15 @@ export function AdminUsersScreen() {
 
           <div className={styles.statusGrid}>
             {(options?.statuses ?? ["active", "pending", "blocked", "suspended"]).map((status) => (
-              <Button
-                type="button"
+              <ConfirmAction
+                label={formatLabel(status)}
+                confirmLabel={`Confirm ${formatLabel(status)}`}
                 variant={status === "blocked" || status === "suspended" ? "danger" : "secondary"}
                 key={status}
                 disabled={!selectedDetail?.guidance.canUpdateStatus}
                 isLoading={pendingAction === `status:${status}`}
-                onClick={() => selectedDetail && void runAction(`status:${status}`, () => adminUsersService.updateStatus(selectedDetail.user.id, status), `Status updated to ${status}`)}
-              >
-                {formatLabel(status)}
-              </Button>
+                onConfirm={() => selectedDetail && void runAction(`status:${status}`, () => adminUsersService.updateStatus(selectedDetail.user.id, status), `Status updated to ${status}`)}
+              />
             ))}
           </div>
 
@@ -318,14 +334,14 @@ export function AdminUsersScreen() {
 
         <div className={styles.permissionSummary}>
           <ProgressBar value={coverage} label="Selected permission coverage" showValue tone="trust" />
-          <Button
-            type="button"
+          <ConfirmAction
+            label="Update Permissions"
+            confirmLabel="Confirm Permissions"
+            size="md"
             disabled={!selectedDetail?.guidance.canUpdatePermissions || !selectedPermissions.length}
             isLoading={pendingAction === "permissions"}
-            onClick={() => selectedDetail && void runAction("permissions", () => adminUsersService.updatePermissions(selectedDetail.user.id, selectedPermissions), "Permissions updated")}
-          >
-            Update Permissions
-          </Button>
+            onConfirm={() => selectedDetail && void runAction("permissions", () => adminUsersService.updatePermissions(selectedDetail.user.id, selectedPermissions), "Permissions updated")}
+          />
         </div>
 
         <div className={styles.permissionGrid}>

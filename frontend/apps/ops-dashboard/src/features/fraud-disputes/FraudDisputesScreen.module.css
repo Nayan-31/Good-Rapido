@@ -170,6 +170,30 @@
   font-weight: 800;
 }
 
+.field select {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 10px;
+  border: 1px solid #dfe6ee;
+  border-radius: 8px;
+  background: #f7f9fb;
+  color: #071f35;
+  font: inherit;
+  font-weight: 800;
+}
+
+.compactFilters {
+  display: grid;
+  grid-template-columns: minmax(130px, 0.5fr) minmax(130px, 0.5fr) minmax(180px, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+  margin-bottom: 14px;
+  padding: 12px;
+  border: 1px solid #edf1f5;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
 .simulation {
   display: grid;
   gap: 12px;
@@ -244,6 +268,7 @@
   .metrics,
   .workspace,
   .actionGrid,
+  .compactFilters,
   .formGrid,
   .detailGrid {
     grid-template-columns: 1fr;

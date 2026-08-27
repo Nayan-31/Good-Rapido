@@ -213,6 +213,18 @@
   resize: vertical;
 }
 
+.compactFilters {
+  display: grid;
+  grid-template-columns: minmax(130px, 0.5fr) minmax(130px, 0.5fr) minmax(180px, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+  margin-bottom: 14px;
+  padding: 12px;
+  border: 1px solid #edf1f5;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
 .fullWidth {
   grid-column: 1 / -1;
 }
@@ -273,6 +285,7 @@
   .metrics,
   .workspace,
   .actionGrid,
+  .compactFilters,
   .form,
   .supportGrid {
     grid-template-columns: 1fr;

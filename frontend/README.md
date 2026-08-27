@@ -256,3 +256,4 @@ Deployment notes are in:
 - Driver dashboard and detail screens avoid planned/sample values by default; demo fallbacks require explicit demo env flags.
 - Rider safety/help and disputes show backend data or explicit empty states instead of UI-only placeholder records.
 - Ops communications reads support summary and tickets from private support APIs, and ops fraud-disputes shows dispute evidence/refund/resolution detail.
+- Ops dashboard pricing, surge, fraud, disputes, communications, admin users, and analytics screens include consistent loading, empty, error, success, filter, disabled, and confirmation states.

@@ -136,6 +136,18 @@
   padding: 0 12px;
 }
 
+.compactFilters {
+  display: grid;
+  grid-template-columns: minmax(140px, 0.45fr) minmax(180px, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid #edf1f5;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
 .field select {
   padding: 0 10px;
 }
@@ -293,7 +305,8 @@
   .workspace,
   .simulationGrid,
   .previewCards,
-  .breakdown {
+  .breakdown,
+  .compactFilters {
     grid-template-columns: 1fr;
   }
 }

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Badge, Button, Card, MetricCard, ProgressBar } from "@good-rapido/ui";
 
+import { ConfirmAction, EmptyState, LoadingRows, StatusBanner } from "@/components";
 import { findOpsRouteById } from "@/routes";
 import { pricingOpsService } from "./pricing.service";
 import type {
@@ -111,6 +112,8 @@ export function PricingScreen() {
   const [simulationForm, setSimulationForm] = useState<PricingSimulationForm>(defaultSimulationForm);
   const [pricingSimulation, setPricingSimulation] = useState<PricingSimulation | null>(null);
   const [surgeSimulation, setSurgeSimulation] = useState<SurgeSimulation | null>(null);
+  const [pricingFilters, setPricingFilters] = useState({ status: "all", query: "" });
+  const [surgeFilters, setSurgeFilters] = useState({ status: "all", query: "" });
   const [isLoading, setIsLoading] = useState(true);
   const [pendingAction, setPendingAction] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -167,6 +170,33 @@ export function PricingScreen() {
     () => pricingSummary.activeRules + surgeSummary.activeRules + surgeSummary.scheduledRules,
     [pricingSummary.activeRules, surgeSummary.activeRules, surgeSummary.scheduledRules]
   );
+
+  const filteredPricingRules = useMemo(() => {
+    const query = pricingFilters.query.trim().toLowerCase();
+
+    return pricingRules.filter((rule) => {
+      const matchesStatus = pricingFilters.status === "all" || rule.status === pricingFilters.status;
+      const searchable = [rule.ruleCode, rule.label, rule.vehicleType, rule.serviceZone].filter(Boolean).join(" ").toLowerCase();
+      const matchesQuery = !query || searchable.includes(query);
+
+      return matchesStatus && matchesQuery;
+    });
+  }, [pricingFilters.query, pricingFilters.status, pricingRules]);
+
+  const filteredSurgeRules = useMemo(() => {
+    const query = surgeFilters.query.trim().toLowerCase();
+
+    return surgeRules.filter((rule) => {
+      const matchesStatus = surgeFilters.status === "all" || rule.status === surgeFilters.status;
+      const searchable = [rule.surgeCode, rule.label, rule.trigger, rule.serviceZone, ...rule.vehicleTypes].filter(Boolean).join(" ").toLowerCase();
+      const matchesQuery = !query || searchable.includes(query);
+
+      return matchesStatus && matchesQuery;
+    });
+  }, [surgeFilters.query, surgeFilters.status, surgeRules]);
+
+  const hasPricingFilters = pricingFilters.status !== "all" || Boolean(pricingFilters.query.trim());
+  const hasSurgeFilters = surgeFilters.status !== "all" || Boolean(surgeFilters.query.trim());
 
   const runAction = async (actionName: string, action: () => Promise<unknown>, successMessage: string) => {
     setPendingAction(actionName);
@@ -292,8 +322,8 @@ export function PricingScreen() {
         <MetricCard label="Max Multiplier" value={`${surgeSummary.maxMultiplier.toFixed(2)}x`} meta={`${surgeSummary.highSurgeRules} high surge`} tone="danger" />
       </section>
 
-      {error ? <div className={styles.errorBanner}>{error}</div> : null}
-      {message ? <div className={styles.successBanner}>{message}</div> : null}
+      {error ? <StatusBanner tone="danger" title="Pricing request failed">{error}</StatusBanner> : null}
+      {message ? <StatusBanner tone="success" title="Pricing update completed">{message}</StatusBanner> : null}
 
       <section className={styles.workspace}>
         <Card padding="lg" className={styles.panel}>
@@ -316,39 +346,69 @@ export function PricingScreen() {
             isUpdating={pendingAction === "update-pricing"}
           />
 
+          <div className={styles.compactFilters} aria-label="Pricing rule filters">
+            <label className={styles.field}>
+              <span>Status</span>
+              <select
+                value={pricingFilters.status}
+                onChange={(event) => setPricingFilters((current) => ({ ...current, status: event.target.value }))}
+              >
+                <option value="all">All statuses</option>
+                {pricingOptions.statuses.map((status) => (
+                  <option key={status} value={status}>{formatLabel(status)}</option>
+                ))}
+              </select>
+            </label>
+            <label className={styles.field}>
+              <span>Search</span>
+              <input
+                value={pricingFilters.query}
+                placeholder="Rule, zone, vehicle"
+                onChange={(event) => setPricingFilters((current) => ({ ...current, query: event.target.value }))}
+              />
+            </label>
+            <Button type="button" size="sm" variant="secondary" disabled={!hasPricingFilters} onClick={() => setPricingFilters({ status: "all", query: "" })}>
+              Clear
+            </Button>
+          </div>
+
           <div className={styles.ruleList}>
-            {pricingRules.map((rule) => (
+            {isLoading ? <LoadingRows rows={3} columns={3} /> : null}
+            {!isLoading ? filteredPricingRules.map((rule) => (
               <button type="button" key={rule.id} className={styles.ruleCard} onClick={() => void openPricingRule(rule)}>
                 <span>{rule.ruleCode || formatLabel(rule.vehicleType)}</span>
                 <strong>{rule.label || "Untitled pricing rule"}</strong>
                 <small>{formatCurrency(rule.baseFare)} base - {formatCurrency(rule.perKm)}/km - {rule.serviceZone}</small>
                 <Badge tone={toneForStatus(rule.status)}>{formatLabel(rule.status)}</Badge>
               </button>
-            ))}
-            {!pricingRules.length ? <div className={styles.emptyState}>No pricing rules yet. Create a draft rule to begin.</div> : null}
+            )) : null}
+            {!isLoading && !filteredPricingRules.length ? (
+              <EmptyState
+                title={pricingRules.length ? "No pricing rules match these filters" : "No pricing rules yet"}
+                description={pricingRules.length ? "Clear filters or adjust the search to review available pricing rules." : "Create a draft pricing rule to begin fare control setup."}
+                actionLabel={pricingRules.length ? "Clear Filters" : undefined}
+                onAction={pricingRules.length ? () => setPricingFilters({ status: "all", query: "" }) : undefined}
+              />
+            ) : null}
           </div>
 
           {selectedPricingRule ? (
             <div className={styles.actionRow}>
-              <Button
-                type="button"
-                size="sm"
+              <ConfirmAction
+                label="Activate"
+                confirmLabel="Confirm Activate"
                 disabled={!selectedPricingRule.guidance.canActivate}
                 isLoading={pendingAction === "activate-pricing"}
-                onClick={() => void runAction("activate-pricing", () => pricingOpsService.activatePricingRule(selectedPricingRule.id), "Pricing rule activated")}
-              >
-                Activate
-              </Button>
-              <Button
-                type="button"
-                size="sm"
+                onConfirm={() => void runAction("activate-pricing", () => pricingOpsService.activatePricingRule(selectedPricingRule.id), "Pricing rule activated")}
+              />
+              <ConfirmAction
+                label="Archive"
+                confirmLabel="Confirm Archive"
                 variant="secondary"
                 disabled={!selectedPricingRule.guidance.canArchive}
                 isLoading={pendingAction === "archive-pricing"}
-                onClick={() => void runAction("archive-pricing", () => pricingOpsService.archivePricingRule(selectedPricingRule.id), "Pricing rule archived")}
-              >
-                Archive
-              </Button>
+                onConfirm={() => void runAction("archive-pricing", () => pricingOpsService.archivePricingRule(selectedPricingRule.id), "Pricing rule archived")}
+              />
             </div>
           ) : null}
         </Card>
@@ -374,59 +434,85 @@ export function PricingScreen() {
             isUpdating={pendingAction === "update-surge"}
           />
 
+          <div className={styles.compactFilters} aria-label="Surge rule filters">
+            <label className={styles.field}>
+              <span>Status</span>
+              <select
+                value={surgeFilters.status}
+                onChange={(event) => setSurgeFilters((current) => ({ ...current, status: event.target.value }))}
+              >
+                <option value="all">All statuses</option>
+                {surgeOptions.statuses.map((status) => (
+                  <option key={status} value={status}>{formatLabel(status)}</option>
+                ))}
+              </select>
+            </label>
+            <label className={styles.field}>
+              <span>Search</span>
+              <input
+                value={surgeFilters.query}
+                placeholder="Surge, trigger, zone"
+                onChange={(event) => setSurgeFilters((current) => ({ ...current, query: event.target.value }))}
+              />
+            </label>
+            <Button type="button" size="sm" variant="secondary" disabled={!hasSurgeFilters} onClick={() => setSurgeFilters({ status: "all", query: "" })}>
+              Clear
+            </Button>
+          </div>
+
           <div className={styles.ruleList}>
-            {surgeRules.map((rule) => (
+            {isLoading ? <LoadingRows rows={3} columns={3} /> : null}
+            {!isLoading ? filteredSurgeRules.map((rule) => (
               <button type="button" key={rule.id} className={styles.ruleCard} onClick={() => void openSurgeRule(rule)}>
                 <span>{rule.surgeCode || formatLabel(rule.trigger)}</span>
                 <strong>{rule.label || "Untitled surge rule"}</strong>
                 <small>{rule.currentMultiplier.toFixed(2)}x current - {rule.vehicleTypes.map(formatLabel).join(", ")}</small>
                 <Badge tone={toneForStatus(rule.status)}>{formatLabel(rule.status)}</Badge>
               </button>
-            ))}
-            {!surgeRules.length ? <div className={styles.emptyState}>No surge rules yet. Create a scheduled or draft surge rule.</div> : null}
+            )) : null}
+            {!isLoading && !filteredSurgeRules.length ? (
+              <EmptyState
+                title={surgeRules.length ? "No surge rules match these filters" : "No surge rules yet"}
+                description={surgeRules.length ? "Clear filters or search by another trigger, zone, or vehicle type." : "Create a scheduled or draft surge rule to begin demand control setup."}
+                actionLabel={surgeRules.length ? "Clear Filters" : undefined}
+                onAction={surgeRules.length ? () => setSurgeFilters({ status: "all", query: "" }) : undefined}
+              />
+            ) : null}
           </div>
 
           {selectedSurgeRule ? (
             <div className={styles.actionRow}>
-              <Button
-                type="button"
-                size="sm"
+              <ConfirmAction
+                label="Activate"
+                confirmLabel="Confirm Activate"
                 disabled={!selectedSurgeRule.guidance.canActivate}
                 isLoading={pendingAction === "activate-surge"}
-                onClick={() => void runAction("activate-surge", () => pricingOpsService.activateSurgeRule(selectedSurgeRule.id), "Surge rule activated")}
-              >
-                Activate
-              </Button>
-              <Button
-                type="button"
-                size="sm"
+                onConfirm={() => void runAction("activate-surge", () => pricingOpsService.activateSurgeRule(selectedSurgeRule.id), "Surge rule activated")}
+              />
+              <ConfirmAction
+                label="Pause"
+                confirmLabel="Confirm Pause"
                 variant="secondary"
                 disabled={!selectedSurgeRule.guidance.canPause}
                 isLoading={pendingAction === "pause-surge"}
-                onClick={() => void runAction("pause-surge", () => pricingOpsService.pauseSurgeRule(selectedSurgeRule.id), "Surge rule paused")}
-              >
-                Pause
-              </Button>
-              <Button
-                type="button"
-                size="sm"
+                onConfirm={() => void runAction("pause-surge", () => pricingOpsService.pauseSurgeRule(selectedSurgeRule.id), "Surge rule paused")}
+              />
+              <ConfirmAction
+                label="End"
+                confirmLabel="Confirm End"
                 variant="secondary"
                 disabled={!selectedSurgeRule.guidance.canEnd}
                 isLoading={pendingAction === "end-surge"}
-                onClick={() => void runAction("end-surge", () => pricingOpsService.endSurgeRule(selectedSurgeRule.id), "Surge rule ended")}
-              >
-                End
-              </Button>
-              <Button
-                type="button"
-                size="sm"
+                onConfirm={() => void runAction("end-surge", () => pricingOpsService.endSurgeRule(selectedSurgeRule.id), "Surge rule ended")}
+              />
+              <ConfirmAction
+                label="Archive"
+                confirmLabel="Confirm Archive"
                 variant="danger"
                 disabled={!selectedSurgeRule.guidance.canArchive}
                 isLoading={pendingAction === "archive-surge"}
-                onClick={() => void runAction("archive-surge", () => pricingOpsService.archiveSurgeRule(selectedSurgeRule.id), "Surge rule archived")}
-              >
-                Archive
-              </Button>
+                onConfirm={() => void runAction("archive-surge", () => pricingOpsService.archiveSurgeRule(selectedSurgeRule.id), "Surge rule archived")}
+              />
             </div>
           ) : null}
         </Card>
