@@ -16,6 +16,8 @@ export interface OpsRouteOutletProps {
     onAuthenticated: () => void;
     onRestoreSession: () => Promise<string>;
     onSignIn: (form: OpsLoginForm) => Promise<string>;
+    notice?: string | null;
+    onNoticeDismiss?: () => void;
   };
 }
 
@@ -27,6 +29,8 @@ export function OpsRouteOutlet({ route, auth }: OpsRouteOutletProps) {
         onAuthenticated={auth.onAuthenticated}
         onRestoreSession={auth.onRestoreSession}
         onSignIn={auth.onSignIn}
+        notice={auth.notice}
+        onNoticeDismiss={auth.onNoticeDismiss}
       />
     );
   }

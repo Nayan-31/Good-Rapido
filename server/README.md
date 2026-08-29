@@ -221,6 +221,8 @@ The smoke command checks health, rider login, fare estimate, driver search, book
 - Private driver tokens can read and mark their own notifications through `private/notifications`; admin/ops notification dashboard, create, send, retry, fail, and cancel actions remain ops-permission protected.
 - Private support exposes driver-scoped ticket create/history/detail actions and admin/ops global support summary/list/detail actions.
 - Frontend apps should attach access tokens to protected routes, refresh before expiry, retry one protected request after a 401, and clear browser session state when refresh/logout fails.
+- Frontend apps map backend auth failures into user-friendly copy: expired sessions ask the user to sign in again, failed refresh clears stale tokens, logout still succeeds locally if the server session is already invalid, and rate-limit responses show a short wait-and-retry message instead of raw API text.
+- Backend 429 responses should remain structured and include the rate-limit message/status so rider, driver, and ops screens can display the same clean "too many attempts" UX.
 - Public production deployment should eventually move refresh/session handling to secure httpOnly cookies.
 
 ## Tests

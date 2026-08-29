@@ -250,6 +250,7 @@ Deployment notes are in:
 - Frontend auth sessions use `sessionStorage`, and old localStorage token keys are cleaned during migration/logout.
 - The shared API client retries one protected request after a 401 by asking the active app to refresh its access token.
 - If refresh fails, the relevant app clears the session and the route guard returns the user to the auth screen.
+- Rider, driver, and ops apps show clean messages for expired sessions, failed login/register, too many requests, failed refresh, logout success, unauthorized route access, and stale saved sessions.
 - Rider home vehicle prices and ETAs are read from the pricing comparison API when locations are valid.
 - Rider history auto-loads the first selected receipt so fare/trust details appear from real ride data.
 - The seeded demo flow verifies rider booking, driver accept/complete actions, rider history, driver earnings, and ops dashboard visibility.

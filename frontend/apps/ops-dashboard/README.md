@@ -189,3 +189,5 @@ http://127.0.0.1:5176
 ## Important Auth Note
 
 Driver registration is public inside private auth, but admin and ops registration is intentionally disabled in the backend route layer. Admin and ops accounts must be created through the private auth seed script, database setup, or the private admin users API after an admin session exists.
+
+The ops auth screen now keeps auth failures readable for operators: invalid credentials, too many requests, expired sessions, refresh failure, unauthorized route access, stale saved sessions, and logout completion are shown as clean UI messages while tokens are cleared from session storage.

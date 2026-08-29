@@ -7,6 +7,7 @@ Current status: demo-ready rider MVP. The main rider screens and services are im
 ## Current Screens And Flows
 
 - Auth/session structure.
+- Clean auth UX for failed login/register, expired sessions, refresh failure, route guard redirects, logout success, stale session cleanup, and backend rate-limit messages.
 - Booking home.
 - Backend-powered pickup/dropoff suggestions.
 - Fare estimate.
@@ -56,6 +57,7 @@ rider-app/
 - Retry-on-expired-token handling through the shared API client.
 - Legacy localStorage token cleanup during migration/logout.
 - Logout and failed-refresh cleanup.
+- Friendly "too many attempts" and "please sign in again" messages from shared API error handling.
 - Auth gate.
 
 Backend modules:

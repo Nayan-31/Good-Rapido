@@ -14,7 +14,7 @@ export const apiClient = createGoodRapidoApiClient({
   baseUrl,
   getAccessToken: () => getValidDriverAccessToken(),
   refreshAccessToken: () => refreshDriverAccessToken(),
-  onUnauthorized: () => clearDriverAuthSession()
+  onUnauthorized: () => clearDriverAuthSession("Your driver session expired. Please login again to continue.")
 });
 
 export const driverApiBaseUrl = baseUrl;
@@ -67,7 +67,7 @@ const requestDriverTokenRefresh = async () => {
     saveDriverAuthSession(payload.data);
     return payload.data.tokens.accessToken;
   } catch {
-    clearDriverAuthSession();
+    clearDriverAuthSession("Session refresh failed. Please login again to continue.");
     return null;
   }
 };

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 
+import { toFriendlyApiErrorMessage } from "@good-rapido/api-client";
 import { Alert, AppHeader, Button, Card, TextField } from "@good-rapido/ui";
 import type { LoginForm, RegisterForm } from "./auth.types";
 import styles from "./AuthGate.module.css";
@@ -10,6 +11,8 @@ type AuthMode = "login" | "register";
 export interface AuthGateProps {
   onSignIn: (form: LoginForm) => Promise<string>;
   onRegister: (form: RegisterForm) => Promise<string>;
+  notice?: string | null;
+  onNoticeDismiss?: () => void;
 }
 
 const defaultLoginForm: LoginForm = {
@@ -24,7 +27,7 @@ const defaultRegisterForm: RegisterForm = {
   password: ""
 };
 
-export function AuthGate({ onSignIn, onRegister }: AuthGateProps) {
+export function AuthGate({ onSignIn, onRegister, notice, onNoticeDismiss }: AuthGateProps) {
   const [mode, setMode] = useState<AuthMode>("login");
   const [loginForm, setLoginForm] = useState<LoginForm>(defaultLoginForm);
   const [registerForm, setRegisterForm] = useState<RegisterForm>(defaultRegisterForm);
@@ -36,13 +39,14 @@ export function AuthGate({ onSignIn, onRegister }: AuthGateProps) {
     event.preventDefault();
     setError(null);
     setMessage(null);
+    onNoticeDismiss?.();
     setIsSubmitting(true);
 
     try {
       const nextMessage = mode === "login" ? await onSignIn(loginForm) : await onRegister(registerForm);
       setMessage(nextMessage);
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : "Authentication failed");
+      setError(toFriendlyApiErrorMessage(submitError, mode));
     } finally {
       setIsSubmitting(false);
     }
@@ -71,6 +75,7 @@ export function AuthGate({ onSignIn, onRegister }: AuthGateProps) {
                 setMode("login");
                 setError(null);
                 setMessage(null);
+                onNoticeDismiss?.();
               }}
             >
               Sign In
@@ -82,6 +87,7 @@ export function AuthGate({ onSignIn, onRegister }: AuthGateProps) {
                 setMode("register");
                 setError(null);
                 setMessage(null);
+                onNoticeDismiss?.();
               }}
             >
               Register
@@ -138,9 +144,9 @@ export function AuthGate({ onSignIn, onRegister }: AuthGateProps) {
               </Alert>
             ) : null}
 
-            {message ? (
-              <Alert tone="trust" title="Session Ready">
-                {message}
+            {message || notice ? (
+              <Alert tone="trust" title={message ? "Session Ready" : "Session Notice"}>
+                {message || notice}
               </Alert>
             ) : null}
 

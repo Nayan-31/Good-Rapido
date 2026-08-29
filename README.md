@@ -95,7 +95,7 @@ frontend/
 
 Rider app current state:
 
-- Authentication/session structure with restore, refresh, stale-token cleanup, and logout.
+- Authentication/session structure with restore, refresh, stale-token cleanup, friendly expired-session/rate-limit messages, route guard notices, and logout.
 - Booking home screen with address-only pickup/dropoff fields, hidden internal coordinates, professional fallback location suggestions, clean unknown-location validation, disabled estimate state until both locations are resolved, and backend-backed vehicle pricing comparison.
 - Fare estimate screen with breakdown, confidence, surge transparency, and quote-derived fare context.
 - Confirm ride flow using pricing, matching, and lifecycle concepts.
@@ -110,7 +110,7 @@ Driver app current state:
 
 - React Vite TypeScript setup.
 - App shell, routing, and feature folder structure.
-- Real private driver authentication: register, login, session restore, refresh, logout, and protected routes.
+- Real private driver authentication: register, login, session restore, refresh, logout, friendly auth errors, and protected routes.
 - Driver onboarding, availability, ride requests, active ride lifecycle, earnings, trust, alerts, profile, and support flows.
 - Active ride GPS watch publishes driver movement into the backend ride lifecycle tracking stream.
 - Seeded driver accounts can receive real rider bookings in the request queue and complete the ride lifecycle.
@@ -118,7 +118,7 @@ Driver app current state:
 Ops dashboard current state:
 
 - React Vite TypeScript setup.
-- Admin/ops private auth flow with protected routes, session restore, refresh, and logout.
+- Admin/ops private auth flow with protected routes, session restore, refresh, logout, and clean unauthorized-session messaging.
 - Backend-aligned app shell and routing.
 - Overview, ride operations, pricing/surge, trust-safety, fraud-disputes, communications, admin users, and analytics flows.
 - API client methods for private admin, analytics, pricing, surge, fraud, admin auth, ops auth, and ride operations.
@@ -131,6 +131,7 @@ Real backend data is currently active for:
 - Public and private auth APIs.
 - Session refresh and logout APIs for rider, driver, admin, and ops sessions.
 - MongoDB-backed rider, driver, admin, and ops users.
+- Frontend auth UX now converts expired tokens, failed refreshes, unauthorized routes, stale saved sessions, logout completion, and backend rate-limit responses into clear user-facing messages.
 - Public location search API with optional Google Places provider and local known-place fallback.
 - Rider pricing comparison, fare estimate, driver search, booking creation, live status stream, current ride status, ride history, receipt transparency, and profile data in the verified demo flow.
 - Public payments can create provider-backed UPI/card payment sessions, confirm success, mark failures, and process provider-aware refund requests.
