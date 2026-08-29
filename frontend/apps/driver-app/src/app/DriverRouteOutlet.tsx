@@ -21,6 +21,8 @@ export interface DriverRouteOutletProps {
     onRegister: (form: DriverRegisterForm) => Promise<string>;
     onRestoreSession: () => Promise<string>;
     onAuthenticated: (mode: "login" | "register") => void;
+    notice?: string | null;
+    onNoticeDismiss?: () => void;
   };
 }
 
@@ -65,6 +67,8 @@ export function DriverRouteOutlet({ route, onNavigate, onSignOut, auth }: Driver
         onRegister={auth.onRegister}
         onRestoreSession={auth.onRestoreSession}
         onSignIn={auth.onSignIn}
+        notice={auth.notice}
+        onNoticeDismiss={auth.onNoticeDismiss}
       />
     );
   }

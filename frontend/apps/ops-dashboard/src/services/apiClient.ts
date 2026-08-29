@@ -19,7 +19,7 @@ export const apiClient = createGoodRapidoApiClient({
   baseUrl,
   getAccessToken: () => getValidOpsAccessToken(),
   refreshAccessToken: () => refreshOpsAccessToken(),
-  onUnauthorized: () => clearOpsAuthSession()
+  onUnauthorized: () => clearOpsAuthSession("Your ops session expired. Please sign in again to continue.")
 });
 
 export const opsApiBaseUrl = baseUrl;
@@ -76,7 +76,7 @@ const requestOpsTokenRefresh = async () => {
     });
     return payload.data.tokens.accessToken;
   } catch {
-    clearOpsAuthSession();
+    clearOpsAuthSession("Session refresh failed. Please sign in again to continue.");
     return null;
   }
 };

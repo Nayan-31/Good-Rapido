@@ -54,7 +54,7 @@ export function useAuthSession() {
       applySession(refreshResponse.data);
       return refreshResponse.message || "Rider session restored";
     } catch (error) {
-      clearAuthSession();
+      clearAuthSession("Saved rider session expired. Please sign in again.");
       setSession(null);
       throw error;
     } finally {
@@ -98,7 +98,7 @@ export function useAuthSession() {
         await authService.logoutRider(refreshToken);
       }
     } finally {
-      clearAuthSession();
+      clearAuthSession("You have been signed out safely.");
       setSession(null);
       window.location.hash = "/";
     }

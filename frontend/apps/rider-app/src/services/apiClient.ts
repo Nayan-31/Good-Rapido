@@ -14,7 +14,7 @@ export const apiClient = createGoodRapidoApiClient({
   baseUrl,
   getAccessToken: () => getValidRiderAccessToken(),
   refreshAccessToken: () => refreshRiderAccessToken(),
-  onUnauthorized: () => clearAuthSession()
+  onUnauthorized: () => clearAuthSession("Your rider session expired. Please sign in again to continue.")
 });
 
 export const riderApiBaseUrl = baseUrl;
@@ -67,7 +67,7 @@ const requestRiderTokenRefresh = async () => {
     saveAuthSession(payload.data);
     return payload.data.tokens.accessToken;
   } catch {
-    clearAuthSession();
+    clearAuthSession("Session refresh failed. Please sign in again to continue.");
     return null;
   }
 };

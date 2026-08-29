@@ -54,7 +54,7 @@ export function useDriverAuthSession() {
       applySession(refreshResponse.data);
       return refreshResponse.message || "Driver session restored";
     } catch (error) {
-      clearDriverAuthSession();
+      clearDriverAuthSession("Saved driver session expired. Please login again.");
       setSession(null);
       throw error;
     } finally {
@@ -98,7 +98,7 @@ export function useDriverAuthSession() {
         await driverAuthService.logoutDriver(refreshToken);
       }
     } finally {
-      clearDriverAuthSession();
+      clearDriverAuthSession("You have been signed out safely.");
       setSession(null);
     }
   }, [session?.tokens.refreshToken]);

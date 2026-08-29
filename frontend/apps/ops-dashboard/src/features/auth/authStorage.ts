@@ -5,6 +5,7 @@ const REFRESH_TOKEN_KEY = "goodRapido.opsRefreshToken";
 const USER_KEY = "goodRapido.opsUser";
 const ROLE_KEY = "goodRapido.opsRole";
 export const OPS_AUTH_SESSION_CHANGED_EVENT = "goodRapido:opsAuthSessionChanged";
+const OPS_AUTH_NOTICE_KEY = "goodRapido.opsAuthNotice";
 const LEGACY_OPS_ACCESS_TOKEN_KEYS = ["goodRapido.accessToken", "accessToken"];
 const LEGACY_OPS_REFRESH_TOKEN_KEYS = ["goodRapido.refreshToken", "refreshToken"];
 
@@ -16,9 +17,13 @@ export const readOpsAuthSession = (): OpsAuthSession | null => {
   const accessToken = readSessionValue(ACCESS_TOKEN_KEY, LEGACY_OPS_ACCESS_TOKEN_KEYS);
   const refreshToken = readSessionValue(REFRESH_TOKEN_KEY, LEGACY_OPS_REFRESH_TOKEN_KEYS);
   const role = readStoredRole();
+  const hasPartialSession = Boolean(accessToken || refreshToken || role || sessionStorage.getItem(USER_KEY) || localStorage.getItem(USER_KEY));
 
   if (!accessToken || !refreshToken || !role) {
     clearOpsAuthSessionStorage();
+    if (hasPartialSession) {
+      writeOpsAuthNotice("We cleared an incomplete ops session. Please sign in again.");
+    }
     return null;
   }
 
@@ -36,6 +41,7 @@ export const saveOpsAuthSession = (session: OpsAuthSession) => {
   sessionStorage.setItem(ACCESS_TOKEN_KEY, session.tokens.accessToken);
   sessionStorage.setItem(REFRESH_TOKEN_KEY, session.tokens.refreshToken);
   sessionStorage.setItem(ROLE_KEY, session.role);
+  sessionStorage.removeItem(OPS_AUTH_NOTICE_KEY);
   localStorage.removeItem(ACCESS_TOKEN_KEY);
   localStorage.removeItem(REFRESH_TOKEN_KEY);
   localStorage.removeItem(ROLE_KEY);
@@ -51,9 +57,18 @@ export const saveOpsAuthSession = (session: OpsAuthSession) => {
   notifyOpsAuthSessionChanged();
 };
 
-export const clearOpsAuthSession = () => {
+export const clearOpsAuthSession = (notice?: string) => {
   clearOpsAuthSessionStorage();
+  if (notice) {
+    writeOpsAuthNotice(notice);
+  }
   notifyOpsAuthSessionChanged();
+};
+
+export const consumeOpsAuthNotice = () => {
+  const notice = sessionStorage.getItem(OPS_AUTH_NOTICE_KEY);
+  sessionStorage.removeItem(OPS_AUTH_NOTICE_KEY);
+  return notice;
 };
 
 const clearOpsAuthSessionStorage = () => {
@@ -67,6 +82,10 @@ const clearOpsAuthSessionStorage = () => {
   localStorage.removeItem(ROLE_KEY);
   LEGACY_OPS_ACCESS_TOKEN_KEYS.forEach((key) => localStorage.removeItem(key));
   LEGACY_OPS_REFRESH_TOKEN_KEYS.forEach((key) => localStorage.removeItem(key));
+};
+
+const writeOpsAuthNotice = (notice: string) => {
+  sessionStorage.setItem(OPS_AUTH_NOTICE_KEY, notice);
 };
 
 const notifyOpsAuthSessionChanged = () => {

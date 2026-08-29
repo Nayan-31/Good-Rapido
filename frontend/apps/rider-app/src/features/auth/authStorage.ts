@@ -4,6 +4,7 @@ export const RIDER_ACCESS_TOKEN_KEY = "goodRapido.riderAccessToken";
 export const RIDER_REFRESH_TOKEN_KEY = "goodRapido.riderRefreshToken";
 export const RIDER_USER_KEY = "goodRapido.riderUser";
 export const RIDER_AUTH_SESSION_CHANGED_EVENT = "goodRapido:riderAuthSessionChanged";
+const RIDER_AUTH_NOTICE_KEY = "goodRapido.riderAuthNotice";
 const LEGACY_RIDER_ACCESS_TOKEN_KEYS = ["goodRapido.accessToken", "accessToken"];
 const LEGACY_RIDER_REFRESH_TOKEN_KEYS = ["goodRapido.refreshToken", "refreshToken"];
 
@@ -14,9 +15,13 @@ export const readAuthSession = (): AuthSession | null => {
 
   const accessToken = readSessionValue(RIDER_ACCESS_TOKEN_KEY, LEGACY_RIDER_ACCESS_TOKEN_KEYS);
   const refreshToken = readSessionValue(RIDER_REFRESH_TOKEN_KEY, LEGACY_RIDER_REFRESH_TOKEN_KEYS);
+  const hasPartialSession = Boolean(accessToken || refreshToken || sessionStorage.getItem(RIDER_USER_KEY) || localStorage.getItem(RIDER_USER_KEY));
 
   if (!accessToken || !refreshToken) {
     clearAuthSessionStorage();
+    if (hasPartialSession) {
+      writeAuthNotice("We cleared an incomplete rider session. Please sign in again.");
+    }
     return null;
   }
 
@@ -32,6 +37,7 @@ export const readAuthSession = (): AuthSession | null => {
 export const saveAuthSession = (session: AuthSession) => {
   sessionStorage.setItem(RIDER_ACCESS_TOKEN_KEY, session.tokens.accessToken);
   sessionStorage.setItem(RIDER_REFRESH_TOKEN_KEY, session.tokens.refreshToken);
+  sessionStorage.removeItem(RIDER_AUTH_NOTICE_KEY);
   localStorage.removeItem(RIDER_ACCESS_TOKEN_KEY);
   localStorage.removeItem(RIDER_REFRESH_TOKEN_KEY);
 
@@ -46,9 +52,18 @@ export const saveAuthSession = (session: AuthSession) => {
   notifyAuthSessionChanged();
 };
 
-export const clearAuthSession = () => {
+export const clearAuthSession = (notice?: string) => {
   clearAuthSessionStorage();
+  if (notice) {
+    writeAuthNotice(notice);
+  }
   notifyAuthSessionChanged();
+};
+
+export const consumeAuthNotice = () => {
+  const notice = sessionStorage.getItem(RIDER_AUTH_NOTICE_KEY);
+  sessionStorage.removeItem(RIDER_AUTH_NOTICE_KEY);
+  return notice;
 };
 
 const clearAuthSessionStorage = () => {
@@ -60,6 +75,10 @@ const clearAuthSessionStorage = () => {
   localStorage.removeItem(RIDER_USER_KEY);
   LEGACY_RIDER_ACCESS_TOKEN_KEYS.forEach((key) => localStorage.removeItem(key));
   LEGACY_RIDER_REFRESH_TOKEN_KEYS.forEach((key) => localStorage.removeItem(key));
+};
+
+const writeAuthNotice = (notice: string) => {
+  sessionStorage.setItem(RIDER_AUTH_NOTICE_KEY, notice);
 };
 
 const notifyAuthSessionChanged = () => {

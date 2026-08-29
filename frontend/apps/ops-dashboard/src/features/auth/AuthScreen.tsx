@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 
+import { toFriendlyApiErrorMessage } from "@good-rapido/api-client";
 import { Alert, Badge, Button, Card, TextField } from "@good-rapido/ui";
 import type { OpsLoginForm } from "./auth.types";
 import styles from "./AuthScreen.module.css";
@@ -9,6 +10,8 @@ export interface AuthScreenProps {
   onAuthenticated: () => void;
   onRestoreSession: () => Promise<string>;
   onSignIn: (form: OpsLoginForm) => Promise<string>;
+  notice?: string | null;
+  onNoticeDismiss?: () => void;
 }
 
 const defaultForm: OpsLoginForm = {
@@ -17,7 +20,14 @@ const defaultForm: OpsLoginForm = {
   password: "Password@123"
 };
 
-export function AuthScreen({ isRestoring, onAuthenticated, onRestoreSession, onSignIn }: AuthScreenProps) {
+export function AuthScreen({
+  isRestoring,
+  onAuthenticated,
+  onRestoreSession,
+  onSignIn,
+  notice,
+  onNoticeDismiss
+}: AuthScreenProps) {
   const [form, setForm] = useState<OpsLoginForm>(defaultForm);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -27,6 +37,7 @@ export function AuthScreen({ isRestoring, onAuthenticated, onRestoreSession, onS
     event.preventDefault();
     setError(null);
     setMessage(null);
+    onNoticeDismiss?.();
     setIsSubmitting(true);
 
     try {
@@ -34,7 +45,7 @@ export function AuthScreen({ isRestoring, onAuthenticated, onRestoreSession, onS
       setMessage(nextMessage);
       onAuthenticated();
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : "Ops authentication failed");
+      setError(toFriendlyApiErrorMessage(submitError, "login"));
     } finally {
       setIsSubmitting(false);
     }
@@ -43,13 +54,14 @@ export function AuthScreen({ isRestoring, onAuthenticated, onRestoreSession, onS
   const restore = async () => {
     setError(null);
     setMessage(null);
+    onNoticeDismiss?.();
 
     try {
       const nextMessage = await onRestoreSession();
       setMessage(nextMessage);
       onAuthenticated();
     } catch (restoreError) {
-      setError(restoreError instanceof Error ? restoreError.message : "Session restore failed");
+      setError(toFriendlyApiErrorMessage(restoreError, "restore"));
     }
   };
 
@@ -84,14 +96,20 @@ export function AuthScreen({ isRestoring, onAuthenticated, onRestoreSession, onS
             <button
               className={form.role === "ops" ? styles.selectedRole : styles.roleButton}
               type="button"
-              onClick={() => setForm((current) => ({ ...current, role: "ops" }))}
+              onClick={() => {
+                setForm((current) => ({ ...current, role: "ops" }));
+                onNoticeDismiss?.();
+              }}
             >
               Ops
             </button>
             <button
               className={form.role === "admin" ? styles.selectedRole : styles.roleButton}
               type="button"
-              onClick={() => setForm((current) => ({ ...current, role: "admin" }))}
+              onClick={() => {
+                setForm((current) => ({ ...current, role: "admin" }));
+                onNoticeDismiss?.();
+              }}
             >
               Admin
             </button>
@@ -114,9 +132,9 @@ export function AuthScreen({ isRestoring, onAuthenticated, onRestoreSession, onS
               {error}
             </Alert>
           ) : null}
-          {message ? (
-            <Alert tone="trust" title="Ops session ready">
-              {message}
+          {message || notice ? (
+            <Alert tone="trust" title={message ? "Ops session ready" : "Session notice"}>
+              {message || notice}
             </Alert>
           ) : null}
 

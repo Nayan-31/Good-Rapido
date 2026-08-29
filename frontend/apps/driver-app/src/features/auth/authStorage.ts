@@ -4,6 +4,7 @@ export const DRIVER_ACCESS_TOKEN_KEY = "goodRapido.driverAccessToken";
 export const DRIVER_REFRESH_TOKEN_KEY = "goodRapido.driverRefreshToken";
 export const DRIVER_AUTH_SESSION_CHANGED_EVENT = "goodRapido:driverAuthSessionChanged";
 const DRIVER_USER_KEY = "goodRapido.driverUser";
+const DRIVER_AUTH_NOTICE_KEY = "goodRapido.driverAuthNotice";
 const LEGACY_DRIVER_ACCESS_TOKEN_KEYS = ["goodRapido.accessToken", "accessToken"];
 const LEGACY_DRIVER_REFRESH_TOKEN_KEYS = ["goodRapido.refreshToken", "refreshToken"];
 
@@ -14,9 +15,13 @@ export const readDriverAuthSession = (): DriverAuthSession | null => {
 
   const accessToken = readSessionValue(DRIVER_ACCESS_TOKEN_KEY, LEGACY_DRIVER_ACCESS_TOKEN_KEYS);
   const refreshToken = readSessionValue(DRIVER_REFRESH_TOKEN_KEY, LEGACY_DRIVER_REFRESH_TOKEN_KEYS);
+  const hasPartialSession = Boolean(accessToken || refreshToken || sessionStorage.getItem(DRIVER_USER_KEY) || localStorage.getItem(DRIVER_USER_KEY));
 
   if (!accessToken || !refreshToken) {
     clearDriverAuthSessionStorage();
+    if (hasPartialSession) {
+      writeDriverAuthNotice("We cleared an incomplete driver session. Please login again.");
+    }
     return null;
   }
 
@@ -32,6 +37,7 @@ export const readDriverAuthSession = (): DriverAuthSession | null => {
 export const saveDriverAuthSession = (session: DriverAuthSession) => {
   sessionStorage.setItem(DRIVER_ACCESS_TOKEN_KEY, session.tokens.accessToken);
   sessionStorage.setItem(DRIVER_REFRESH_TOKEN_KEY, session.tokens.refreshToken);
+  sessionStorage.removeItem(DRIVER_AUTH_NOTICE_KEY);
   localStorage.removeItem(DRIVER_ACCESS_TOKEN_KEY);
   localStorage.removeItem(DRIVER_REFRESH_TOKEN_KEY);
 
@@ -46,9 +52,18 @@ export const saveDriverAuthSession = (session: DriverAuthSession) => {
   notifyDriverAuthSessionChanged();
 };
 
-export const clearDriverAuthSession = () => {
+export const clearDriverAuthSession = (notice?: string) => {
   clearDriverAuthSessionStorage();
+  if (notice) {
+    writeDriverAuthNotice(notice);
+  }
   notifyDriverAuthSessionChanged();
+};
+
+export const consumeDriverAuthNotice = () => {
+  const notice = sessionStorage.getItem(DRIVER_AUTH_NOTICE_KEY);
+  sessionStorage.removeItem(DRIVER_AUTH_NOTICE_KEY);
+  return notice;
 };
 
 const clearDriverAuthSessionStorage = () => {
@@ -60,6 +75,10 @@ const clearDriverAuthSessionStorage = () => {
   localStorage.removeItem(DRIVER_USER_KEY);
   LEGACY_DRIVER_ACCESS_TOKEN_KEYS.forEach((key) => localStorage.removeItem(key));
   LEGACY_DRIVER_REFRESH_TOKEN_KEYS.forEach((key) => localStorage.removeItem(key));
+};
+
+const writeDriverAuthNotice = (notice: string) => {
+  sessionStorage.setItem(DRIVER_AUTH_NOTICE_KEY, notice);
 };
 
 const notifyDriverAuthSessionChanged = () => {

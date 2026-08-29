@@ -68,7 +68,7 @@ export function useOpsAuthSession() {
       applySession(refreshResponse.data);
       return refreshResponse.message || "Ops session restored";
     } catch (error) {
-      clearOpsAuthSession();
+      clearOpsAuthSession("Saved ops session expired. Please sign in again.");
       setSession(null);
       throw error;
     } finally {
@@ -84,7 +84,7 @@ export function useOpsAuthSession() {
         await opsAuthService.logout(storedSession.role, storedSession.tokens.refreshToken);
       }
     } finally {
-      clearOpsAuthSession();
+      clearOpsAuthSession("You have been signed out safely.");
       setSession(null);
     }
   }, [session]);

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 
+import { toFriendlyApiErrorMessage } from "@good-rapido/api-client";
 import { Alert, Badge, Button, TextField } from "@good-rapido/ui";
 import type { DriverLoginForm, DriverRegisterForm } from "./auth.types";
 import styles from "./AuthScreen.module.css";
@@ -13,6 +14,8 @@ export interface AuthScreenProps {
   onRestoreSession: () => Promise<string>;
   onAuthenticated: (mode: AuthMode) => void;
   isRestoring: boolean;
+  notice?: string | null;
+  onNoticeDismiss?: () => void;
 }
 
 const defaultLoginForm: DriverLoginForm = {
@@ -35,7 +38,9 @@ export function AuthScreen({
   onRegister,
   onRestoreSession,
   onAuthenticated,
-  isRestoring
+  isRestoring,
+  notice,
+  onNoticeDismiss
 }: AuthScreenProps) {
   const [mode, setMode] = useState<AuthMode>("login");
   const [loginForm, setLoginForm] = useState(defaultLoginForm);
@@ -48,6 +53,7 @@ export function AuthScreen({
     event.preventDefault();
     setError(null);
     setMessage(null);
+    onNoticeDismiss?.();
     setIsSubmitting(true);
 
     try {
@@ -55,7 +61,7 @@ export function AuthScreen({
       setMessage(nextMessage);
       onAuthenticated(mode);
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : "Driver authentication failed");
+      setError(toFriendlyApiErrorMessage(submitError, mode));
     } finally {
       setIsSubmitting(false);
     }
@@ -64,13 +70,14 @@ export function AuthScreen({
   const handleRestore = async () => {
     setError(null);
     setMessage(null);
+    onNoticeDismiss?.();
 
     try {
       const nextMessage = await onRestoreSession();
       setMessage(nextMessage);
       onAuthenticated("login");
     } catch (restoreError) {
-      setError(resolveRestoreErrorMessage(restoreError));
+      setError(toFriendlyApiErrorMessage(restoreError, "restore"));
     }
   };
 
@@ -107,6 +114,7 @@ export function AuthScreen({
               setMode("login");
               setError(null);
               setMessage(null);
+              onNoticeDismiss?.();
             }}
           >
             Login
@@ -118,6 +126,7 @@ export function AuthScreen({
               setMode("register");
               setError(null);
               setMessage(null);
+              onNoticeDismiss?.();
             }}
           >
             Register
@@ -193,9 +202,9 @@ export function AuthScreen({
             </Alert>
           ) : null}
 
-          {message ? (
-            <Alert tone="trust" title="Driver session">
-              {message}
+          {message || notice ? (
+            <Alert tone="trust" title={message ? "Driver session" : "Session notice"}>
+              {message || notice}
             </Alert>
           ) : null}
 
@@ -245,15 +254,3 @@ export function AuthScreen({
     </section>
   );
 }
-
-const resolveRestoreErrorMessage = (error: unknown) => {
-  if (!(error instanceof Error)) {
-    return "Saved driver session expired. Please login again.";
-  }
-
-  if (/refresh|restore|token|session/i.test(error.message)) {
-    return "Saved driver session expired. Please login again.";
-  }
-
-  return error.message;
-};

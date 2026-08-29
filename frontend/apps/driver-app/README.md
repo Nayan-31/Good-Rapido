@@ -8,6 +8,7 @@ Current status: demo-ready driver MVP. The app shell, routing, auth flow, onboar
 
 - Driver registration.
 - Driver login.
+- Friendly driver auth messages for failed login/register, too many requests, expired sessions, refresh failure, unauthorized routes, stale saved sessions, and logout success.
 - JWT access and refresh token flow.
 - Session-storage based frontend auth session.
 - Proactive access-token refresh before protected driver API calls.
@@ -15,6 +16,7 @@ Current status: demo-ready driver MVP. The app shell, routing, auth flow, onboar
 - Legacy localStorage token cleanup during migration/logout.
 - Session restore.
 - Logout and failed-refresh cleanup.
+- User-friendly rate-limit and stale-session messages through shared API error handling.
 - Route protection based on auth state.
 - Header initials from the authenticated driver name.
 - Real seeded ride request visibility for the matched driver.
@@ -113,6 +115,7 @@ Login or register
 - Session-scoped token storage.
 - Proactive token refresh and retry-on-expired-token handling.
 - Logout and stale-session cleanup.
+- Route guard redirects with a clear login-required message.
 
 Backend module:
 
