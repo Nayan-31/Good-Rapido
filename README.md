@@ -258,12 +258,31 @@ CORS_ORIGIN=http://localhost:5173,http://localhost:5174,http://localhost:5176
 ACCESS_SECRET_TOKEN=local-access-secret-change-me
 REFRESH_SECRET_TOKEN=local-refresh-secret-change-me
 GOOGLE_MAPS_API_KEY=
+GOOGLE_PLACES_AUTOCOMPLETE_ENDPOINT=https://places.googleapis.com/v1/places:autocomplete
+GOOGLE_PLACES_DETAILS_ENDPOINT=https://places.googleapis.com/v1/places
+GOOGLE_MAPS_SEARCH_COUNTRY=IN
+PAYMENT_GATEWAY_PROVIDER=mock
+RAZORPAY_KEY_ID=
+RAZORPAY_KEY_SECRET=
+STRIPE_SECRET_KEY=
+STRIPE_PUBLISHABLE_KEY=
 VITE_API_BASE_URL=http://localhost:3000
 VITE_USE_DEMO_RIDE_REQUESTS=false
 VITE_USE_DEMO_DRIVER_DATA=false
+VITE_GOOGLE_MAPS_API_KEY=
 ```
 
 Only set `VITE_USE_DEMO_RIDE_REQUESTS=true` or `VITE_USE_DEMO_DRIVER_DATA=true` when you intentionally want screenshot/demo fallback cards. Normal testing should keep both disabled so rider, driver, and ops screens use backend data or honest empty states.
+
+## Deployment Readiness
+
+- Use `server/.env.example` for backend variables and each frontend app `.env.example` for build-time frontend variables.
+- MongoDB must be running before API start, seeding, or smoke tests.
+- Production `CORS_ORIGIN` must include every deployed frontend URL.
+- Keep payment provider as `mock` until Razorpay or Stripe credentials are ready.
+- Google Places works only when backend `GOOGLE_MAPS_API_KEY` is configured; otherwise the known-place fallback is used.
+- Driver Google Maps screens need `VITE_GOOGLE_MAPS_API_KEY` at frontend build time.
+- Full deploy steps are documented in `DEPLOYMENT_GUIDE.md`.
 
 ## Verification
 
