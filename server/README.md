@@ -135,7 +135,28 @@ GOOGLE_PLACES_DETAILS_ENDPOINT=https://places.googleapis.com/v1/places
 GOOGLE_MAPS_SEARCH_COUNTRY=IN
 ```
 
-Copy `server/.env.example` when preparing a new local or deployment environment.
+Copy `server/.env.example` when preparing a new local or deployment environment. The server loads root `.env` first and then `server/.env`, so values in `server/.env` override root values.
+
+Required for every environment:
+
+- `MONGO_URL`
+- `ACCESS_SECRET_TOKEN`
+- `REFRESH_SECRET_TOKEN`
+- `CORS_ORIGIN`
+
+Local vs production:
+
+- Local can use `MONGO_URL=mongodb://localhost:27017/rapido` and `NODE_ENV=development`.
+- Production should use a hosted MongoDB URL, `NODE_ENV=production`, long random JWT secrets, and only deployed frontend URLs in `CORS_ORIGIN`.
+- `CORS_ORIGIN` is a comma-separated allowlist. Example: `https://rider.example.com,https://driver.example.com,https://ops.example.com`.
+- Avoid `CORS_ORIGIN=*` for production because frontend apps send credentials.
+
+Provider credentials:
+
+- Keep `PAYMENT_GATEWAY_PROVIDER=mock` until Razorpay or Stripe credentials are ready.
+- For Razorpay, set `PAYMENT_GATEWAY_PROVIDER=razorpay`, `RAZORPAY_KEY_ID`, and `RAZORPAY_KEY_SECRET`.
+- For Stripe, set `PAYMENT_GATEWAY_PROVIDER=stripe`, `STRIPE_SECRET_KEY`, and `STRIPE_PUBLISHABLE_KEY`.
+- Set `GOOGLE_MAPS_API_KEY` only when Google Places is enabled for backend location search. Without it, the MVP known-place fallback still works.
 
 Do not commit real secrets.
 

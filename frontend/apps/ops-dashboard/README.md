@@ -186,6 +186,8 @@ http://localhost:5176
 http://127.0.0.1:5176
 ```
 
+For production, set `VITE_API_BASE_URL` to the deployed backend URL before building the ops dashboard, then add the final ops dashboard URL to backend `CORS_ORIGIN`.
+
 ## Important Auth Note
 
 Driver registration is public inside private auth, but admin and ops registration is intentionally disabled in the backend route layer. Admin and ops accounts must be created through the private auth seed script, database setup, or the private admin users API after an admin session exists.

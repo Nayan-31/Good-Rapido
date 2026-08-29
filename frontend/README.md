@@ -238,6 +238,16 @@ frontend/apps/driver-app/.env.example
 frontend/apps/ops-dashboard/.env.example
 ```
 
+Frontend variables are read at build time by Vite:
+
+- `VITE_API_BASE_URL` is required for rider, driver, and ops apps.
+- Local value: `http://localhost:3000`.
+- Production value: the deployed backend API URL, for example `https://api.goodrapido.example`.
+- `VITE_GOOGLE_MAPS_API_KEY` is optional and currently used by the driver app map screens.
+- `VITE_USE_DEMO_RIDE_REQUESTS` and `VITE_USE_DEMO_DRIVER_DATA` should stay `false` unless you intentionally want demo fallback cards.
+
+For production, build each app after setting its production `.env` values. If `VITE_API_BASE_URL` is left as localhost during build, the deployed app will still call localhost.
+
 Deployment notes are in:
 
 ```text

@@ -25,8 +25,8 @@ The demo-ready MVP can deploy with:
 
 Still pending for production:
 
-- Real payment provider.
-- Real Google Maps/Mapbox moving vehicle tracking.
+- Live Razorpay/Stripe credentials and payment-provider verification.
+- Live Google billing/API-key verification for Places and driver maps.
 - Real SMS, push, and email providers.
 - Production monitoring and log aggregation.
 - Production httpOnly cookie auth.
@@ -47,6 +47,15 @@ ACCESS_SECRET_TOKEN=replace-with-a-long-random-access-secret
 REFRESH_SECRET_TOKEN=replace-with-a-long-random-refresh-secret
 ACCESS_TOKEN_EXPIRES_IN=15m
 REFRESH_TOKEN_EXPIRES_IN=7d
+PAYMENT_GATEWAY_PROVIDER=mock
+RAZORPAY_KEY_ID=
+RAZORPAY_KEY_SECRET=
+STRIPE_SECRET_KEY=
+STRIPE_PUBLISHABLE_KEY=
+GOOGLE_MAPS_API_KEY=
+GOOGLE_PLACES_AUTOCOMPLETE_ENDPOINT=https://places.googleapis.com/v1/places:autocomplete
+GOOGLE_PLACES_DETAILS_ENDPOINT=https://places.googleapis.com/v1/places
+GOOGLE_MAPS_SEARCH_COUNTRY=IN
 ```
 
 Why these matter:
@@ -55,6 +64,27 @@ Why these matter:
 - `CORS_ORIGIN` tells backend which frontend URLs can call it.
 - `ACCESS_SECRET_TOKEN` signs short-lived access tokens.
 - `REFRESH_SECRET_TOKEN` signs refresh tokens.
+- `PAYMENT_GATEWAY_PROVIDER` controls `mock`, `razorpay`, or `stripe` payment behavior.
+- `GOOGLE_MAPS_API_KEY` enables Google Places location search on the backend. If it is empty, known demo locations are still supported.
+
+Local backend config:
+
+```text
+NODE_ENV=development
+MONGO_URL=mongodb://localhost:27017/rapido
+CORS_ORIGIN=http://localhost:5173,http://localhost:5174,http://localhost:5176
+PAYMENT_GATEWAY_PROVIDER=mock
+```
+
+Production backend config:
+
+```text
+NODE_ENV=production
+MONGO_URL=<hosted MongoDB connection string>
+CORS_ORIGIN=<rider URL>,<driver URL>,<ops URL>
+ACCESS_SECRET_TOKEN=<long random secret>
+REFRESH_SECRET_TOKEN=<long random secret>
+```
 
 Do not commit real secrets.
 
@@ -64,6 +94,19 @@ Each frontend app needs the backend URL.
 
 ```text
 VITE_API_BASE_URL=https://your-backend-api.com
+```
+
+Driver app optional map variable:
+
+```text
+VITE_GOOGLE_MAPS_API_KEY=
+```
+
+Driver demo fallback variables:
+
+```text
+VITE_USE_DEMO_RIDE_REQUESTS=false
+VITE_USE_DEMO_DRIVER_DATA=false
 ```
 
 Local examples are available at:
@@ -78,7 +121,43 @@ Why this matters:
 
 Vite reads `VITE_API_BASE_URL` at build time. If this value points to localhost during production build, the deployed frontend will try to call localhost instead of the deployed backend.
 
-## 4. Local Docker Backend
+Use this local setup:
+
+```text
+Rider VITE_API_BASE_URL=http://localhost:3000
+Driver VITE_API_BASE_URL=http://localhost:3000
+Ops VITE_API_BASE_URL=http://localhost:3000
+```
+
+Use this production setup:
+
+```text
+Rider VITE_API_BASE_URL=https://your-api.example.com
+Driver VITE_API_BASE_URL=https://your-api.example.com
+Ops VITE_API_BASE_URL=https://your-api.example.com
+```
+
+Keep demo fallback variables disabled in production.
+
+## 4. CORS Setup
+
+Backend CORS is controlled by `CORS_ORIGIN`.
+
+Local:
+
+```text
+CORS_ORIGIN=http://localhost:5173,http://localhost:5174,http://localhost:5176
+```
+
+Production:
+
+```text
+CORS_ORIGIN=https://your-rider-app.com,https://your-driver-app.com,https://your-ops-dashboard.com
+```
+
+After frontend deployment, update `CORS_ORIGIN` with the final deployed URLs and restart the backend. Avoid `*` in production because the apps use credentialed requests and bearer tokens.
+
+## 5. Local Docker Backend
 
 From `server/`:
 
@@ -99,7 +178,7 @@ curl http://localhost:3000/health
 
 The API container uses `npm start`, not `npm run dev`, so it does not depend on `nodemon`.
 
-## 5. Local Full Demo
+## 6. Local Full Demo
 
 From repo root:
 
@@ -127,7 +206,42 @@ Driver:  http://localhost:5174
 Ops:     http://localhost:5176
 ```
 
-## 6. Production Build Commands
+## 7. Test And Smoke Commands
+
+Backend tests:
+
+```bash
+npm --prefix server test
+```
+
+Backend demo smoke flow:
+
+```bash
+npm --prefix server run smoke:demo
+```
+
+Frontend typechecks:
+
+```bash
+npm --prefix frontend run typecheck:rider
+npm --prefix frontend run typecheck:driver
+npm --prefix frontend run typecheck:ops
+npm --prefix frontend run typecheck:api-client
+```
+
+Frontend browser E2E demo smoke:
+
+```bash
+npm --prefix frontend run e2e:demo
+```
+
+Headed browser E2E:
+
+```bash
+npm --prefix frontend run e2e:demo:headed
+```
+
+## 8. Production Build Commands
 
 Backend:
 
@@ -172,7 +286,38 @@ Build output:
 frontend/apps/ops-dashboard/dist
 ```
 
-## 7. Suggested Cloud Deployment
+## 9. Provider Credential Checklist
+
+MongoDB:
+
+- Create a MongoDB Atlas, Railway MongoDB, or self-hosted MongoDB database.
+- Put the connection string in `MONGO_URL`.
+- Run the backend health check after deployment.
+
+JWT/auth:
+
+- Generate long random values for `ACCESS_SECRET_TOKEN` and `REFRESH_SECRET_TOKEN`.
+- Do not reuse local demo secrets in production.
+
+Payments:
+
+- Use `PAYMENT_GATEWAY_PROVIDER=mock` for demo environments.
+- Use `razorpay` only after `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` are ready.
+- Use `stripe` only after `STRIPE_SECRET_KEY` and `STRIPE_PUBLISHABLE_KEY` are ready.
+- Verify payment success, failure, history, and refund flows before showing payment as production-ready.
+
+Google:
+
+- Backend Places search needs `GOOGLE_MAPS_API_KEY`.
+- Driver map UI needs `VITE_GOOGLE_MAPS_API_KEY` during frontend build.
+- Keep key restrictions enabled in Google Cloud and allow the exact local/deployed origins you use.
+
+Notifications:
+
+- Current app has notification APIs and UI.
+- Real SMS, push, WhatsApp, or email provider credentials are still future production work.
+
+## 10. Suggested Cloud Deployment
 
 Backend can be deployed on:
 
@@ -194,23 +339,29 @@ MongoDB can be deployed on:
 - Railway MongoDB
 - Self-hosted MongoDB
 
-## 8. Deployment Order
+## 11. Deployment Order
 
 Use this order:
 
 ```text
 1. Create MongoDB database.
-2. Deploy backend API with production env variables.
-3. Check backend /health.
-4. Build rider app using deployed backend URL.
-5. Build driver app using deployed backend URL.
-6. Build ops dashboard using deployed backend URL.
-7. Update backend CORS_ORIGIN with deployed frontend URLs.
-8. Seed demo data only if this is a demo environment.
-9. Run smoke test against the deployed backend if network access allows.
+2. Add production backend env variables.
+3. Deploy backend API.
+4. Check backend `/health`.
+5. Run backend tests or smoke flow against a staging/demo database.
+6. Set each frontend `VITE_API_BASE_URL` to the deployed backend URL.
+7. Add driver `VITE_GOOGLE_MAPS_API_KEY` only if driver Google Maps is ready.
+8. Build rider app.
+9. Build driver app.
+10. Build ops dashboard.
+11. Deploy frontend static builds.
+12. Update backend `CORS_ORIGIN` with final deployed frontend URLs.
+13. Restart backend.
+14. Seed demo data only if this is a demo environment.
+15. Run browser smoke flow or manual demo checklist.
 ```
 
-## 9. Demo Credentials
+## 12. Demo Credentials
 
 After running:
 
@@ -240,7 +391,7 @@ Driver: amit.das.driver@goodrapido.test
 
 Do not use demo credentials in a real production environment.
 
-## 10. Deployment Checklist
+## 13. Deployment Checklist
 
 Before sharing a deployed link:
 
@@ -249,12 +400,15 @@ Backend /health works.
 MongoDB connection works.
 CORS_ORIGIN contains every frontend URL.
 Frontend VITE_API_BASE_URL points to deployed backend.
+Production frontend builds were created after env variables were set.
 Rider app opens.
 Driver app opens.
 Ops dashboard opens.
 Rider login works.
 Driver login works.
 Ops login works.
+Pickup/dropoff search works with Google Places or known-place fallback.
+Payment provider is either intentionally mock or live credentials are verified.
 Smoke flow passes in demo environment.
 Real secrets are not committed.
 ```

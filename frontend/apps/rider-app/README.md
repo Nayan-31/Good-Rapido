@@ -236,6 +236,8 @@ If the backend is running on a custom port, run this from `frontend/apps/rider-a
 VITE_API_BASE_URL=http://localhost:3000 npm run dev -- --host 0.0.0.0
 ```
 
+For production, set `VITE_API_BASE_URL` to the deployed backend URL before running `npm run build`. Rider location search uses the backend location-search API, so Google Places credentials belong in the backend env, not this app env.
+
 ## Verify
 
 ```bash

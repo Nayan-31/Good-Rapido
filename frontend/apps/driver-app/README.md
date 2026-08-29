@@ -278,7 +278,7 @@ To use Google Maps in the driver app, add this in `frontend/apps/driver-app/.env
 VITE_GOOGLE_MAPS_API_KEY=your_google_maps_api_key
 ```
 
-The key must have Google Maps JavaScript API enabled. Without this key, the app uses Leaflet/OpenStreetMap fallback.
+The key must have Google Maps JavaScript API enabled. Without this key, the app uses Leaflet/OpenStreetMap fallback. For production, set `VITE_API_BASE_URL` and optional `VITE_GOOGLE_MAPS_API_KEY` before running `npm run build` because Vite bakes these values into the static output.
 
 Optional demo fallbacks:
 
