@@ -12,6 +12,7 @@ const riderUrl = process.env.RIDER_APP_URL ?? "http://127.0.0.1:5273";
 const driverUrl = process.env.DRIVER_APP_URL ?? "http://127.0.0.1:5274";
 const opsUrl = process.env.OPS_DASHBOARD_URL ?? "http://127.0.0.1:5275";
 const demoPassword = process.env.GOOD_RAPIDO_DEMO_PASSWORD ?? "Password@123";
+const e2eMongoUrl = process.env.GOOD_RAPIDO_E2E_MONGO_URL ?? "mongodb://127.0.0.1:27017/rapido";
 
 const demoAccounts = {
   rider: {
@@ -36,6 +37,7 @@ test.beforeAll(() => {
     stdio: "inherit",
     env: {
       ...process.env,
+      MONGO_URL: e2eMongoUrl,
       GOOD_RAPIDO_DEMO_RESET_PASSWORDS: "true"
     }
   });

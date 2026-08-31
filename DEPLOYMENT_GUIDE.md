@@ -35,6 +35,17 @@ Still pending for production:
 
 Use `.env.example` or `server/.env.example` as the template.
 
+Environment priority is:
+
+```text
+1. Shell/CI/hosting platform variables
+2. server/.env
+3. root .env
+4. code defaults
+```
+
+This means a cloud provider or test runner can safely override local `.env` values such as `PORT` and `MONGO_URL`.
+
 Important backend variables:
 
 ```text
@@ -232,6 +243,7 @@ npm --prefix frontend run typecheck:api-client
 Frontend browser E2E demo smoke:
 
 ```bash
+npm --prefix frontend exec -- playwright install chromium
 npm --prefix frontend run e2e:demo
 ```
 

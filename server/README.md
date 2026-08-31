@@ -135,7 +135,7 @@ GOOGLE_PLACES_DETAILS_ENDPOINT=https://places.googleapis.com/v1/places
 GOOGLE_MAPS_SEARCH_COUNTRY=IN
 ```
 
-Copy `server/.env.example` when preparing a new local or deployment environment. The server loads root `.env` first and then `server/.env`, so values in `server/.env` override root values.
+Copy `server/.env.example` when preparing a new local or deployment environment. The server loads root `.env` first and then `server/.env`, so values in `server/.env` override root values. Shell, CI, and host-provided environment variables still have the highest priority, which keeps Playwright, Docker, and production platforms able to set `PORT`, `MONGO_URL`, and secrets safely.
 
 Required for every environment:
 

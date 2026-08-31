@@ -280,6 +280,7 @@ If this passes, your core demo story is working.
 Then run the browser E2E demo smoke flow:
 
 ```bash
+npm --prefix frontend exec -- playwright install chromium
 npm --prefix frontend run e2e:demo
 ```
 
@@ -287,14 +288,17 @@ Why:
 
 This checks the same story through real browser screens, not only direct API calls.
 
-It uses Playwright to start isolated local demo servers:
+It uses Playwright to build the frontend apps and start isolated local preview demo servers:
 
 ```text
 API: http://127.0.0.1:3100
 Rider app: http://127.0.0.1:5273
 Driver app: http://127.0.0.1:5274
 Ops dashboard: http://127.0.0.1:5275
+MongoDB: mongodb://127.0.0.1:27017/rapido
 ```
+
+If you need a different test database, run it with `GOOD_RAPIDO_E2E_MONGO_URL`.
 
 It verifies:
 

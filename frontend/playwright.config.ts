@@ -4,10 +4,11 @@ import { fileURLToPath } from "node:url";
 import { defineConfig, devices } from "@playwright/test";
 
 const apiBaseUrl = process.env.GOOD_RAPIDO_API_BASE_URL ?? "http://127.0.0.1:3100";
+const e2eMongoUrl = process.env.GOOD_RAPIDO_E2E_MONGO_URL ?? "mongodb://127.0.0.1:27017/rapido";
 const riderBaseUrl = process.env.RIDER_APP_URL ?? "http://127.0.0.1:5273";
 const driverBaseUrl = process.env.DRIVER_APP_URL ?? "http://127.0.0.1:5274";
 const opsBaseUrl = process.env.OPS_DASHBOARD_URL ?? "http://127.0.0.1:5275";
-const browserChannel = process.env.E2E_BROWSER_CHANNEL || (process.env.CI ? undefined : "chrome");
+const browserChannel = process.env.E2E_BROWSER_CHANNEL || undefined;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "..");
 const serverRoot = path.join(repoRoot, "server");
@@ -47,6 +48,7 @@ export default defineConfig({
       cwd: serverRoot,
       env: {
         PORT: apiTarget.port,
+        MONGO_URL: e2eMongoUrl,
         CORS_ORIGIN: appOrigins
       },
       url: `${apiBaseUrl}/health`,
@@ -54,7 +56,7 @@ export default defineConfig({
       timeout: 120_000
     },
     {
-      command: `npm run dev:rider -- --host ${riderTarget.host} --port ${riderTarget.port}`,
+      command: `npm run build:rider && npm --workspace @good-rapido/rider-app run preview -- --host ${riderTarget.host} --port ${riderTarget.port}`,
       cwd: frontendRoot,
       env: {
         VITE_API_BASE_URL: apiBaseUrl
@@ -64,7 +66,7 @@ export default defineConfig({
       timeout: 120_000
     },
     {
-      command: `npm run dev:driver -- --host ${driverTarget.host} --port ${driverTarget.port}`,
+      command: `npm run build:driver && npm --workspace @good-rapido/driver-app run preview -- --host ${driverTarget.host} --port ${driverTarget.port}`,
       cwd: frontendRoot,
       env: {
         VITE_API_BASE_URL: apiBaseUrl
@@ -74,7 +76,7 @@ export default defineConfig({
       timeout: 120_000
     },
     {
-      command: `npm run dev:ops -- --host ${opsTarget.host} --port ${opsTarget.port}`,
+      command: `npm run build:ops && npm --workspace @good-rapido/ops-dashboard run preview -- --host ${opsTarget.host} --port ${opsTarget.port}`,
       cwd: frontendRoot,
       env: {
         VITE_API_BASE_URL: apiBaseUrl
