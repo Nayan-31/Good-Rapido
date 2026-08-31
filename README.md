@@ -301,6 +301,7 @@ npm --prefix server run smoke:demo
 Browser E2E demo smoke flow:
 
 ```bash
+npm --prefix frontend exec -- playwright install chromium
 npm --prefix frontend run e2e:demo
 ```
 
@@ -310,16 +311,19 @@ Headed browser mode:
 npm --prefix frontend run e2e:demo:headed
 ```
 
-The Playwright smoke flow reseeds demo data, starts isolated local servers, and verifies the complete browser journey:
+The Playwright smoke flow reseeds demo data, builds the frontend apps, starts isolated local preview servers, and verifies the complete browser journey:
 
 ```text
 API: http://127.0.0.1:3100
 Rider: http://127.0.0.1:5273
 Driver: http://127.0.0.1:5274
 Ops: http://127.0.0.1:5275
+MongoDB: mongodb://127.0.0.1:27017/rapido
 ```
 
 It checks rider login/register UI, pickup/dropoff suggestion selection, fare estimate, booking confirmation, driver request acceptance, arrived/start/complete lifecycle actions, rider live status update, rider history, driver earnings, and ops completed ride visibility.
+
+To point the browser smoke flow at another test database, set `GOOD_RAPIDO_E2E_MONGO_URL`.
 
 Frontend checks:
 

@@ -214,6 +214,15 @@ npm run build:driver
 npm run build:ops
 ```
 
+Browser E2E demo smoke:
+
+```bash
+npm exec -- playwright install chromium
+npm run e2e:demo
+```
+
+The browser smoke builds all three frontend apps and serves their production preview bundles before running the rider, driver, and ops demo journey.
+
 ## Backend Connection
 
 Frontend apps read the backend base URL from:

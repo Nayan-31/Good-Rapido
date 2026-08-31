@@ -8,9 +8,12 @@ const currentDir = dirname(fileURLToPath(import.meta.url))
 const serverEnvPath = resolve(currentDir, '../../.env')
 const rootEnvPath = resolve(currentDir, '../../../.env')
 const quiet = process.env.NODE_ENV === 'test'
+const runtimeEnv = { ...process.env }
 
 dotenv.config({ path: rootEnvPath, quiet })
 dotenv.config({ path: serverEnvPath, override: true, quiet })
+
+Object.assign(process.env, runtimeEnv)
 
 const envSchema = z.object({
     PORT: z.coerce.number().default(appConstant.PORT),
